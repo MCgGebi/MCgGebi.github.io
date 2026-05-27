@@ -55,6 +55,35 @@
             border-radius: 5px; font-weight: bold; font-size: 1rem; border: 2px solid var(--mc-green);
         }
         .btn:hover { background-color: transparent; color: var(--mc-green); }
+                <!-- 放在 header / hero 区域 -->
+        <div class="hero-search">
+            <input type="text" id="heroSearchInput" placeholder="输入模组名称，直达搜索结果..." autocomplete="off">
+            <button id="heroSearchBtn"><i class="fa-solid fa-magnifying-glass"></i> 搜索模组</button>
+        </div>
+        
+        <script>
+        // ⚠️ 将下面的链接替换为你自己的搜索页地址
+        const SEARCH_PAGE_URL = './search.html'; 
+        
+        const heroInput = document.getElementById('heroSearchInput');
+        const heroBtn = document.getElementById('heroSearchBtn');
+        
+        function jumpToSearch() {
+            const query = heroInput.value.trim();
+            if (!query) {
+                heroInput.focus();
+                return;
+            }
+            // 将关键词编码后作为 URL 参数传递
+            window.location.href = `${SEARCH_PAGE_URL}?q=${encodeURIComponent(query)}`;
+        }
+        
+        heroBtn.addEventListener('click', jumpToSearch);
+        heroInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') jumpToSearch();
+        });
+        </script>
+
 
         /* --- 通用 Section 样式 --- */
         section { padding: 4rem 8%; }
@@ -228,6 +257,11 @@
             </div>
         </div>
     </section>
+    <!-- ✅ 仅添加此按钮，不改动原有结构 -->
+<a href="./search.html" class="hero-search-btn">
+    <i class="fa-solid fa-magnifying-glass"></i> 前往搜索
+</a>
+
 
     <section id="resources">
         <h2 class="section-title">精选资源推荐</h2>
