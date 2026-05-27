@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft JE 资源整合站 | 探索无限可能</title>
+    <!-- 引入 FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 全局变量与重置 --- */
+        :root {
+            --mc-green: #4CAF50;
+            --mc-dark-green: #2E7D32;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-sub: #b0b0b0;
+            --accent: #3498db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        ul { list-style: none; }
+
+        /* --- 导航栏 --- */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-bottom: 1px solid #333;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--mc-green);
+            letter-spacing: 1px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--mc-green);
+        }
+
+        /* --- Hero 区域 --- */
+        header {
+            height: 80vh;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1607513168406-034571a15d22?q=80&w=1920&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 1rem;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #ddd;
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background-color: var(--mc-green);
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border: 2px solid var(--mc-green);
+        }
+
+        .btn:hover {
+            background-color: transparent;
+            color: var(--mc-green);
+        }
+
+        /* --- 通用 Section 样式 --- */
+        section {
+            padding: 5rem 10%;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: var(--mc-green);
+            margin: 10px auto 0;
+            border-radius: 2px;
+        }
+
+        /* --- 介绍板块 --- */
+        .intro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+            border: 1px solid #333;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--mc-green);
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            color: var(--mc-green);
+            margin-bottom: 1rem;
+        }
+
+        /* --- 资源卡片网格 --- */
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .res-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .res-img {
+            height: 160px;
+            background-color: #333;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .res-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            width: fit-content;
+        }
+
+        .tag-mod { background: #e67e22; color: white; }
+        .tag-shader { background: #9b59b6; color: white; }
+        .tag-tool { background: #3498db; color: white; }
+        .tag-loader { background: #e74c3c; color: white; }
+
+        .res-title { font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .res-desc { font-size: 0.9rem; color: var(--text-sub); margin-bottom: 1rem; flex-grow: 1; }
+        
+        .download-btn {
+            display: block;
+            text-align: center;
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .download-btn:hover { background: var(--mc-green); }
+
+        /* --- Footer --- */
+        footer {
+            background: #0a0a0a;
+            padding: 3rem 10%;
+            text-align: center;
+            color: var(--text-sub);
+            border-top: 1px solid #333;
+        }
+
+        /* --- 响应式调整 --- */
+        @media (max-width: 768px) {
+            header h1 { font-size: 2.5rem; }
+            .nav-links { display: none; } /* 移动端简化：隐藏菜单，实际项目需加汉堡菜单 */
+            section { padding: 3rem 5%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 导航栏 -->
+    <nav>
+        <div class="logo"><i class="fa-solid fa-cube"></i> MC-JE HUB</div>
+        <ul class="nav-links">
+            <li><a href="#home">首页</a></li>
+            <li><a href="#about">关于 JE</a></li>
+            <li><a href="#loaders">模组加载器</a></li>
+            <li><a href="#resources">资源下载</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero 区域 -->
+    <header id="home">
+        <h1>Minecraft Java Edition</h1>
+        <p>这里是通往方块世界深处的入口。获取最新的模组、光影、材质包以及游戏指南。</p>
+        <a href="#resources" class="btn">开始探索</a>
+    </header>
+
+    <!-- 关于 JE -->
+    <section id="about">
+        <h2 class="section-title">为什么选择 Java 版？</h2>
+        <div class="intro-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-code-branch"></i>
+                <h3>无限的模组 (Mods)</h3>
+                <p>Java 版拥有最庞大的模组社区，从工业科技到魔法冒险，彻底改变游戏玩法。</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-server"></i>
+                <h3>自由的服务器</h3>
+                <p>支持搭建私人服务器，拥有 Hypixel 等全球最大的小游戏服务器网络。</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-paintbrush"></i>
+                <h3>自定义皮肤与材质</h3>
+                <p>完全开放的资源包系统，让你可以替换游戏中的每一个像素和音效。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 模组加载器科普 -->
+    <section id="loaders" style="background-color: #181818;">
+        <h2 class="section-title">核心前置：模组加载器</h2>
+        <p style="text-align: center; margin-bottom: 2rem; color: var(--text-sub);">在安装 Mod 前，你需要了解目前主流的三大加载器：</p>
+        <div class="resource-grid">
+            <!-- Forge -->
+            <div class="res-card">
+                <div class="res-content">
+                    <span class="tag tag-loader">老牌稳定</span>
+                    <h3 class="res-title">Minecraft Forge</h3>
+                    <p class="res-desc">历史最悠久，支持大型科技/魔法模组最多。兼容性最好，但启动速度稍慢。</p>
+                    <a href="#" class="download-btn">访问官网</a>
+                </div>
+            </div>
+            <!-- Fabric -->
+            <div class="res-card">
+                <div class="res-content">
+                    <span class="tag tag-loader">轻量极速</span>
+                    <h3 class="res-title">Fabric Loader</h3>
+                    <p class="res-desc">模块化设计，启动极快，更新版本迅速。适合原版增强、优化类模组及高版本游玩。</p>
+                    <a href="#" class="download-btn">访问官网</a>
+                </div>
+            </div>
+            <!-- NeoForge -->
+            <div class="res-card">
+                <div class="res-content">
+                    <span class="tag tag-loader">后起之秀</span>
+                    <h3 class="res-title">NeoForge</h3>
+                    <p class="res-desc">由 Forge 团队分裂而来，旨在提供更现代化的 API，是未来高版本的主流选择之一。</p>
+                    <a href="#" class="download-btn">访问官网</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 资源推荐 -->
+    <section id="resources">
+        <h2 class="section-title">精选资源推荐</h2>
+        
+        <!-- 筛选标签 (仅作展示) -->
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <span style="margin: 0 10px; cursor: pointer; color: var(--mc-green); font-weight: bold;">全部</span>
+            <span style="margin: 0 10px; cursor: pointer; color: var(--text-sub);">光影</span>
+            <span style="margin: 0 10px; cursor: pointer; color: var(--text-sub);">材质包</span>
+            <span style="margin: 0 10px; cursor: pointer; color: var(--text-sub);">实用Mod</span>
+        </div>
+
+        <div class="resource-grid">
+            <!-- 资源 1: Sodium -->
+            <div class="res-card">
+                <!-- 使用占位图，实际使用请替换图片链接 -->
+                <div class="res-img" style="background-image: url('https://cdn.modrinth.com/data/AANobbMI/icon.png'); background-size: contain; background-repeat: no-repeat;"></div>
+                <div class="res-content">
+                    <span class="tag tag-mod">Fabric / 优化</span>
+                    <h3 class="res-title">Sodium (钠)</h3>
+                    <p class="res-desc">Fabric 端最强渲染引擎优化，大幅提升帧数，告别卡顿。</p>
+                    <a href="https://modrinth.com/mod/sodium" target="_blank" class="download-btn"><i class="fa-brands fa-github"></i> Modrinth 下载</a>
+                </div>
+            </div>
+
+            <!-- 资源 2: Iris -->
+            <div class="res-card">
+                <div class="res-img" style="background-image: url('https://cdn.modrinth.com/data/YL57xq9U/icon.png'); background-size: contain; background-repeat: no-repeat;"></div>
+                <div class="res-content">
+                    <span class="tag tag-shader">Fabric / 光影</span>
+                    <h3 class="res-title">Iris Shaders</h3>
+                    <p class="res-desc">配合 Sodium 使用的光影加载器，兼容大部分 OptiFine 光影。</p>
+                    <a href="https://modrinth.com/mod/iris" target="_blank" class="download-btn"><i class="fa-brands fa-github"></i> Modrinth 下载</a>
+                </div>
+            </div>
+
+            <!-- 资源 3: JEI -->
+            <div class="res-card">
+                <div class="res-img" style="background-image: url('https://cdn.modrinth.com/data/u6dRKJwZ/icon.png'); background-size: contain; background-repeat: no-repeat;"></div>
+                <div class="res-content">
+                    <span class="tag tag-mod">Forge&Fabric / 辅助</span>
+                    <h3 class="res-title">JEI (物品管理器)</h3>
+                    <p class="res-desc">查看合成表、用途和掉落物的必备神器，玩模组服必装。</p>
+                    <a href="https://www.curseforge.com/minecraft/mc-mods/jei" target="_blank" class="download-btn"><i class="fa-solid fa-download"></i> CurseForge</a>
+                </div>
+            </div>
+
+            <!-- 资源 4: BSL Shaders -->
+            <div class="res-card">
+                <div class="res-img" style="background-color: #444; display: flex; align-items: center; justify-content: center; color: #aaa;">
+                    <i class="fa-solid fa-sun" style="font-size: 3rem;"></i>
+                </div>
+                <div class="res-content">
+                    <span class="tag tag-shader">光影文件</span>
+                    <h3 class="res-title">BSL Shaders</h3>
+                    <p class="res-desc">画面唯美，性能适中，自带雾效和色调调节，最受欢迎的老牌光影。</p>
+                    <a href="#" class="download-btn"><i class="fa-solid fa-download"></i> 下载资源</a>
+                </div>
+            </div>
+            
+             <!-- 资源 5: PCL2 -->
+             <div class="res-card">
+                <div class="res-img" style="background-color: #3498db; display: flex; align-items: center; justify-content: center; color: white;">
+                    <i class="fa-solid fa-rocket" style="font-size: 3rem;"></i>
+                </div>
+                <div class="res-content">
+                    <span class="tag tag-tool">启动器</span>
+                    <h3 class="res-title">PCL2 启动器</h3>
+                    <p class="res-desc">国内最受好评的第三方启动器，自动安装 Forge/Fabric，下载速度快。</p>
+                    <a href="https://afdian.net/p/0164034c016c11ebafcb52540025c377" target="_blank" class="download-btn"><i class="fa-solid fa-download"></i> 爱发电获取</a>
+                </div>
+            </div>
+
+             <!-- 资源 6: Create -->
+             <div class="res-card">
+                <div class="res-img" style="background-image: url('https://cdn.modrinth.com/data/LNytGWDc/icon.png'); background-size: contain; background-repeat: no-repeat;"></div>
+                <div class="res-content">
+                    <span class="tag tag-mod">Forge&Fabric / 科技</span>
+                    <h3 class="res-title">Create (机械动力)</h3>
+                    <p class="res-desc">基于旋转动能的蒸汽朋克风格科技模组，视觉效果极其震撼。</p>
+                    <a href="https://www.curseforge.com/minecraft/mc-mods/create" target="_blank" class="download-btn"><i class="fa-solid fa-download"></i> CurseForge</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer>
+        <p>&copy; 2026 MC-JE HUB. Not affiliated with Mojang or Microsoft.</p>
+        <p style="font-size: 0.8rem; margin-top: 10px; opacity: 0.6;">Made for Minecraft Players</p>
+    </footer>
+
+    <!-- 简单的平滑滚动脚本 -->
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
