@@ -1,35 +1,335 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>主页</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能主站 | 深色模式</title>
+    <!-- 引入图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 全局样式 - 深色模式 + 自适应字体 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        :root {
+            --bg-main: #121218;
+            --bg-card: #1e1e2f;
+            --bg-hover: #2d2d44;
+            --text-primary: #f0f0f8;
+            --text-secondary: #a9a9c2;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --border: #33334d;
+            --shadow: 0 4px 20px rgba(0,0,0,0.4);
+            --radius: 12px;
+            --transition: all 0.3 ease;
+            /* 基础字号基准 */
+            --base-font: 14px;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            /* 核心：根字体随屏幕缩放 */
+            font-size: clamp(13px, 1vw, 15px);
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            box-shadow: var(--shadow);
+        }
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+            font-weight: 700;
+            color: var(--accent-light);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 1.2rem;
+        }
+        .nav-item a {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            color: var(--text-secondary);
+            font-size: clamp(13px, 0.9vw, 14px);
+        }
+        .nav-item a:hover, .nav-item a.active {
+            background-color: var(--bg-hover);
+            color: var(--accent-light);
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1400px;
+            margin: 1.5rem auto;
+            padding: 0 2rem;
+        }
+        .page-title {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .page-title h1 {
+            font-size: clamp(1.6rem, 2.5vw, 2rem);
+            margin-bottom: 0.4rem;
+        }
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: clamp(12px, 0.8vw, 13px);
+        }
+
+        /* 功能卡片网格 */
+        .func-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 3rem;
+        }
+        .func-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem 1rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .func-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+            border-color: var(--accent);
+            background-color: var(--bg-hover);
+        }
+        .func-icon {
+            font-size: clamp(2rem, 3vw, 2.3rem);
+            color: var(--accent-light);
+            margin-bottom: 0.8rem;
+        }
+        .func-card h3 {
+            font-size: clamp(14px, 1vw, 16px);
+            margin-bottom: 0.4rem;
+        }
+        .func-card p {
+            color: var(--text-secondary);
+            font-size: clamp(12px, 0.8vw, 13px);
+        }
+
+        /* 快捷分区标题 */
+        .section-title {
+            font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+            margin: 3rem 0 1.2rem;
+            padding-left: 0.5rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* 快捷工具栏 */
+        .tool-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 2.5rem;
+        }
+        .tool-btn {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: clamp(12px, 0.9vw, 14px);
+        }
+        .tool-btn:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* 预留拓展区块 */
+        .extend-box {
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+        }
+        .extend-box h3 {
+            font-size: clamp(14px, 1.1vw, 16px);
+            margin-bottom: 0.5rem;
+        }
+        .extend-box p {
+            font-size: clamp(12px, 0.8vw, 13px);
+        }
+
+        /* 页脚 */
+        .footer {
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 0;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 4rem;
+            font-size: clamp(12px, 0.8vw, 13px);
+        }
+
+        /* 移动端精细适配 */
+        @media (max-width: 768px) {
+            .nav-container {
+                height: 50px;
+            }
+            .nav-menu {
+                gap: 0.6rem;
+            }
+            .nav-item a {
+                padding: 0.4rem 0.6rem;
+            }
+            .func-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header class="navbar">
-    <div class="container">
-      <a href="home.html" class="logo">深色主站</a>
-      <nav class="nav-links">
-        <a href="home.html" class="active">主页</a>
-        <a href="search.html">搜索</a>
-      </nav>
-    </div>
-  </header>
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-cube"></i>
+                <span>综合主站</span>
+            </a>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="active">首页主站</a>
+                </li>
+                <li class="nav-item">
+                    <a href="search.html">搜索中心</a>
+                </li>
+                <!-- 后续新增导航直接在这里加 <li> 标签即可 -->
+                <li class="nav-item">
+                    <a href="#">待添加页面</a>
+                </li>
+            </ul>
+        </div>
+    </header>
 
-  <main class="main-wrap">
-    <div class="container">
-      <h1>欢迎访问深色模式主站</h1>
-      <p>纯静态无需后端 · 页面自由跳转</p>
-      <a href="search.html" class="go-btn">前往搜索页面</a>
-    </div>
-  </main>
+    <!-- 主体内容 -->
+    <main class="container">
+        <div class="page-title">
+            <h1>功能聚合主站</h1>
+            <p>统一入口 | 快速跳转所有站点与功能，深色护眼模式</p>
+        </div>
 
-  <footer class="footer">
-    <div class="container">
-      <p>静态深色网站 · 可自由扩展</p>
-    </div>
-  </footer>
-  <script src="js/main.js"></script>
+        <!-- 核心功能卡片区 -->
+        <h2 class="section-title">核心入口</h2>
+        <div class="func-grid">
+            <!-- 已有页面：index.html -->
+            <a href="index.html" class="func-card">
+                <div class="func-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <h3>主站首页</h3>
+                <p>跳转至 index.html</p>
+            </a>
+
+            <!-- 已有页面：search.html -->
+            <a href="search.html" class="func-card">
+                <div class="func-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3>搜索页面</h3>
+                <p>跳转至 search.html</p>
+            </a>
+
+            <!-- 预留空位卡片 -->
+            <div class="func-card">
+                <div class="func-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h3>新增功能</h3>
+                <p>待添加新页面</p>
+            </div>
+            <div class="func-card">
+                <div class="func-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h3>系统设置</h3>
+                <p>预留拓展入口</p>
+            </div>
+            <div class="func-card">
+                <div class="func-icon">
+                    <i class="fas fa-file-code"></i>
+                </div>
+                <h3>工具集合</h3>
+                <p>后续添加工具页面</p>
+            </div>
+        </div>
+
+        <!-- 快捷按钮栏 -->
+        <h2 class="section-title">快捷工具</h2>
+        <div class="tool-bar">
+            <a href="index.html" class="tool-btn">
+                <i class="fas fa-home"></i> 快速回首页
+            </a>
+            <a href="search.html" class="tool-btn">
+                <i class="fas fa-search"></i> 快速搜索
+            </a>
+            <a href="#" class="tool-btn">
+                <i class="fas fa-link"></i> 拓展链接
+            </a>
+            <a href="#" class="tool-btn">
+                <i class="fas fa-wrench"></i> 常用工具
+            </a>
+        </div>
+
+        <!-- 大型拓展区块 -->
+        <h2 class="section-title">拓展区域</h2>
+        <div class="extend-box">
+            <h3>自定义拓展板块</h3>
+            <p>此处可添加公告、图文、新功能模块、外部链接、内容展示等</p>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <p>综合主站系统 &copy; 2026 | 深色模式 · 持续拓展中</p>
+    </footer>
 </body>
 </html>
