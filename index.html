@@ -6,7 +6,6 @@
     <title>Minecraft JE 资源整合站 | 探索无限可能</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- 全局变量与重置 --- */
         :root {
             --mc-green: #4CAF50;
             --mc-dark-green: #2E7D32;
@@ -15,55 +14,159 @@
             --text-main: #ffffff;
             --text-sub: #b0b0b0;
             --accent: #3498db;
+            --nav-scroll-bg: #0a0a0a; /* 滚动后导航栏背景 */
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        
-        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; font-size: 16px; }
-        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            scroll-behavior: smooth; /* 全局平滑滚动 */
+        }
+
+        /* 修复固定导航遮挡锚点问题 */
+        html {
+            scroll-padding-top: 70px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: 0.3s;
+        }
+
         ul { list-style: none; }
         img { max-width: 100%; display: block; }
 
         /* --- 导航栏 --- */
         nav {
-            position: fixed; top: 0; width: 100%;
-            background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(10px);
-            padding: 0.8rem 5%; display: flex; justify-content: space-between; align-items: center;
-            z-index: 1000; border-bottom: 1px solid #333;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-bottom: 1px solid #333;
+            transition: background 0.3s ease;
         }
-        .logo { font-size: 1.3rem; font-weight: bold; color: var(--mc-green); letter-spacing: 1px; }
-        .nav-links { display: flex; gap: 2rem; }
-        .nav-links a:hover { color: var(--mc-green); }
+
+        /* 滚动后导航栏样式 */
+        nav.scrolled {
+            background: var(--nav-scroll-bg);
+            border-bottom: 1px solid var(--mc-green);
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--mc-green);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 桌面导航 */
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--mc-green);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--mc-green);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* 汉堡按钮 */
+        .hamburger {
+            display: none;
+            font-size: 1.6rem;
+            color: #fff;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .hamburger:hover {
+            color: var(--mc-green);
+        }
 
         /* --- Hero 区域 --- */
         header {
-            height: 70vh; min-height: 400px;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1607513168406-034571a15d22?q=80&w=1920&auto=format&fit=crop'); 
-            background-size: cover; background-position: center;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            text-align: center; padding: 0 1.5rem;
+            height: 70vh;
+            min-height: 450px;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1607513168406-034571a15d22?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 1.5rem;
         }
-        header h1 { 
-            font-size: clamp(2rem, 5vw, 3.5rem); 
-            margin-bottom: 1rem; text-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-        }
-        header p { font-size: clamp(0.9rem, 2vw, 1.2rem); color: #ddd; max-width: 600px; margin-bottom: 2rem; }
-        
-        .btn {
-            padding: 10px 25px; background-color: var(--mc-green); color: white;
-            border-radius: 5px; font-weight: bold; font-size: 1rem; border: 2px solid var(--mc-green);
-        }
-        .btn:hover { background-color: transparent; color: var(--mc-green); }
 
-        /* 🔍 优化的搜索框样式 */
+        .hero-inner {
+            margin-top: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        header p {
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            color: #ddd;
+            max-width: 600px;
+        }
+
+        /* 搜索框 */
         .hero-search {
             display: flex;
             gap: 10px;
-            margin-top: 1rem;
             max-width: 550px;
             width: 100%;
             padding: 0 10px;
         }
+
         .hero-search input {
             flex: 1;
             padding: 12px 16px;
@@ -74,10 +177,14 @@
             background: #2a2a2a;
             color: #fff;
             border: 1px solid #444;
+            transition: border-color 0.3s;
         }
+
         .hero-search input:focus {
             border-color: var(--mc-green);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
         }
+
         .hero-search button {
             padding: 12px 20px;
             background: var(--mc-green);
@@ -88,127 +195,342 @@
             cursor: pointer;
             transition: 0.3s;
         }
+
         .hero-search button:hover {
             background: var(--mc-dark-green);
+            transform: translateY(-2px);
+        }
+
+        /* 按钮通用样式 */
+        .btn {
+            padding: 10px 25px;
+            background-color: var(--mc-green);
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1rem;
+            border: 2px solid var(--mc-green);
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background-color: transparent;
+            color: var(--mc-green);
+            transform: translateY(-2px);
         }
 
         /* --- 通用 Section 样式 --- */
-        section { padding: 4rem 8%; }
-        .section-title { 
-            text-align: center; font-size: clamp(1.8rem, 4vw, 2.5rem); 
-            margin-bottom: 2.5rem; position: relative; 
+        section {
+            padding: 5rem 8%;
         }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
         .section-title::after {
-            content: ''; display: block; width: 50px; height: 3px;
-            background: var(--mc-green); margin: 8px auto 0; border-radius: 2px;
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: var(--mc-green);
+            margin: 8px auto 0;
+            border-radius: 2px;
         }
 
         /* --- 介绍板块 --- */
-        .intro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .feature-card {
-            background: var(--card-bg); padding: 1.5rem; border-radius: 10px;
-            text-align: center; transition: transform 0.3s; border: 1px solid #333;
+        .intro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
         }
-        .feature-card:hover { transform: translateY(-5px); border-color: var(--mc-green); }
-        .feature-card i { font-size: 2.5rem; color: var(--mc-green); margin-bottom: 0.8rem; }
-        .feature-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
-        .feature-card p { font-size: 0.9rem; color: var(--text-sub); }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 2rem 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+            border: 1px solid #333;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--mc-green);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.1);
+        }
+
+        .feature-card i {
+            font-size: 2.8rem;
+            color: var(--mc-green);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+        }
 
         /* --- 资源/加载器卡片网格 --- */
-        .resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
-        
-        .res-card {
-            background: var(--card-bg); border-radius: 12px; overflow: hidden;
-            border: 1px solid #333; display: flex; flex-direction: column;
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
         }
-        
+
+        .res-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, border-color 0.3s;
+            height: 100%;
+        }
+
+        .res-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--mc-green);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
         .res-img {
-            height: 160px; background-color: #2a2a2a;
-            display: flex; align-items: center; justify-content: center;
+            height: 180px;
+            background-color: #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
         }
-        .res-img img { width: 100%; height: 100%; object-fit: contain; padding: 20px; }
-        .res-img.cover img { object-fit: cover; padding: 0; }
 
-        .res-content { padding: 1.2rem; flex-grow: 1; display: flex; flex-direction: column; }
-        
-        .tag {
-            display: inline-block; padding: 3px 8px; font-size: 0.75rem;
-            border-radius: 4px; margin-bottom: 0.5rem; width: fit-content; font-weight: bold;
+        .res-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 20px;
+            transition: transform 0.3s;
         }
+
+        .res-card:hover .res-img img {
+            transform: scale(1.05);
+        }
+
+        .res-img.cover img {
+            object-fit: cover;
+            padding: 0;
+        }
+
+        .res-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 0.8rem;
+            width: fit-content;
+            font-weight: bold;
+        }
+
         .tag-mod { background: #e67e22; color: white; }
         .tag-shader { background: #9b59b6; color: white; }
         .tag-tool { background: #3498db; color: white; }
         .tag-loader { background: #e74c3c; color: white; }
 
-        .res-title { font-size: 1.1rem; margin-bottom: 0.4rem; }
-        .res-desc { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 1rem; flex-grow: 1; line-height: 1.5; }
-        
-        .download-btn {
-            display: block; text-align: center; background: #333; padding: 8px;
-            border-radius: 5px; color: white; font-size: 0.85rem; margin-top: auto;
+        .res-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.6rem;
         }
-        .download-btn:hover { background: var(--mc-green); }
+
+        .res-desc {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 1.2rem;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .download-btn {
+            display: block;
+            text-align: center;
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.9rem;
+            margin-top: auto;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background-color: var(--mc-green);
+            transform: translateY(-2px);
+        }
 
         /* --- Footer --- */
         footer {
-            background: #0a0a0a; padding: 2rem 5%; text-align: center;
-            color: var(--text-sub); border-top: 1px solid #333; font-size: 0.8rem;
+            background: #0a0a0a;
+            padding: 2.5rem 5%;
+            text-align: center;
+            color: var(--text-sub);
+            border-top: 1px solid #333;
+            font-size: 0.9rem;
         }
 
-        /* --- 移动端优化 --- */
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* --- 回到顶部按钮 --- */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 45px;
+            height: 45px;
+            background: var(--mc-green);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .back-to-top.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .back-to-top:hover {
+            background: var(--mc-dark-green);
+            transform: translateY(-3px);
+        }
+
+        /* ========== 平板端适配 ========== */
+        @media (max-width: 1024px) {
+            section { padding: 4rem 5%; }
+            .resource-grid { gap: 1.5rem; }
+        }
+
+        /* ========== 移动端适配 ========== */
         @media (max-width: 768px) {
             nav { padding: 0.6rem 4%; }
             .logo { font-size: 1.1rem; }
-            .nav-links { display: none; }
-            
-            header { height: 60vh; min-height: 350px; }
-            
-            section { padding: 2.5rem 4%; }
-            .section-title { margin-bottom: 1.5rem; }
-            
-            .intro-grid, .resource-grid { grid-template-columns: 1fr; gap: 1rem; }
-            
-            .feature-card { padding: 1.2rem; }
-            .feature-card i { font-size: 2rem; }
-            
-            .res-img { height: 140px; }
-            .res-content { padding: 1rem; }
-            .res-title { font-size: 1rem; }
-            .res-desc { font-size: 0.8rem; }
+            .hamburger { display: block; }
+
+            /* 修复菜单动画BUG */
+            .nav-links {
+                position: absolute;
+                top: 100%;
+                right: 5%;
+                width: auto;
+                min-width: 160px;
+                max-width: 220px;
+                background: rgba(18,18,18,0.98);
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 1rem 0;
+                flex-direction: column;
+                /* 动画核心 */
+                opacity: 0;
+                transform: translateY(-10px);
+                pointer-events: none;
+                transition: all 0.3s ease;
+            }
+
+            .nav-links.active {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+
+            .nav-links li {
+                text-align: center;
+                margin: 0.6rem 0;
+            }
+
+            .nav-links a {
+                font-size: 0.95rem;
+                display: block;
+                padding: 0.5rem 0;
+            }
+
+            header {
+                height: 60vh;
+                min-height: 400px;
+            }
+
+            .hero-inner { margin-top: 2rem; }
 
             .hero-search {
                 flex-direction: column;
                 gap: 8px;
             }
+
+            section { padding: 3rem 4%; }
+            .section-title { margin-bottom: 2rem; }
+
+            .intro-grid, .resource-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .res-img { height: 160px; }
+            .res-content { padding: 1.2rem; }
         }
     </style>
 </head>
 <body>
 
+    <!-- 导航栏（已添加全部资源按钮） -->
     <nav>
         <div class="logo"><i class="fa-solid fa-cube"></i> MC-JE HUB</div>
-        <ul class="nav-links">
+        <button class="hamburger" id="menuBtn"><i class="fa-solid fa-bars"></i></button>
+        <ul class="nav-links" id="navMenu">
             <li><a href="#home">首页</a></li>
+            <li><a href="all.html">全部资源</a></li>
             <li><a href="#about">关于 JE</a></li>
             <li><a href="#loaders">模组加载器</a></li>
             <li><a href="#resources">资源下载</a></li>
         </ul>
     </nav>
 
+    <!-- 首页横幅 -->
     <header id="home">
-        <h1>Minecraft Java Edition</h1>
-        <p>通往方块世界深处的入口。获取最新模组、光影、材质包及游戏指南。</p>
-        
-        <!-- 🔍 优化后的可用搜索框 -->
-        <div class="hero-search">
-            <input type="text" id="heroSearchInput" placeholder="输入模组名称，直达搜索结果..." autocomplete="off">
-            <button id="heroSearchBtn"><i class="fa-solid fa-magnifying-glass"></i> 搜索模组</button>
-        </div>
+        <div class="hero-inner">
+            <h1>Minecraft Java Edition</h1>
+            <p>通往方块世界深处的入口。获取最新模组、光影、材质包及游戏指南。</p>
+            
+            <div class="hero-search">
+                <input type="text" id="heroSearchInput" placeholder="输入模组名称，直达搜索结果..." autocomplete="off">
+                <button id="heroSearchBtn"><i class="fa-solid fa-magnifying-glass"></i> 搜索模组</button>
+            </div>
 
-        <a href="#resources" class="btn">开始探索</a>
+            <a href="#resources" class="btn">开始探索</a>
+        </div>
     </header>
 
+    <!-- 关于JE -->
     <section id="about">
         <h2 class="section-title">为什么选择 Java 版？</h2>
         <div class="intro-grid">
@@ -230,15 +552,16 @@
         </div>
     </section>
 
+    <!-- 模组加载器 -->
     <section id="loaders" style="background-color: #181818;">
         <h2 class="section-title">核心前置：模组加载器</h2>
-        <p style="text-align: center; margin-bottom: 2rem; color: var(--text-sub); font-size: 0.9rem;">
+        <p style="text-align: center; margin-bottom: 2rem; color: var(--text-sub); font-size: 0.95rem;">
             在安装 Mod 前，你需要了解目前主流的三大加载器
         </p>
         <div class="resource-grid">
             <div class="res-card">
                 <div class="res-img">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/forge/forge-original.svg" alt="Forge Logo" style="filter: invert(1); opacity: 0.9;">
+                    <img src="https://files.minecraftforge.net/net/minecraftforge/forge/img/forge.png" alt="Forge Logo" loading="lazy">
                 </div>
                 <div class="res-content">
                     <span class="tag tag-loader">老牌稳定</span>
@@ -249,7 +572,7 @@
             </div>
             <div class="res-card">
                 <div class="res-img">
-                    <img src="https://fabricmc.net/assets/logo.png" alt="Fabric Logo">
+                    <img src="https://fabricmc.net/assets/logo.png" alt="Fabric Logo" loading="lazy">
                 </div>
                 <div class="res-content">
                     <span class="tag tag-loader">轻量极速</span>
@@ -260,7 +583,7 @@
             </div>
             <div class="res-card">
                 <div class="res-img">
-                    <img src="https://neoforged.net/img/authors/neoforged.png" alt="NeoForge Logo">
+                    <img src="https://neoforged.net/img/authors/neoforged.png" alt="NeoForge Logo" loading="lazy">
                 </div>
                 <div class="res-content">
                     <span class="tag tag-loader">后起之秀</span>
@@ -272,12 +595,13 @@
         </div>
     </section>
 
+    <!-- 精选资源 -->
     <section id="resources">
         <h2 class="section-title">精选资源推荐</h2>
         <div class="resource-grid">
             <div class="res-card">
                 <div class="res-img">
-                    <img src="https://cdn.modrinth.com/data/AANobbMI/icon.png" alt="Sodium">
+                    <img src="https://cdn.modrinth.com/data/AANobbMI/icon.png" alt="Sodium" loading="lazy">
                 </div>
                 <div class="res-content">
                     <span class="tag tag-mod">Fabric / 优化</span>
@@ -288,7 +612,7 @@
             </div>
             <div class="res-card">
                 <div class="res-img">
-                    <img src="https://cdn.modrinth.com/data/YL57xq9U/icon.png" alt="Iris">
+                    <img src="https://cdn.modrinth.com/data/YL57xq9U/icon.png" alt="Iris" loading="lazy">
                 </div>
                 <div class="res-content">
                     <span class="tag tag-shader">Fabric / 光影</span>
@@ -299,7 +623,7 @@
             </div>
             <div class="res-card">
                 <div class="res-img">
-                    <img src="https://cdn.modrinth.com/data/u6dRKJwZ/icon.png" alt="JEI">
+                    <img src="https://cdn.modrinth.com/data/u6dRKJwZ/icon.png" alt="JEI" loading="lazy">
                 </div>
                 <div class="res-content">
                     <span class="tag tag-mod">全平台 / 辅助</span>
@@ -310,13 +634,13 @@
             </div>
             <div class="res-card">
                 <div class="res-img">
-                    <img src="https://cdn.modrinth.com/data/LNytGWDc/icon.png" alt="Create">
+                    <img src="https://cdn.modrinth.com/data/LNytGWDc/icon.png" alt="Create" loading="lazy">
                 </div>
                 <div class="res-content">
                     <span class="tag tag-mod">全平台 / 科技</span>
                     <h3 class="res-title">Create 机械动力</h3>
                     <p class="res-desc">基于旋转动能的蒸汽朋克风格科技模组，视觉效果极其震撼。</p>
-                    <a href="https://www.curseforge.com/minecraft/mc-mods/create" target="_blank" class="download-btn"><i class="fa-solid fa-download"></i> CurseForge</a>
+                    <a href="https://curseforge.com/minecraft/mc-mods/create" target="_blank" class="download-btn"><i class="fa-solid fa-download"></i> CurseForge</a>
                 </div>
             </div>
             <div class="res-card">
@@ -338,23 +662,29 @@
                     <span class="tag tag-shader">光影文件</span>
                     <h3 class="res-title">BSL Shaders</h3>
                     <p class="res-desc">画面唯美，性能适中，自带雾效和色调调节，最受欢迎的老牌光影。</p>
-                    <a href="https://www.curseforge.com/minecraft/shaders/bsl-shaders" target="_blank" class="download-btn"><i class="fa-solid fa-download"></i> CurseForge</a>
+                    <a href="https://curseforge.com/minecraft/shaders/bsl-shaders" target="_blank" class="download-btn"><i class="fa-solid fa-download"></i> CurseForge</a>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- 页脚 -->
     <footer>
         <p>&copy; 2026 MC-JE HUB. Not affiliated with Mojang or Microsoft.</p>
-        <p style="margin-top: 8px; opacity: 0.5;">Made for Minecraft Players</p>
+        <p>Made for Minecraft Players</p>
     </footer>
+
+    <!-- 回到顶部按钮 -->
+    <div class="back-to-top" id="backToTop">
+        <i class="fa-solid fa-arrow-up"></i>
+    </div>
 
     <script>
         // 搜索功能
-        const SEARCH_PAGE_URL = './search.html'; 
+        const SEARCH_PAGE_URL = './search.html';
         const heroInput = document.getElementById('heroSearchInput');
         const heroBtn = document.getElementById('heroSearchBtn');
-        
+
         function jumpToSearch() {
             const query = heroInput.value.trim();
             if (!query) {
@@ -363,19 +693,57 @@
             }
             window.location.href = `${SEARCH_PAGE_URL}?q=${encodeURIComponent(query)}`;
         }
-        
+
         heroBtn.addEventListener('click', jumpToSearch);
         heroInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') jumpToSearch();
         });
 
-        // 平滑滚动
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) target.scrollIntoView({ behavior: 'smooth' });
+        // 导航栏滚动效果
+        const nav = document.querySelector('nav');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // 移动端菜单
+        const menuBtn = document.getElementById('menuBtn');
+        const navMenu = document.getElementById('navMenu');
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navMenu.classList.toggle('active');
+        });
+
+        // 点击菜单链接关闭菜单
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
             });
+        });
+
+        // 点击空白处关闭菜单
+        document.addEventListener('click', (e) => {
+            if (!menuBtn.contains(e.target) && !navMenu.contains(e.target)) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // 回到顶部功能
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('show');
+            } else {
+                backToTop.classList.remove('show');
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     </script>
 </body>
