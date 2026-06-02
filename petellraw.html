@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>MC基岩版 titleraw 指令生成器</title>
+    <style>
+        * {box-sizing: border-box;margin:0;padding:0;font-family:system-ui,Microsoft Yahei}
+        body{background:#f5f7fa;padding:20px;max-width:1200px;margin:0 auto}
+        .wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+        .card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 12px #00000012}
+        h2{margin-bottom:16px;color:#222;border-left:4px solid #409eff;padding-left:8px}
+        .item{margin-bottom:14px}
+        label{display:block;margin-bottom:6px;font-weight:500;color:#333}
+        input,select,textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px}
+        textarea{min-height:100px;resize:vertical;font-family:Consolas}
+        .btn-group{display:flex;gap:10px;margin-top:15px}
+        button{padding:9px 16px;border:none;border-radius:6px;cursor:pointer;font-size:14px}
+        #gen{background:#409eff;color:#fff}
+        #copy{background:#67c23a;color:#fff}
+        .color-box{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:8px 0}
+        .color-box span{height:28px;border:1px solid #ccc;cursor:pointer;font-size:12px;text-align:center;line-height:28px;color:#fff}
+        .format-box{display:flex;gap:6px;margin:8px 0}
+        .format-box span{padding:4px 8px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#f8f8f8}
+        .tip{font-size:12px;color:#888;margin-top:4px}
+    </style>
+</head>
+<body>
+    <h1 style="margin-bottom:20px;text-align:center">MC基岩版 titleraw 可视化生成器</h1>
+    <div class="wrap">
+        <!-- 左侧配置面板 -->
+        <div class="card">
+            <h2>参数配置</h2>
+            <div class="item">
+                <label>目标选择器</label>
+                <select id="selector">
+                    <option value="@a">@a 全部玩家</option>
+                    <option value="@s">@s 执行自身</option>
+                    <option value="@p">@p 最近玩家</option>
+                    <option value="玩家名">自定义玩家名</option>
+                </select>
+                <input id="customSel" placeholder="自定义玩家/选择器" style="margin-top:6px;display:none">
+            </div>
+            <div class="item">
+                <label>显示位置</label>
+                <select id="pos">
+                    <option value="title">title 屏幕大标题</option>
+                    <option value="subtitle">subtitle 副标题</option>
+                    <option value="actionbar">actionbar 物品栏上方状态栏</option>
+                </select>
+            </div>
+
+            <div class="item">
+                <label>内容类型</label>
+                <select id="type">
+                    <option value="text">普通文本 text</option>
+                    <option value="score">计分板 score</option>
+                    <option value="selector">实体选择器 selector</option>
+                </select>
+            </div>
+
+            <div class="item" id="textCfg">
+                <label>输入文本内容（\n换行）</label>
+                <input id="txtVal" placeholder="示例：§6欢迎来到服务器">
+                <div class="tip">下方点击颜色/格式自动插入§代码</div>
+                <div class="color-box" id="colorList"></div>
+                <div class="format-box" id="formatList"></div>
+            </div>
+
+            <div class="item" id="scoreCfg" style="display:none">
+                <label>计分板目标</label>
+                <input id="scoreObj" placeholder="计分板名称 例：金币">
+                <label style="margin-top:8px">计分板玩家</label>
+                <input id="scoreName" placeholder="@s / 玩家名" value="@s">
+            </div>
+
+            <div class="item" id="selCfg" style="display:none">
+                <label>实体选择器</label>
+                <input id="selStr" placeholder="@e[r=10,type=!player]">
+            </div>
+
+            <div class="btn-group">
+                <button id="gen">一键生成指令</button>
+                <button id="copy">复制指令</button>
+            </div>
+        </div>
+
+        <!-- 右侧结果 -->
+        <div class="card">
+            <h2>生成指令结果</h2>
+            <textarea id="result" readonly placeholder="生成后的titleraw指令在此..."></textarea>
+            <div style="margin-top:15px">
+                <h3>常用快捷指令</h3>
+                <p style="margin:6px 0;font-family:Consolas">titleraw @a clear &nbsp;&nbsp;//清空标题</p>
+                <p style="margin:6px 0;font-family:Consolas">titleraw @a reset &nbsp;//重置标题时间</p>
+                <p style="margin:6px 0;font-family:Consolas">titleraw @a times 10 70 20 &nbsp;//淡入 停留 淡出(游戏刻)</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+//颜色配置
+const colorArr = [
+    {c:"§0",n:"黑"},{c:"§1",n:"深蓝"},{c:"§2",n:"深绿"},{c:"§3",n:"天蓝"},
+    {c:"§4",n:"红"},{c:"§5",n:"深紫"},{c:"§6",n:"金黄"},{c:"§7",n:"浅灰"},
+    {c:"§8",n:"深灰"},{c:"§9",n:"淡紫"},{c:"§a",n:"浅绿"},{c:"§b",n:"淡蓝"},
+    {c:"§c",n:"橙红"},{c:"§d",n:"粉紫"},{c:"§e",n:"淡黄"},{c:"§f",n:"白"}
+]
+const formatArr = [
+    {c:"§l",n:"加粗"},{c:"§m",n:"斜体"},{c:"§n",n:"下划线"}
+]
+//渲染颜色按钮
+const colorWrap = document.getElementById('colorList')
+colorArr.forEach(item=>{
+    let sp = document.createElement('span')
+    sp.textContent = item.n
+    sp.style.background = item.c.replace('§','')
+    sp.dataset.code = item.c
+    sp.onclick=()=>insertCode(item.c)
+    colorWrap.appendChild(sp)
+})
+//渲染格式按钮
+const fmtWrap = document.getElementById('formatList')
+formatArr.forEach(item=>{
+    let sp = document.createElement('span')
+    sp.textContent = item.n
+    sp.dataset.code = item.c
+    sp.onclick=()=>insertCode(item.c)
+    fmtWrap.appendChild(sp)
+})
+//插入格式码到输入框
+function insertCode(code){
+    const inp = document.getElementById('txtVal')
+    let start = inp.selectionStart
+    let end = inp.selectionEnd
+    let val = inp.value
+    inp.value = val.slice(0,start)+code+val.slice(end)
+    inp.focus()
+    inp.selectionStart = inp.selectionEnd = start+code.length
+}
+
+//切换内容类型
+const typeSel = document.getElementById('type')
+const textCfg = document.getElementById('textCfg')
+const scoreCfg = document.getElementById('scoreCfg')
+const selCfg = document.getElementById('selCfg')
+typeSel.onchange = function(){
+    let v = this.value
+    textCfg.style.display = v=='text'?'block':'none'
+    scoreCfg.style.display = v=='score'?'block':'none'
+    selCfg.style.display = v=='selector'?'block':'none'
+}
+
+//自定义选择器显示
+const selMain = document.getElementById('selector')
+const selCustom = document.getElementById('customSel')
+selMain.onchange=()=>{
+    selCustom.style.display = selMain.value=='玩家名'?'block':'none'
+}
+
+//生成指令
+document.getElementById('gen').onclick = function(){
+    let tar = selMain.value==='玩家名'?selCustom.value:selMain.value
+    let pos = document.getElementById('pos').value
+    let t = document.getElementById('type').value
+    let rawItem
+    if(t==='text'){
+        let txt = document.getElementById('txtVal').value
+        rawItem = `{"text":"${txt.replace(/"/g,'\\"')}"}`
+    }else if(t==='score'){
+        let obj = document.getElementById('scoreObj').value
+        let name = document.getElementById('scoreName').value
+        rawItem = `{"score":{"name":"${name}","objective":"${obj}"}}`
+    }else{
+        let sel = document.getElementById('selStr').value
+        rawItem = `{"selector":"${sel}"}`
+    }
+    let cmd = `titleraw ${tar} ${pos} {"rawtext":[${rawItem}]}`
+    document.getElementById('result').value = cmd
+}
+
+//复制
+document.getElementById('copy').onclick = function(){
+    let res = document.getElementById('result')
+    res.select()
+    document.execCommand('copy')
+    alert('指令已复制到剪贴板！')
+}
+</script>
+</body>
+</html>
