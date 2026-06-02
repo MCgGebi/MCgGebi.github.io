@@ -2,10 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>MC基岩版 titleraw 指令生成器</title>
+    <title>MC基岩版 titleraw全能生成器</title>
     <style>
         * {box-sizing: border-box;margin:0;padding:0;font-family:system-ui,Microsoft Yahei}
         body{background:#f5f7fa;padding:20px;max-width:1200px;margin:0 auto}
+        .top-bar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:12px}
+        .top-bar button{padding:6px 10px;border:none;border-radius:5px;cursor:pointer;color:#fff;font-size:13px}
+        .doc-btn{background:#0078d4}
+        .md-btn{background:#00994c}
         .wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px}
         .card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 12px #00000012}
         h2{margin-bottom:16px;color:#222;border-left:4px solid #409eff;padding-left:8px}
@@ -13,11 +17,15 @@
         label{display:block;margin-bottom:6px;font-weight:500;color:#333}
         input,select,textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px}
         textarea{min-height:100px;resize:vertical;font-family:Consolas}
-        .btn-group{display:flex;gap:10px;margin-top:15px}
-        button{padding:9px 16px;border:none;border-radius:6px;cursor:pointer;font-size:14px}
-        #gen{background:#409eff;color:#fff}
-        #copy{background:#67c23a;color:#fff}
-        #addPart{background:#e6a23c;color:#fff}
+        .btn-group{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
+        button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;font-size:13px;color:#fff}
+        #gen{background:#409eff}
+        #copy{background:#67c23a}
+        #addPart{background:#e6a23c}
+        #clearAllPart{background:#f56c6c}
+        #clearInput{background:#909399}
+        #clearResult{background:#722ed1}
+        #clearPreview{background:#dd5588;}
         .color-box{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:8px 0}
         .color-box span{height:28px;border:1px solid #ccc;cursor:pointer;font-size:12px;text-align:center;line-height:28px;font-weight:bold}
         .format-box{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
@@ -26,12 +34,62 @@
         .part-list{border:1px solid #eee;padding:10px;border-radius:6px;margin:10px 0;max-height:180px;overflow:auto}
         .part-item{padding:5px 8px;background:#f0f7ff;border-radius:4px;margin:4px 0;display:flex;justify-content:space-between}
         .del-part{color:#f56c6c;cursor:pointer;padding:0 6px}
+        .preview-box{
+            margin-top:10px;
+            background:#222;
+            color:#fff;
+            padding:12px;
+            min-height:60px;
+            border-radius:6px;
+            white-space:pre-wrap;
+            font-family: "Microsoft Yahei",sans-serif;
+        }
+        .game-preview{
+            margin-top:12px;
+            background:#272727;
+            border-radius:8px;
+            height:260px;
+            position:relative;
+            overflow:hidden;
+            border:2px solid #444;
+            font-family:system-ui,"SimHei",sans-serif;
+        }
+        .game-title{
+            position:absolute;
+            top:25%;
+            left:0;width:100%;text-align:center;
+            font-size:42px;color:#fff;white-space:pre-wrap;letter-spacing:1px;
+        }
+        .game-subtitle{
+            position:absolute;
+            top:42%;left:0;width:100%;text-align:center;
+            font-size:20px;color:#ddd;white-space:pre-wrap;
+        }
+        .game-actionbar{
+            position:absolute;
+            bottom:62px;left:0;width:100%;text-align:center;
+            font-size:15px;color:#fff;white-space:pre-wrap;
+        }
+        .hotbar-bg{
+            position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+            width:300px;height:34px;background:#555;border:2px solid #999;border-radius:4px;
+        }
+        .preview-title{margin-bottom:8px;font-weight:500}
+        .with-wrap{border:1px solid #e1e1e1;padding:10px;border-radius:6px;margin:8px 0}
+        .with-item-list{max-height:130px;overflow:auto;border:1px solid #eee;padding:6px;margin:6px 0}
+        .with-item{padding:4px 6px;background:#f7fbff;margin:3px 0;display:flex;justify-content:space-between}
+        .with-del{color:red;cursor:pointer}
+        .var-box{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+        .var-box span{padding:3px 6px;background:#eef5ff;border-radius:3px;cursor:pointer;font-size:12px}
     </style>
 </head>
 <body>
-    <h1 style="margin-bottom:20px;text-align:center">MC基岩版 titleraw 可视化生成器</h1>
+    <div class="top-bar">
+        <button class="doc-btn" id="openDoc">打开官方RAWJSON文档</button>
+        <button class="md-btn" id="downloadMd">下载完整使用教程.md</button>
+    </div>
+    <h1 style="margin-bottom:20px;text-align:center">MC基岩版 titleraw全能生成器</h1>
     <div class="wrap">
-        <!-- 左侧配置面板 -->
         <div class="card">
             <h2>参数配置</h2>
             <div class="item">
@@ -40,237 +98,475 @@
                     <option value="@a">@a 全部玩家</option>
                     <option value="@s">@s 执行自身</option>
                     <option value="@p">@p 最近玩家</option>
-                    <option value="玩家名">自定义玩家名</option>
+                    <option value="custom">自定义玩家/选择器</option>
                 </select>
-                <input id="customSel" placeholder="自定义玩家/选择器" style="margin-top:6px;display:none">
+                <input id="customSel" placeholder="自定义名称/选择器" style="margin-top:6px;display:none">
             </div>
             <div class="item">
                 <label>显示位置</label>
                 <select id="pos">
-                    <option value="title">title 屏幕大标题</option>
+                    <option value="title">title 大标题</option>
                     <option value="subtitle">subtitle 副标题</option>
-                    <option value="actionbar">actionbar 物品栏上方状态栏</option>
+                    <option value="actionbar">actionbar 物品栏上方</option>
                 </select>
             </div>
-
             <div class="item">
                 <label>内容类型</label>
                 <select id="type">
                     <option value="text">普通文本 text</option>
                     <option value="score">计分板 score</option>
                     <option value="selector">实体选择器 selector</option>
+                    <option value="translate_origin">原版标准本地化（key物品/系统）</option>
+                    <option value="translate_cond">%%条件本地化（分支判断专用）</option>
                 </select>
             </div>
 
             <div class="item" id="textCfg">
-                <label>输入文本内容（\n换行）</label>
-                <input id="txtVal" placeholder="示例：§6欢迎来到服务器">
-                <div class="tip">下方点击颜色/格式自动插入§代码，色块文字即为实际颜色预览</div>
+                <label>输入文本（换行请手动输入 \n 符号，不能直接回车）</label>
+                <div style="display:flex;gap:6px">
+                    <input id="txtVal" placeholder="§6第一行\n第二行">
+                    <button id="clearInput">清空</button>
+                </div>
+                <div class="tip">示例：§a第一行\n第二行，预览和游戏都会自动换行</div>
                 <div class="color-box" id="colorList"></div>
                 <div class="format-box" id="formatList"></div>
+                <label style="margin-top:8px">单段预览：</label>
+                <div class="preview-box" id="preview">输入：文字\n换行 测试</div>
             </div>
 
             <div class="item" id="scoreCfg" style="display:none">
-                <label>计分板目标</label>
-                <input id="scoreObj" placeholder="计分板名称 例：金币">
-                <label style="margin-top:8px">计分板玩家</label>
-                <input id="scoreName" placeholder="@s / 玩家名" value="@s">
+                <label>计分板目标名</label>
+                <input id="scoreObj" placeholder="金币">
+                <label style="margin-top:6px">玩家名/选择器(*=查看者)</label>
+                <input id="scoreName" value="@s" placeholder="@s / *">
             </div>
 
             <div class="item" id="selCfg" style="display:none">
                 <label>实体选择器</label>
-                <input id="selStr" placeholder="@e[r=10,type=!player]">
+                <input id="selStr" placeholder="@e[type=cow,r=5]">
+            </div>
+
+            <!-- 原版标准本地化面板 -->
+            <div class="item" id="transOriginCfg" style="display:none">
+                <label>原版本地化Key（如item.apple.name）</label>
+                <input id="originKey" placeholder="item.diamond.name">
+                <label style="margin-top:6px">With参数（多个英文逗号分隔，无则空）</label>
+                <input id="originWith" placeholder="参数1,参数2">
+                <div class="tip">原版key自动跟随系统中英文切换，不带%%</div>
+            </div>
+
+            <!-- %%条件本地化面板（5类with组件+%%） -->
+            <div class="item" id="transCondCfg" style="display:none">
+                <label>条件文案(支持%%1 %%2占位，\n换行)</label>
+                <input id="condKey" placeholder="达标%%1\n不足%%2">
+                <div class="var-box" id="varBtnBox">
+                    <span data-v="%%1">%%1</span><span data-v="%%2">%%2</span><span data-v="%%3">%%3</span>
+                    <span data-v="%%4">%%4</span><span data-v="%%5">%%5</span><span data-v="%%6">%%6</span>
+                    <span data-v="%%7">%%7</span><span data-v="%%8">%%8</span><span data-v="%%9">%%9</span>
+                </div>
+                <div class="with-wrap">
+                    <label>With参数【5种组件全支持】｜分隔符：|拆分字段</label>
+                    <div style="display:flex;gap:5px;margin:6px 0;flex-wrap:wrap">
+                        <select id="withAddType">
+                            <option value="text">①普通文本</option>
+                            <option value="score">②纯计分板</option>
+                            <option value="selector">③实体选择器</option>
+                            <option value="textscore">④带计分文本(条件核心)</option>
+                            <option value="nesttrans">⑤嵌套Translate</option>
+                        </select>
+                        <input id="withAddVal" placeholder="格式看下方提示">
+                        <button id="addWithItem" style="background:#1890ff">添加</button>
+                    </div>
+                    <div class="tip">
+                        ④带计分文本：文字|玩家|计分 → §a充足|@s|金币<br>
+                        ⑤嵌套Translate：key|参数1,参数2
+                    </div>
+                    <div class="with-item-list" id="withList">
+                        <div class="tip">列表顺序=%%1、%%2、%%3...，用来做多条件分支</div>
+                    </div>
+                </div>
             </div>
 
             <div class="item">
-                <button id="addPart">添加本段到RawText列表</button>
-                <div class="tip">支持多段拼接，一段文本/计分/选择器为一项</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button id="addPart">添加本段到RawText</button>
+                    <button id="clearAllPart">清空全部片段</button>
+                </div>
+                <div class="tip">多段自由拼接：文字+计分+选择器+原版本地化+%%条件本地化</div>
                 <div class="part-list" id="partList"></div>
             </div>
 
             <div class="btn-group">
-                <button id="gen">一键生成指令</button>
+                <button id="gen">生成指令</button>
                 <button id="copy">复制指令</button>
+                <button id="clearResult">清空结果</button>
+                <button id="clearPreview">清除画面预览</button>
             </div>
         </div>
 
-        <!-- 右侧结果 -->
         <div class="card">
-            <h2>生成指令结果</h2>
-            <textarea id="result" readonly placeholder="生成后的titleraw指令在此..."></textarea>
+            <h2>生成指令</h2>
+            <textarea id="result" readonly placeholder="生成titleraw指令..."></textarea>
             <div style="margin-top:15px">
-                <h3>常用快捷指令</h3>
-                <p style="margin:6px 0;font-family:Consolas">titleraw @a clear &nbsp;&nbsp;//清空标题</p>
-                <p style="margin:6px 0;font-family:Consolas">titleraw @a reset &nbsp;//重置标题时间</p>
-                <p style="margin:6px 0;font-family:Consolas">titleraw @a times 10 70 20 &nbsp;//淡入 停留 淡出(游戏刻)</p>
+                <h3>快捷指令</h3>
+                <p style="margin:6px 0;font-family:Consolas">titleraw @a clear &nbsp;&nbsp;//清标题</p>
+                <p style="margin:6px 0;font-family:Consolas">titleraw @a reset &nbsp;//重置时间</p>
+                <p style="margin:6px 0;font-family:Consolas">titleraw @a times 10 70 20</p>
+            </div>
+            <div class="preview-title">游戏画面模拟预览（\n自动换行）</div>
+            <div class="game-preview">
+                <div class="game-title" id="preTitle"></div>
+                <div class="game-subtitle" id="preSub"></div>
+                <div class="game-actionbar" id="preAction"></div>
+                <div class="hotbar-bg"></div>
             </div>
         </div>
     </div>
 
 <script>
-//颜色配置 MC原版全部颜色码 + 对应css色值用来预览文字颜色
+// ================= MD教程全文内容 =================
+const MD_CONTENT = `# MC基岩版 titleraw & rawtext %%条件本地化完整教程
+> 配套生成器使用文档｜适配基岩1.21全版本｜微软官方参考：https://learn.microsoft.com/en-us/minecraft/creator/reference/content/rawmessagejson
+
+## 一、类型区分（生成器5大组件）
+### 1.普通文本 text
+固定彩色文字，支持§颜色代码、\\n换行，永远正常显示
+JSON格式：{"text":"§6测试文字\\n第二行"}
+
+### 2.纯计分板 score
+只展示数字，无自定义文字；格式：玩家|计分名
+JSON：{"score":{"name":"@s","objective":"金币"}}
+
+### 3.实体选择器 selector
+填入选择器，找到实体显示名称，找不到内容为空、对应%%消失
+JSON：{"selector":"@e[type=cow,r=5]"}
+
+### 4.原版本地化 translate_origin
+填写游戏原版Key，跟随客户端系统语言自动切换中英日韩，不支持%%占位
+with参数仅英文逗号分隔普通文本，不可嵌套计分/选择器
+
+### 5.%%条件本地化 translate_cond【核心】
+自定义文案+%%1~%%9占位，with数组5种组件自由组合；
+规则：%%N = with列表第N项内容，with项为空则对应%%空白，实现条件隐藏/切换
+
+## 二、with五种填写规范（条件本地化专用）
+|类型|填写格式|示例|
+|----|----|----|
+|①普通文本|直接写内容|§a达标奖励|
+|②纯计分|玩家|计分|@s|金币|
+|③选择器|选择器表达式|@e[type=sheep,r=8]|
+|④带计分文本|文字|玩家|计分|§c不足|@s|金币|
+|⑤嵌套Translate|原版key|参数1,参数2|item.apple.name|
+
+> 分隔符必须英文竖线 |
+
+## 三、三大实战案例
+### 案例1：分数达标绿字、不足红字互斥
+文案：状态：%%1%%2
+with1：§a金币充足|@s|金币
+with2：§c金币不足|@s|金币
+金币>0显示绿字，=0红字显示
+
+### 案例2：附近有牛才展示，无牛整行隐藏
+文案：附近生物：%%1
+with：@e[type=cow,r=6]
+无牛时%%1空白，整行文字消失
+
+### 案例3：原版本地化+条件混用
+rawtext分段拼接：
+[{"text":"奖品："},{"translate":"item.diamond.name"},{"translate":"剩余%%1金币","with":[{"score":{"name":"@s","objective":"金币"}}]}]
+
+## 四、混用规则
+1. 同一条rawtext数组可以任意穿插：text/score/selector/原版本地化/%%条件本地化
+2. 单个translate组件只能二选一：原版key 或 自定义%%文案，不能混写
+3. %%仅在【%%条件本地化】生效，原版本地化无法识别%%
+
+## 五、避坑说明
+1. §颜色只能写在text内容内，score/selector本体不能加颜色
+2. with分隔符为英文|，禁止中文全角符号
+3. %%最多1~9，超过9无法识别
+4. * 作为玩家名 = 观看者自身（全服统一动态标题）
+
+## 六、官方参考
+微软RAW JSON权威文档：https://learn.microsoft.com/en-us/minecraft/creator/reference/content/rawmessagejson
+`;
+
+// 打开官方文档
+document.getElementById('openDoc').onclick = ()=>{
+    window.open("https://learn.microsoft.com/en-us/minecraft/creator/reference/content/rawmessagejson","_blank")
+}
+// 下载MD文件
+document.getElementById('downloadMd').onclick = ()=>{
+    const blob = new Blob([MD_CONTENT],{type:"text/markdown"});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "titleraw_%%条件本地化完整教程.md";
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
 const colorArr = [
-    {c:"§0",n:"黑",css:"#000000"},
-    {c:"§1",n:"深蓝",css:"#0000AA"},
-    {c:"§2",n:"深绿",css:"#00AA00"},
-    {c:"§3",n:"天蓝",css:"#00AAAA"},
-    {c:"§4",n:"红",css:"#AA0000"},
-    {c:"§5",n:"深紫",css:"#AA00AA"},
-    {c:"§6",n:"金黄",css:"#FFAA00"},
-    {c:"§7",n:"浅灰",css:"#AAAAAA"},
-    {c:"§8",n:"深灰",css:"#555555"},
-    {c:"§9",n:"淡紫",css:"#5555FF"},
-    {c:"§a",n:"浅绿",css:"#55FF55"},
-    {c:"§b",n:"淡蓝",css:"#55FFFF"},
-    {c:"§c",n:"橙红",css:"#FF5555"},
-    {c:"§d",n:"粉紫",css:"#FF55FF"},
-    {c:"§e",n:"淡黄",css:"#FFFF55"},
-    {c:"§f",n:"白",css:"#FFFFFF"}
+    {c:"§0",n:"黑",css:"#000000"},{c:"§1",n:"深蓝",css:"#0000AA"},{c:"§2",n:"深绿",css:"#00AA00"},
+    {c:"§3",n:"天蓝",css:"#00AAAA"},{c:"§4",n:"红",css:"#AA0000"},{c:"§5",n:"深紫",css:"#AA00AA"},
+    {c:"§6",n:"金黄",css:"#FFAA00"},{c:"§7",n:"浅灰",css:"#AAAAAA"},{c:"§8",n:"深灰",css:"#555555"},
+    {c:"§9",n:"淡紫",css:"#5555FF"},{c:"§a",n:"浅绿",css:"#55FF55"},{c:"§b",n:"淡蓝",css:"#55FFFF"},
+    {c:"§c",n:"橙红",css:"#FF5555"},{c:"§d",n:"粉紫",css:"#FF55FF"},{c:"§e",n:"淡黄",css:"#FFFF55"},{c:"§f",n:"白",css:"#FFFFFF"}
 ]
-//完整格式码：加粗、斜体、下划线、删除线、随机字符
-const formatArr = [
-    {c:"§l",n:"加粗"},{c:"§m",n:"删除线"},{c:"§n",n:"下划线"},{c:"§o",n:"斜体"},{c:"§k",n:"随机闪烁"}
-]
+const colorMap = {}; colorArr.forEach(i=>colorMap[i.c]=i.css);
+const formatArr = [{c:"§l",n:"加粗"},{c:"§m",n:"删除线"},{c:"§n",n:"下划线"},{c:"§o",n:"斜体"}];
+const fmtMap = {"§l":"font-weight:bold;","§o":"font-style:italic;","§n":"text-decoration:underline;","§m":"text-decoration:line-through;"};
 
-//存储多段raw数组
+let saveData = {title:"",subtitle:"",actionbar:""};
 let rawTextArr = [];
+let nowPos = "title";
+let withItemArr = [];
+
 const partListDom = document.getElementById('partList');
+const previewDom = document.getElementById('preview');
+const txtInput = document.getElementById('txtVal');
+const preTitleDom = document.getElementById("preTitle");
+const preSubDom = document.getElementById("preSub");
+const preActionDom = document.getElementById("preAction");
+const withListDom = document.getElementById("withList");
+const condKeyDom = document.getElementById("condKey");
 
-//渲染颜色按钮【重点：文字颜色 = MC对应色，背景用反色方便看清】
-const colorWrap = document.getElementById('colorList')
+//渲染颜色按钮
+const colorWrap = document.getElementById('colorList');
 colorArr.forEach(item=>{
-    let sp = document.createElement('span')
-    sp.textContent = item.n
-    sp.style.color = item.css; //文字使用MC原版颜色
-    //浅色文字加深底色，深色文字用浅底色
-    if(["#FFFFFF","#FFFF55","#55FFFF","#55FF55","#5555FF","#FF5555","#FF55FF"].includes(item.css)){
-        sp.style.background="#333333";
-    }else{
-        sp.style.background="#f8f8f8";
-    }
-    sp.dataset.code = item.c
-    sp.onclick=()=>insertCode(item.c)
-    colorWrap.appendChild(sp)
+    let sp = document.createElement('span');
+    sp.textContent=item.n; sp.style.color=item.css;
+    sp.style.background=(["#FFFFFF","#FFFF55","#55FFFF","#55FF55","#5555FF","#FF5555","#FF55FF"].includes(item.css))?"#333":"#f8f8f8";
+    sp.dataset.code=item.c;
+    sp.onclick=()=>{insertCode(item.c);updatePreview()};
+    colorWrap.appendChild(sp);
 })
-
-//渲染格式按钮
-const fmtWrap = document.getElementById('formatList')
+//格式按钮
+const fmtWrap = document.getElementById('formatList');
 formatArr.forEach(item=>{
-    let sp = document.createElement('span')
-    sp.textContent = item.n
-    sp.dataset.code = item.c
-    //样式模拟格式
-    if(item.c === '§l') sp.style.fontWeight='bold'
-    if(item.c === '§o') sp.style.fontStyle='italic'
-    if(item.c === '§n') sp.style.textDecoration='underline'
-    if(item.c === '§m') sp.style.textDecoration='line-through'
-    sp.onclick=()=>insertCode(item.c)
-    fmtWrap.appendChild(sp)
+    let sp = document.createElement('span'); sp.textContent=item.n; sp.dataset.code=item.c;
+    if(item.c==='§l')sp.style.fontWeight='bold';
+    if(item.c==='§o')sp.style.fontStyle='italic';
+    if(item.c==='§n')sp.style.textDecoration='underline';
+    if(item.c==='§m')sp.style.textDecoration='line-through';
+    sp.onclick=()=>{insertCode(item.c);updatePreview()};
+    fmtWrap.appendChild(sp);
 })
 
-//插入格式码到输入框
-function insertCode(code){
-    const inp = document.getElementById('txtVal')
-    let start = inp.selectionStart
-    let end = inp.selectionEnd
-    let val = inp.value
-    inp.value = val.slice(0,start)+code+val.slice(end)
-    inp.focus()
-    inp.selectionStart = inp.selectionEnd = start+code.length
-}
-
-//切换内容类型
-const typeSel = document.getElementById('type')
-const textCfg = document.getElementById('textCfg')
-const scoreCfg = document.getElementById('scoreCfg')
-const selCfg = document.getElementById('selCfg')
-typeSel.onchange = function(){
-    let v = this.value
-    textCfg.style.display = v=='text'?'block':'none'
-    scoreCfg.style.display = v=='score'?'block':'none'
-    selCfg.style.display = v=='selector'?'block':'none'
-}
-
-//自定义选择器显示
-const selMain = document.getElementById('selector')
-const selCustom = document.getElementById('customSel')
-selMain.onchange=()=>{
-    selCustom.style.display = selMain.value=='玩家名'?'block':'none'
-}
-
-//添加一段内容到列表
-document.getElementById('addPart').onclick = ()=>{
-    let t = document.getElementById('type').value
-    let partObj = null;
-    if(t==='text'){
-        let txt = document.getElementById('txtVal').value.trim()
-        if(!txt){alert('文本不能为空！');return;}
-        partObj = {type:'text',data:`{"text":"${txt.replace(/"/g,'\\"')}"}`}
-    }else if(t==='score'){
-        let obj = document.getElementById('scoreObj').value.trim()
-        let name = document.getElementById('scoreName').value.trim()
-        if(!obj||!name){alert('计分板参数不能为空！');return;}
-        partObj = {type:'score',data:`{"score":{"name":"${name}","objective":"${obj}"}}`}
-    }else{
-        let sel = document.getElementById('selStr').value.trim()
-        if(!sel){alert('选择器不能为空！');return;}
-        partObj = {type:'selector',data:`{"selector":"${sel}"}`}
+//%%快速插入
+document.querySelectorAll('#varBtnBox span').forEach(sp=>{
+    sp.onclick=()=>{
+        let v = sp.dataset.v;
+        let s = condKeyDom.selectionStart;
+        let val = condKeyDom.value;
+        condKeyDom.value = val.slice(0,s)+v+val.slice(condKeyDom.selectionEnd);
+        condKeyDom.focus();
+        condKeyDom.selectionStart=condKeyDom.selectionEnd=s+v.length;
     }
-    rawTextArr.push(partObj);
-    renderPartList();
+})
+
+function insertCode(code){
+    let inp = txtInput;
+    let s=inp.selectionStart,e=inp.selectionEnd,v=inp.value;
+    inp.value = v.slice(0,s)+code+v.slice(e);
+    inp.focus(); inp.selectionStart=inp.selectionEnd=s+code.length;
 }
 
-//渲染已添加片段列表
-function renderPartList(){
-    partListDom.innerHTML = '';
-    rawTextArr.forEach((item,idx)=>{
-        let div = document.createElement('div');
-        div.className = 'part-item';
-        div.innerHTML = `<span>[${item.type}]</span><span class="del-part" data-i="${idx}">删除</span>`;
-        partListDom.appendChild(div);
-    })
-    //绑定删除
-    document.querySelectorAll('.del-part').forEach(d=>{
-        d.onclick=()=>{
-            let i = Number(d.dataset.i);
-            rawTextArr.splice(i,1);
-            renderPartList();
+//【重点修复：\n强制转为换行】
+function parseMcText(str){
+    let html="",nowColor="#fff",nowStyle="",i=0;
+    while(i<str.length){
+        if(str[i]==="§"&&i+1<str.length){
+            let tag="§"+str[++i];i++;
+            if(colorMap[tag]){nowColor=colorMap[tag];nowStyle=""}
+            else if(fmtMap[tag]) nowStyle+=fmtMap[tag];
+        }else if(str[i] === '\\' && str[i+1] === 'n'){
+            //匹配 \n 两个字符
+            html += "<br>";
+            i += 2;
+            continue;
+        }else{
+            let c=str[i];
+            html += `<span style="color:${nowColor};${nowStyle}">${c}</span>`;
+            i++;
         }
+    }
+    return html;
+}
+
+function updatePreview(){
+    let t = txtInput.value;
+    previewDom.innerHTML = t?parseMcText(t):"<span style='color:#aaa'>输入示例：§a第一行\\n第二行</span>";
+}
+function refreshAllGamePreview(){
+    preTitleDom.innerHTML=parseMcText(saveData.title);
+    preSubDom.innerHTML=parseMcText(saveData.subtitle);
+    preActionDom.innerHTML=parseMcText(saveData.actionbar);
+}
+//新增：清除画面预览函数
+function clearGamePreview(){
+    saveData = {title:"",subtitle:"",actionbar:""};
+    preTitleDom.innerHTML = "";
+    preSubDom.innerHTML = "";
+    preActionDom.innerHTML = "";
+}
+
+//切换类型面板
+const typeSel = document.getElementById('type');
+const textCfg = document.getElementById('textCfg');
+const scoreCfg = document.getElementById('scoreCfg');
+const selCfg = document.getElementById('selCfg');
+const transOriginCfg = document.getElementById('transOriginCfg');
+const transCondCfg = document.getElementById('transCondCfg');
+
+typeSel.onchange=()=>{
+    let v=typeSel.value;
+    textCfg.style.display=v=='text'?'block':'none';
+    scoreCfg.style.display=v=='score'?'block':'none';
+    selCfg.style.display=v=='selector'?'block':'none';
+    transOriginCfg.style.display=v=='translate_origin'?'block':'none';
+    transCondCfg.style.display=v=='translate_cond'?'block':'none';
+    if(v !== 'translate_cond') withItemArr = [];
+    renderWithList();
+}
+
+//自定义选择器
+const selMain = document.getElementById('selector');
+const selCustom = document.getElementById('customSel');
+selMain.onchange=()=>selCustom.style.display=selMain.value==='custom'?'block':'none';
+
+//with添加五种组件
+document.getElementById('addWithItem').onclick=()=>{
+    let t=document.getElementById('withAddType').value;
+    let val=document.getElementById('withAddVal').value.trim();
+    if(!val){alert("填写内容");return;}
+    withItemArr.push({type:t,val:val});
+    document.getElementById('withAddVal').value="";
+    renderWithList();
+}
+function renderWithList(){
+    withListDom.innerHTML='<div class="tip">列表顺序=%%1、%%2、%%3...</div>';
+    const nameMap={text:"文本",score:"纯计分",selector:"选择器",textscore:"带计分文本",nesttrans:"嵌套Translate"};
+    withItemArr.forEach((it,idx)=>{
+        let div=document.createElement('div');div.className='with-item';
+        div.innerHTML=`<span>%%${idx+1}【${nameMap[it.type]}】${it.val.substring(0,22)}</span><span class="with-del" data-i="${idx}">删</span>`;
+        withListDom.appendChild(div);
+    })
+    document.querySelectorAll('.with-del').forEach(d=>d.onclick=()=>{
+        let i=+d.dataset.i; withItemArr.splice(i,1); renderWithList();
+    })
+}
+
+//拼接条件版with json
+function buildWithJson(){
+    let arr=[];
+    withItemArr.forEach(it=>{
+        let v=it.val.replace(/"/g,'\\"');
+        if(it.type==='text'){
+            arr.push(`{"text":"${v}"}`);
+        }else if(it.type==='score'){
+            let sp=it.val.split("|");
+            let p=sp[0]||"@s",obj=sp[1]||sp[0];
+            arr.push(`{"score":{"name":"${p}","objective":"${obj}"}}`);
+        }else if(it.type==='selector'){
+            arr.push(`{"selector":"${v}"}`);
+        }else if(it.type==='textscore'){
+            let sp=it.val.split("|");
+            let tx=sp[0]||"",p=sp[1]||"@s",obj=sp[2]||"";
+            arr.push(`{"text":"${tx}","score":{"name":"${p}","objective":"${obj}"}}`);
+        }else if(it.type==='nesttrans'){
+            let sp=it.val.split("|");
+            let k=sp[0];
+            let para=sp[1]?sp[1].split(',').map(x=>`"${x.trim().replace(/"/g,'\\"')}"`):[];
+            if(para.length>0){
+                arr.push(`{"translate":"${k}","with":[${para.join(',')}]}`);
+            }else{
+                arr.push(`{"translate":"${k}"}`);
+            }
+        }
+    })
+    return arr.join(',');
+}
+
+//添加片段
+document.getElementById('addPart').onclick=()=>{
+    let t=typeSel.value;let part=null;
+    if(t==='text'){
+        let v=txtInput.value.trim();if(!v){alert("文本不能为空");return;}
+        part={type:'text',data:`{"text":"${v.replace(/"/g,'\\"')}"}`,rawTxt:v}
+    }else if(t==='score'){
+        let obj=document.getElementById('scoreObj').value.trim();
+        let n=document.getElementById('scoreName').value.trim();
+        if(!obj||!n){alert("计分参数不全");return;}
+        let d=`{"score":{"name":"${n.replace(/"/g,'\\"')}","objective":"${obj.replace(/"/g,'\\"')}}"}`;
+        part={type:'score',data:d,rawTxt:`[计分:${obj}]`}
+    }else if(t==='selector'){
+        let s=document.getElementById('selStr').value.trim();if(!s){alert("选择器不能为空");return;}
+        part={type:'selector',data:`{"selector":"${s.replace(/"/g,'\\"')}"}`,rawTxt:`[选择器${s}]`}
+    }else if(t==='translate_origin'){
+        let k=document.getElementById('originKey').value.trim();
+        let wStr=document.getElementById('originWith').value.trim();
+        if(!k){alert("请填写原版Key");return;}
+        let kk=k.replace(/"/g,'\\"');
+        let json;
+        if(wStr){
+            let pArr=wStr.split(',').map(x=>`"${x.trim().replace(/"/g,'\\"')}"`);
+            json=`{"translate":"${kk}","with":[${pArr.join(',')}]}`;
+        }else{
+            json=`{"translate":"${kk}"}`;
+        }
+        part={type:'originTrans',data:json,rawTxt:`[原版本地化:${k}]`};
+    }else if(t==='translate_cond'){
+        let key=condKeyDom.value.trim();if(!key){alert("条件文案不能为空");return;}
+        let kk = key.replace(/"/g,'\\"');
+        let wstr=buildWithJson();
+        let json= wstr?`{"translate":"${kk}","with":[${wstr}]}`:`{"translate":"${kk}"}`;
+        part={type:'condTrans',data:json,rawTxt:`[条件Translate:${key}]`};
+    }
+    rawTextArr.push(part); renderPartList();
+}
+
+function renderPartList(){
+    partListDom.innerHTML="";
+    rawTextArr.forEach((it,idx)=>{
+        let d=document.createElement('div');d.className='part-item';
+        d.innerHTML=`<span>[${it.type}]${it.rawTxt.substring(0,26)}</span><span class="del-part" data-i="${idx}">删除</span>`;
+        partListDom.appendChild(d);
+    })
+    document.querySelectorAll('.del-part').forEach(d=>d.onclick=()=>{
+        let i=+d.dataset.i;rawTextArr.splice(i,1);renderPartList();
     })
 }
 
 //生成指令
-document.getElementById('gen').onclick = function(){
-    if(rawTextArr.length===0){
-        alert('请先添加内容片段！');
-        return;
-    }
-    let tar = selMain.value==='玩家名'?selCustom.value.trim():selMain.value
-    if(tar==='玩家名'&&!selCustom.value.trim()){
-        alert('请填写自定义玩家名称');
-        return;
-    }
-    let pos = document.getElementById('pos').value
-    let rawStr = rawTextArr.map(item=>item.data).join(',')
-    let cmd = `titleraw ${tar} ${pos} {"rawtext":[${rawStr}]}`
-    document.getElementById('result').value = cmd
+document.getElementById('gen').onclick=()=>{
+    if(rawTextArr.length===0){alert("先添加片段");return;}
+    let tar = selMain.value==='custom'?selCustom.value.trim():selMain.value;
+    if(selMain.value==='custom'&&!tar){alert("填写自定义选择器");return;}
+    let pos=document.getElementById('pos').value;
+    let rawStr=rawTextArr.map(i=>i.data).join(',');
+    let cmd=`titleraw ${tar} ${pos} {"rawtext":[${rawStr}]}`;
+    document.getElementById('result').value=cmd;
+    saveData[pos]=rawTextArr.map(x=>x.rawTxt).join("");
+    refreshAllGamePreview();
 }
 
-//新版剪贴板复制（替换废弃execCommand）
-document.getElementById('copy').onclick = async function(){
-    let res = document.getElementById('result').value
-    if(!res){alert('暂无生成的指令！');return;}
-    try{
-        await navigator.clipboard.writeText(res);
-        alert('指令已复制到剪贴板！')
-    }catch(e){
-        //降级兼容
-        let ta = document.getElementById('result');
-        ta.select();
-        document.execCommand('copy');
-        alert('指令已复制到剪贴板！')
+//复制
+document.getElementById('copy').onclick=async()=>{
+    let res=document.getElementById('result').value;
+    if(!res){alert("无指令");return;}
+    try{await navigator.clipboard.writeText(res);alert("复制成功")}catch(e){
+        let ta=document.getElementById('result');ta.select();document.execCommand('copy');alert("复制成功")
     }
 }
+document.getElementById('clearInput').onclick=()=>{txtInput.value="";updatePreview()};
+document.getElementById('clearAllPart').onclick=()=>{rawTextArr=[];renderPartList()};
+document.getElementById('clearResult').onclick=()=>document.getElementById('result').value="";
+//绑定清除预览按钮事件
+document.getElementById('clearPreview').onclick = clearGamePreview;
+document.getElementById('pos').onchange=()=>nowPos=document.getElementById('pos').value;
+txtInput.oninput=updatePreview;
+
+updatePreview();refreshAllGamePreview();renderPartList();
 </script>
 </body>
 </html>
