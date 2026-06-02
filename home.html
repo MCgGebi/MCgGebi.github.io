@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft Yahei", sans-serif;
+            font-family: "Microsoft Yahei", system-ui, sans-serif;
         }
 
         :root {
@@ -26,8 +26,8 @@
             --border: #33334d;
             --shadow: 0 4px 20px rgba(0,0,0,0.4);
             --radius: 12px;
-            --transition: all 0.3 ease;
-            /* 基础字号基准 */
+            /* 修复：补上s单位 */
+            --transition: all 0.3s ease;
             --base-font: 14px;
         }
 
@@ -36,8 +36,8 @@
             color: var(--text-primary);
             min-height: 100vh;
             line-height: 1.6;
-            /* 核心：根字体随屏幕缩放 */
-            font-size: clamp(13px, 1vw, 15px);
+            /* 优化全局字体：缩小上下限，大小更均衡 */
+            font-size: clamp(14px, 0.95vw, 15.5px);
         }
 
         a {
@@ -68,7 +68,8 @@
             justify-content: space-between;
         }
         .logo {
-            font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+            /* 优化logo字体区间 */
+            font-size: clamp(1.05rem, 1.3vw, 1.25rem);
             font-weight: 700;
             color: var(--accent-light);
             display: flex;
@@ -84,7 +85,8 @@
             border-radius: 8px;
             transition: var(--transition);
             color: var(--text-secondary);
-            font-size: clamp(13px, 0.9vw, 14px);
+            /* 优化导航字体大小 */
+            font-size: clamp(13px, 0.85vw, 14px);
         }
         .nav-item a:hover, .nav-item a.active {
             background-color: var(--bg-hover);
@@ -102,12 +104,13 @@
             margin-bottom: 2.5rem;
         }
         .page-title h1 {
-            font-size: clamp(1.6rem, 2.5vw, 2rem);
+            /* 优化大标题缩放 */
+            font-size: clamp(1.5rem, 2.2vw, 1.9rem);
             margin-bottom: 0.4rem;
         }
         .page-title p {
             color: var(--text-secondary);
-            font-size: clamp(12px, 0.8vw, 13px);
+            font-size: clamp(13px, 0.85vw, 14px);
         }
 
         /* 功能卡片网格 */
@@ -133,22 +136,23 @@
             background-color: var(--bg-hover);
         }
         .func-icon {
-            font-size: clamp(2rem, 3vw, 2.3rem);
+            font-size: clamp(2rem, 2.8vw, 2.2rem);
             color: var(--accent-light);
             margin-bottom: 0.8rem;
         }
         .func-card h3 {
-            font-size: clamp(14px, 1vw, 16px);
+            /* 优化卡片标题字号 */
+            font-size: clamp(14.5px, 1vw, 16px);
             margin-bottom: 0.4rem;
         }
         .func-card p {
             color: var(--text-secondary);
-            font-size: clamp(12px, 0.8vw, 13px);
+            font-size: clamp(12.5px, 0.82vw, 13.5px);
         }
 
         /* 快捷分区标题 */
         .section-title {
-            font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+            font-size: clamp(1.05rem, 1.6vw, 1.25rem);
             margin: 3rem 0 1.2rem;
             padding-left: 0.5rem;
             border-left: 4px solid var(--accent);
@@ -171,7 +175,7 @@
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            font-size: clamp(12px, 0.9vw, 14px);
+            font-size: clamp(13px, 0.88vw, 14px);
         }
         .tool-btn:hover {
             background-color: var(--accent);
@@ -189,11 +193,11 @@
             margin-bottom: 2.5rem;
         }
         .extend-box h3 {
-            font-size: clamp(14px, 1.1vw, 16px);
+            font-size: clamp(14.5px, 1.05vw, 16px);
             margin-bottom: 0.5rem;
         }
         .extend-box p {
-            font-size: clamp(12px, 0.8vw, 13px);
+            font-size: clamp(12.5px, 0.82vw, 13.5px);
         }
 
         /* 页脚 */
@@ -204,7 +208,7 @@
             text-align: center;
             color: var(--text-secondary);
             margin-top: 4rem;
-            font-size: clamp(12px, 0.8vw, 13px);
+            font-size: clamp(12.5px, 0.82vw, 13.5px);
         }
 
         /* 移动端精细适配 */
@@ -213,13 +217,14 @@
                 height: 50px;
             }
             .nav-menu {
-                gap: 0.6rem;
+                gap: 0.5rem;
             }
             .nav-item a {
-                padding: 0.4rem 0.6rem;
+                padding: 0.35rem 0.55rem;
             }
+            /* 优化手机端卡片最小宽度，不会过窄 */
             .func-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
             .container {
                 padding: 0 1rem;
@@ -278,58 +283,36 @@
                 <p>跳转至 search.html</p>
             </a>
 
+            <!-- 新增：MCPE函数生成器卡片 pemcpack.html -->
+            <a href="pemcpack.html" class="func-card">
+                <div class="func-icon">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <h3>MCPE函数生成器</h3>
+                <p>跳转至 pemcpack.html</p>
+            </a>
+
             <!-- 预留空位卡片 -->
-            <div class="func-card">
-                <div class="func-icon">
-                    <i class="fas fa-plus"></i>
-                </div>
-                <h3>新增功能</h3>
-                <p>待添加新页面</p>
-            </div>
-            <div class="func-card">
-                <div class="func-icon">
-                    <i class="fas fa-cog"></i>
-                </div>
-                <h3>系统设置</h3>
-                <p>预留拓展入口</p>
-            </div>
-            <div class="func-card">
-                <div class="func-icon">
-                    <i class="fas fa-file-code"></i>
-                </div>
-                <h3>工具集合</h3>
-                <p>后续添加工具页面</p>
-            </div>
+
         </div>
 
-        <!-- 快捷按钮栏 -->
+        <!-- 快捷工具栏区域示例 -->
         <h2 class="section-title">快捷工具</h2>
         <div class="tool-bar">
-            <a href="index.html" class="tool-btn">
-                <i class="fas fa-home"></i> 快速回首页
-            </a>
-            <a href="search.html" class="tool-btn">
-                <i class="fas fa-search"></i> 快速搜索
-            </a>
-            <a href="#" class="tool-btn">
-                <i class="fas fa-link"></i> 拓展链接
-            </a>
-            <a href="#" class="tool-btn">
-                <i class="fas fa-wrench"></i> 常用工具
-            </a>
+            <a class="tool-btn"><i class="fas fa-wrench"></i>常用工具1</a>
+            <a class="tool-btn"><i class="fas fa-file-code"></i>代码工具</a>
         </div>
 
-        <!-- 大型拓展区块 -->
-        <h2 class="section-title">拓展区域</h2>
+        <!-- 拓展预留区域 -->
         <div class="extend-box">
-            <h3>自定义拓展板块</h3>
-            <p>此处可添加公告、图文、新功能模块、外部链接、内容展示等</p>
+            <h3>后续功能拓展区</h3>
+            <p>后续新增功能卡片、页面可添加在上方网格内</p>
         </div>
     </main>
 
     <!-- 页脚 -->
     <footer class="footer">
-        <p>综合主站系统 &copy; 2026 | 深色模式 · 持续拓展中</p>
+        <p>综合聚合主站 © 深色主题 | 自适应多端访问</p>
     </footer>
 </body>
 </html>
