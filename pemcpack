@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC基岩版 自定义函数MCpack生成器</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft YaHei",monospace}
+        body{background:#1a1c23;color:#fff;padding:20px;max-width:1000px;margin:0 auto}
+        .container{background:#252830;padding:24px;border-radius:12px;box-shadow:0 0 15px rgba(0,0,0,0.3)}
+        h1{text-align:center;color:#4ade80;margin-bottom:20px}
+        .form-group{margin-bottom:16px}
+        label{display:block;margin-bottom:6px;font-weight:bold;color:#e2e8f0}
+        input,textarea{width:100%;padding:10px;border:1px solid #475569;border-radius:6px;background:#1e293b;color:#fff}
+        textarea{min-height:140px;resize:vertical}
+        .btn{background:#16a34a;color:#fff;border:none;padding:12px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-top:8px}
+        .btn:hover{background:#15803d}
+        .btn-del{background:#b91c1c}
+        .btn-del:hover{background:#991b1b}
+        .split{display:flex;gap:12px}
+        .split .form-group{flex:1}
+        hr{border-color:#334155;margin:20px 0}
+        .func-item{background:#1e293b;padding:14px;border-radius:8px;margin-bottom:10px}
+        .func-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+        .func-name{font-weight:bold;color:#4ade80}
+        .tip{color:#94a3b8;font-size:12px;margin-top:4px}
+        #customFunctionsArea{margin-top:12px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>MCPE自定义函数生成器<br/>俺寻思能用👍</h1>
+
+    <div class="form-group">
+        <label>包名 / 命名空间（英文/下划线）</label>
+        <input id="packName" value="my_pack">
+        <div class="tip">游戏内调用：/function 包名:函数名</div>
+    </div>
+
+    <div class="split">
+        <div class="form-group">
+            <label>作者</label>
+            <input id="author" value="Player">
+        </div>
+        <div class="form-group">
+            <label>版本</label>
+            <input id="ver" value="1.0.0">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>描述</label>
+        <input id="desc" value="自定义函数包">
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+        <button class="btn" onclick="addCustomFunction()">➕ 添加自定义函数</button>
+        <div id="customFunctionsArea"></div>
+    </div>
+
+    <button class="btn" onclick="buildPack()">✅ 生成并下载 mcpack</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<script>
+let customFuncList = [
+    { name:"test", code:"say 自定义函数运行成功！" }
+];
+
+function addCustomFunction(){
+    let name = prompt("函数名（英文/数字/下划线）：","test");
+    if(!name) return;
+    name = name.replace(/[^a-zA-Z0-9_]/g,"_");
+    customFuncList.push({name, code:""});
+    renderCustomFunc();
+}
+
+function delCustomFunc(i){
+    customFuncList.splice(i, 1);
+    renderCustomFunc();
+}
+
+function renderCustomFunc(){
+    let area = document.getElementById("customFunctionsArea");
+    area.innerHTML = "";
+    customFuncList.forEach((f,i)=>{
+        let div = document.createElement("div");
+        div.className = "func-item";
+        div.innerHTML = `
+        <div class="func-header">
+            <span class="func-name">${f.name}.mcfunction</span>
+            <button class="btn btn-del" onclick="delCustomFunc(${i})">删除</button>
+        </div>
+        <textarea oninput="customFuncList[${i}].code=this.value" placeholder="输入指令...">${f.code}</textarea>
+        `;
+        area.appendChild(div);
+    });
+}
+
+function generateUUID(){
+    let d = new Date().getTime();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        let r = (d + Math.random()*16) % 16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+    });
+}
+
+// 🔥 自动去掉每行开头的 / 斜杠（核心功能）
+function cleanCommand(code) {
+    if (!code) return "";
+    return code.split("\n").map(line => {
+        return line.trimStart().replace(/^\/+/, "");
+    }).join("\n");
+}
+
+async function buildPack(){
+    const packName = document.getElementById("packName").value.trim() || "my_pack";
+    const author = document.getElementById("author").value;
+    const ver = document.getElementById("ver").value.split(".").map(Number);
+    const desc = document.getElementById("desc").value;
+    const version = [ver[0]||1, ver[1]||0, ver[2]||0];
+
+    const zip = new JSZip();
+
+    zip.file("manifest.json", JSON.stringify({
+        format_version: 2,
+        header: {
+            name: packName,
+            description: desc,
+            uuid: generateUUID(),
+            version: version,
+            min_engine_version: [1,19,0]
+        },
+        modules: [{ type: "data", uuid: generateUUID(), version: version }],
+        metadata: { authors: [author] }
+    }, null, 2));
+
+    const functions = zip.folder("functions");
+    customFuncList.forEach(func => {
+        // 🔥 打包时自动清理斜杠
+        let cleanCode = cleanCommand(func.code);
+        functions.file(`${func.name}.mcfunction`, cleanCode);
+    });
+
+    const blob = await zip.generateAsync({ type:"blob" });
+    saveAs(blob, `${packName}.mcpack`);
+    alert("✅ 生成成功！\n已自动去除所有 / 斜杠\n调用：/function "+packName+":函数名(似乎可以不加命名空间???)");
+}
+
+renderCustomFunc();
+</script>
+</body>
+</html>
