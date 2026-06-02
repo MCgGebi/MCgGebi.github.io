@@ -17,11 +17,15 @@
         button{padding:9px 16px;border:none;border-radius:6px;cursor:pointer;font-size:14px}
         #gen{background:#409eff;color:#fff}
         #copy{background:#67c23a;color:#fff}
+        #addPart{background:#e6a23c;color:#fff}
         .color-box{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:8px 0}
-        .color-box span{height:28px;border:1px solid #ccc;cursor:pointer;font-size:12px;text-align:center;line-height:28px;color:#fff}
-        .format-box{display:flex;gap:6px;margin:8px 0}
+        .color-box span{height:28px;border:1px solid #ccc;cursor:pointer;font-size:12px;text-align:center;line-height:28px;font-weight:bold}
+        .format-box{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
         .format-box span{padding:4px 8px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#f8f8f8}
         .tip{font-size:12px;color:#888;margin-top:4px}
+        .part-list{border:1px solid #eee;padding:10px;border-radius:6px;margin:10px 0;max-height:180px;overflow:auto}
+        .part-item{padding:5px 8px;background:#f0f7ff;border-radius:4px;margin:4px 0;display:flex;justify-content:space-between}
+        .del-part{color:#f56c6c;cursor:pointer;padding:0 6px}
     </style>
 </head>
 <body>
@@ -61,7 +65,7 @@
             <div class="item" id="textCfg">
                 <label>输入文本内容（\n换行）</label>
                 <input id="txtVal" placeholder="示例：§6欢迎来到服务器">
-                <div class="tip">下方点击颜色/格式自动插入§代码</div>
+                <div class="tip">下方点击颜色/格式自动插入§代码，色块文字即为实际颜色预览</div>
                 <div class="color-box" id="colorList"></div>
                 <div class="format-box" id="formatList"></div>
             </div>
@@ -76,6 +80,12 @@
             <div class="item" id="selCfg" style="display:none">
                 <label>实体选择器</label>
                 <input id="selStr" placeholder="@e[r=10,type=!player]">
+            </div>
+
+            <div class="item">
+                <button id="addPart">添加本段到RawText列表</button>
+                <div class="tip">支持多段拼接，一段文本/计分/选择器为一项</div>
+                <div class="part-list" id="partList"></div>
             </div>
 
             <div class="btn-group">
@@ -98,35 +108,66 @@
     </div>
 
 <script>
-//颜色配置
+//颜色配置 MC原版全部颜色码 + 对应css色值用来预览文字颜色
 const colorArr = [
-    {c:"§0",n:"黑"},{c:"§1",n:"深蓝"},{c:"§2",n:"深绿"},{c:"§3",n:"天蓝"},
-    {c:"§4",n:"红"},{c:"§5",n:"深紫"},{c:"§6",n:"金黄"},{c:"§7",n:"浅灰"},
-    {c:"§8",n:"深灰"},{c:"§9",n:"淡紫"},{c:"§a",n:"浅绿"},{c:"§b",n:"淡蓝"},
-    {c:"§c",n:"橙红"},{c:"§d",n:"粉紫"},{c:"§e",n:"淡黄"},{c:"§f",n:"白"}
+    {c:"§0",n:"黑",css:"#000000"},
+    {c:"§1",n:"深蓝",css:"#0000AA"},
+    {c:"§2",n:"深绿",css:"#00AA00"},
+    {c:"§3",n:"天蓝",css:"#00AAAA"},
+    {c:"§4",n:"红",css:"#AA0000"},
+    {c:"§5",n:"深紫",css:"#AA00AA"},
+    {c:"§6",n:"金黄",css:"#FFAA00"},
+    {c:"§7",n:"浅灰",css:"#AAAAAA"},
+    {c:"§8",n:"深灰",css:"#555555"},
+    {c:"§9",n:"淡紫",css:"#5555FF"},
+    {c:"§a",n:"浅绿",css:"#55FF55"},
+    {c:"§b",n:"淡蓝",css:"#55FFFF"},
+    {c:"§c",n:"橙红",css:"#FF5555"},
+    {c:"§d",n:"粉紫",css:"#FF55FF"},
+    {c:"§e",n:"淡黄",css:"#FFFF55"},
+    {c:"§f",n:"白",css:"#FFFFFF"}
 ]
+//完整格式码：加粗、斜体、下划线、删除线、随机字符
 const formatArr = [
-    {c:"§l",n:"加粗"},{c:"§m",n:"斜体"},{c:"§n",n:"下划线"}
+    {c:"§l",n:"加粗"},{c:"§m",n:"删除线"},{c:"§n",n:"下划线"},{c:"§o",n:"斜体"},{c:"§k",n:"随机闪烁"}
 ]
-//渲染颜色按钮
+
+//存储多段raw数组
+let rawTextArr = [];
+const partListDom = document.getElementById('partList');
+
+//渲染颜色按钮【重点：文字颜色 = MC对应色，背景用反色方便看清】
 const colorWrap = document.getElementById('colorList')
 colorArr.forEach(item=>{
     let sp = document.createElement('span')
     sp.textContent = item.n
-    sp.style.background = item.c.replace('§','')
+    sp.style.color = item.css; //文字使用MC原版颜色
+    //浅色文字加深底色，深色文字用浅底色
+    if(["#FFFFFF","#FFFF55","#55FFFF","#55FF55","#5555FF","#FF5555","#FF55FF"].includes(item.css)){
+        sp.style.background="#333333";
+    }else{
+        sp.style.background="#f8f8f8";
+    }
     sp.dataset.code = item.c
     sp.onclick=()=>insertCode(item.c)
     colorWrap.appendChild(sp)
 })
+
 //渲染格式按钮
 const fmtWrap = document.getElementById('formatList')
 formatArr.forEach(item=>{
     let sp = document.createElement('span')
     sp.textContent = item.n
     sp.dataset.code = item.c
+    //样式模拟格式
+    if(item.c === '§l') sp.style.fontWeight='bold'
+    if(item.c === '§o') sp.style.fontStyle='italic'
+    if(item.c === '§n') sp.style.textDecoration='underline'
+    if(item.c === '§m') sp.style.textDecoration='line-through'
     sp.onclick=()=>insertCode(item.c)
     fmtWrap.appendChild(sp)
 })
+
 //插入格式码到输入框
 function insertCode(code){
     const inp = document.getElementById('txtVal')
@@ -157,33 +198,78 @@ selMain.onchange=()=>{
     selCustom.style.display = selMain.value=='玩家名'?'block':'none'
 }
 
+//添加一段内容到列表
+document.getElementById('addPart').onclick = ()=>{
+    let t = document.getElementById('type').value
+    let partObj = null;
+    if(t==='text'){
+        let txt = document.getElementById('txtVal').value.trim()
+        if(!txt){alert('文本不能为空！');return;}
+        partObj = {type:'text',data:`{"text":"${txt.replace(/"/g,'\\"')}"}`}
+    }else if(t==='score'){
+        let obj = document.getElementById('scoreObj').value.trim()
+        let name = document.getElementById('scoreName').value.trim()
+        if(!obj||!name){alert('计分板参数不能为空！');return;}
+        partObj = {type:'score',data:`{"score":{"name":"${name}","objective":"${obj}"}}`}
+    }else{
+        let sel = document.getElementById('selStr').value.trim()
+        if(!sel){alert('选择器不能为空！');return;}
+        partObj = {type:'selector',data:`{"selector":"${sel}"}`}
+    }
+    rawTextArr.push(partObj);
+    renderPartList();
+}
+
+//渲染已添加片段列表
+function renderPartList(){
+    partListDom.innerHTML = '';
+    rawTextArr.forEach((item,idx)=>{
+        let div = document.createElement('div');
+        div.className = 'part-item';
+        div.innerHTML = `<span>[${item.type}]</span><span class="del-part" data-i="${idx}">删除</span>`;
+        partListDom.appendChild(div);
+    })
+    //绑定删除
+    document.querySelectorAll('.del-part').forEach(d=>{
+        d.onclick=()=>{
+            let i = Number(d.dataset.i);
+            rawTextArr.splice(i,1);
+            renderPartList();
+        }
+    })
+}
+
 //生成指令
 document.getElementById('gen').onclick = function(){
-    let tar = selMain.value==='玩家名'?selCustom.value:selMain.value
-    let pos = document.getElementById('pos').value
-    let t = document.getElementById('type').value
-    let rawItem
-    if(t==='text'){
-        let txt = document.getElementById('txtVal').value
-        rawItem = `{"text":"${txt.replace(/"/g,'\\"')}"}`
-    }else if(t==='score'){
-        let obj = document.getElementById('scoreObj').value
-        let name = document.getElementById('scoreName').value
-        rawItem = `{"score":{"name":"${name}","objective":"${obj}"}}`
-    }else{
-        let sel = document.getElementById('selStr').value
-        rawItem = `{"selector":"${sel}"}`
+    if(rawTextArr.length===0){
+        alert('请先添加内容片段！');
+        return;
     }
-    let cmd = `titleraw ${tar} ${pos} {"rawtext":[${rawItem}]}`
+    let tar = selMain.value==='玩家名'?selCustom.value.trim():selMain.value
+    if(tar==='玩家名'&&!selCustom.value.trim()){
+        alert('请填写自定义玩家名称');
+        return;
+    }
+    let pos = document.getElementById('pos').value
+    let rawStr = rawTextArr.map(item=>item.data).join(',')
+    let cmd = `titleraw ${tar} ${pos} {"rawtext":[${rawStr}]}`
     document.getElementById('result').value = cmd
 }
 
-//复制
-document.getElementById('copy').onclick = function(){
-    let res = document.getElementById('result')
-    res.select()
-    document.execCommand('copy')
-    alert('指令已复制到剪贴板！')
+//新版剪贴板复制（替换废弃execCommand）
+document.getElementById('copy').onclick = async function(){
+    let res = document.getElementById('result').value
+    if(!res){alert('暂无生成的指令！');return;}
+    try{
+        await navigator.clipboard.writeText(res);
+        alert('指令已复制到剪贴板！')
+    }catch(e){
+        //降级兼容
+        let ta = document.getElementById('result');
+        ta.select();
+        document.execCommand('copy');
+        alert('指令已复制到剪贴板！')
+    }
 }
 </script>
 </body>
