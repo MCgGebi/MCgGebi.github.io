@@ -46,7 +46,7 @@
         }
         .game-preview{
             margin-top:12px;
-            background:#272727;
+            background:#1a1a1a;
             border-radius:8px;
             height:260px;
             position:relative;
@@ -59,20 +59,23 @@
             top:25%;
             left:0;width:100%;text-align:center;
             font-size:42px;color:#fff;white-space:pre-wrap;letter-spacing:1px;
+            text-shadow: 0 0 6px #000;
         }
         .game-subtitle{
             position:absolute;
             top:42%;left:0;width:100%;text-align:center;
             font-size:20px;color:#ddd;white-space:pre-wrap;
+            text-shadow: 0 0 4px #000;
         }
         .game-actionbar{
             position:absolute;
             bottom:62px;left:0;width:100%;text-align:center;
             font-size:15px;color:#fff;white-space:pre-wrap;
+            text-shadow: 0 0 3px #000;
         }
         .hotbar-bg{
             position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
-            width:300px;height:34px;background:#555;border:2px solid #999;border-radius:4px;
+            width:300px;height:34px;background:#333;border:2px solid #666;border-radius:4px;
         }
         .preview-title{margin-bottom:8px;font-weight:500}
         .with-wrap{border:1px solid #e1e1e1;padding:10px;border-radius:6px;margin:8px 0}
@@ -146,16 +149,14 @@
                 <input id="selStr" placeholder="@e[type=cow,r=5]">
             </div>
 
-            <!-- 原版标准本地化面板 -->
             <div class="item" id="transOriginCfg" style="display:none">
                 <label>原版本地化Key（如item.apple.name）</label>
                 <input id="originKey" placeholder="item.diamond.name">
                 <label style="margin-top:6px">With参数（多个英文逗号分隔，无则空）</label>
                 <input id="originWith" placeholder="参数1,参数2">
-                <div class="tip">原版key自动跟随系统中英文切换，不带%%</div>
+                <div class="tip">原版key自动跟随系统中英文切换，不带%%，with为字符串数组</div>
             </div>
 
-            <!-- %%条件本地化面板（5类with组件+%%） -->
             <div class="item" id="transCondCfg" style="display:none">
                 <label>条件文案(支持%%1 %%2占位，\n换行)</label>
                 <input id="condKey" placeholder="达标%%1\n不足%%2">
@@ -224,7 +225,6 @@
     </div>
 
 <script>
-// ================= MD教程全文内容 =================
 const MD_CONTENT = `# MC基岩版 titleraw & rawtext %%条件本地化完整教程
 > 配套生成器使用文档｜适配基岩1.21全版本｜微软官方参考：https://learn.microsoft.com/en-us/minecraft/creator/reference/content/rawmessagejson
 
@@ -242,12 +242,11 @@ JSON：{"score":{"name":"@s","objective":"金币"}}
 JSON：{"selector":"@e[type=cow,r=5]"}
 
 ### 4.原版本地化 translate_origin
-填写游戏原版Key，跟随客户端系统语言自动切换中英日韩，不支持%%占位
-with参数仅英文逗号分隔普通文本，不可嵌套计分/选择器
+填写游戏原版Key，跟随客户端系统语言自动切换中英日韩，with为字符串数组，不支持%%占位
 
 ### 5.%%条件本地化 translate_cond【核心】
-自定义文案+%%1~%%9占位，with数组5种组件自由组合；
-规则：%%N = with列表第N项内容，with项为空则对应%%空白，实现条件隐藏/切换
+自定义文案+%%1~%%9占位，with为单个{"rawtext":[...]}对象，不用外层[]；
+规则：%%N = rawtext数组第N项内容，with项为空则对应%%空白，实现条件隐藏/切换
 
 ## 二、with五种填写规范（条件本地化专用）
 |类型|填写格式|示例|
@@ -260,42 +259,14 @@ with参数仅英文逗号分隔普通文本，不可嵌套计分/选择器
 
 > 分隔符必须英文竖线 |
 
-## 三、三大实战案例
-### 案例1：分数达标绿字、不足红字互斥
-文案：状态：%%1%%2
-with1：§a金币充足|@s|金币
-with2：§c金币不足|@s|金币
-金币>0显示绿字，=0红字显示
-
-### 案例2：附近有牛才展示，无牛整行隐藏
-文案：附近生物：%%1
-with：@e[type=cow,r=6]
-无牛时%%1空白，整行文字消失
-
-### 案例3：原版本地化+条件混用
-rawtext分段拼接：
-[{"text":"奖品："},{"translate":"item.diamond.name"},{"translate":"剩余%%1金币","with":[{"score":{"name":"@s","objective":"金币"}}]}]
-
-## 四、混用规则
-1. 同一条rawtext数组可以任意穿插：text/score/selector/原版本地化/%%条件本地化
-2. 单个translate组件只能二选一：原版key 或 自定义%%文案，不能混写
-3. %%仅在【%%条件本地化】生效，原版本地化无法识别%%
-
-## 五、避坑说明
-1. §颜色只能写在text内容内，score/selector本体不能加颜色
-2. with分隔符为英文|，禁止中文全角符号
-3. %%最多1~9，超过9无法识别
-4. * 作为玩家名 = 观看者自身（全服统一动态标题）
-
-## 六、官方参考
-微软RAW JSON权威文档：https://learn.microsoft.com/en-us/minecraft/creator/reference/content/rawmessagejson
+## 三、指令格式标准
+条件本地化："with":{"rawtext":[组件1,组件2]}（无外层[]）
+原版本地化："with":["字符串1","字符串2"]（纯字符串数组）
 `;
 
-// 打开官方文档
 document.getElementById('openDoc').onclick = ()=>{
     window.open("https://learn.microsoft.com/en-us/minecraft/creator/reference/content/rawmessagejson","_blank")
 }
-// 下载MD文件
 document.getElementById('downloadMd').onclick = ()=>{
     const blob = new Blob([MD_CONTENT],{type:"text/markdown"});
     const a = document.createElement('a');
@@ -318,7 +289,6 @@ const fmtMap = {"§l":"font-weight:bold;","§o":"font-style:italic;","§n":"text
 
 let saveData = {title:"",subtitle:"",actionbar:""};
 let rawTextArr = [];
-let nowPos = "title";
 let withItemArr = [];
 
 const partListDom = document.getElementById('partList');
@@ -330,20 +300,24 @@ const preActionDom = document.getElementById("preAction");
 const withListDom = document.getElementById("withList");
 const condKeyDom = document.getElementById("condKey");
 
-//渲染颜色按钮
+// 渲染颜色
 const colorWrap = document.getElementById('colorList');
 colorArr.forEach(item=>{
     let sp = document.createElement('span');
-    sp.textContent=item.n; sp.style.color=item.css;
-    sp.style.background=(["#FFFFFF","#FFFF55","#55FFFF","#55FF55","#5555FF","#FF5555","#FF55FF"].includes(item.css))?"#333":"#f8f8f8";
+    sp.textContent=item.n;
+    sp.style.color=item.css;
+    sp.style.background = ["#FFFFFF","#FFFF55","#55FFFF","#55FF55","#5555FF","#FF5555","#FF55FF"].includes(item.css) ? "#333" : "#f8f8f8";
     sp.dataset.code=item.c;
     sp.onclick=()=>{insertCode(item.c);updatePreview()};
     colorWrap.appendChild(sp);
 })
-//格式按钮
+
+// 渲染格式
 const fmtWrap = document.getElementById('formatList');
 formatArr.forEach(item=>{
-    let sp = document.createElement('span'); sp.textContent=item.n; sp.dataset.code=item.c;
+    let sp = document.createElement('span');
+    sp.textContent=item.n;
+    sp.dataset.code=item.c;
     if(item.c==='§l')sp.style.fontWeight='bold';
     if(item.c==='§o')sp.style.fontStyle='italic';
     if(item.c==='§n')sp.style.textDecoration='underline';
@@ -352,7 +326,7 @@ formatArr.forEach(item=>{
     fmtWrap.appendChild(sp);
 })
 
-//%%快速插入
+// %% 快速插入
 document.querySelectorAll('#varBtnBox span').forEach(sp=>{
     sp.onclick=()=>{
         let v = sp.dataset.v;
@@ -364,29 +338,29 @@ document.querySelectorAll('#varBtnBox span').forEach(sp=>{
     }
 })
 
+// 插入符号
 function insertCode(code){
     let inp = txtInput;
     let s=inp.selectionStart,e=inp.selectionEnd,v=inp.value;
     inp.value = v.slice(0,s)+code+v.slice(e);
-    inp.focus(); inp.selectionStart=inp.selectionEnd=s+code.length;
+    inp.focus();
+    inp.selectionStart=inp.selectionEnd=s+code.length;
 }
 
-//【重点修复：\n强制转为换行】
+// 解析MC文字（修复换行）
 function parseMcText(str){
-    let html="",nowColor="#fff",nowStyle="",i=0;
+    if(!str) return "";
+    str = str.replace(/\\n/g, "\n");
+    let html="", nowColor="#fff", nowStyle="", i=0;
     while(i<str.length){
-        if(str[i]==="§"&&i+1<str.length){
-            let tag="§"+str[++i];i++;
-            if(colorMap[tag]){nowColor=colorMap[tag];nowStyle=""}
-            else if(fmtMap[tag]) nowStyle+=fmtMap[tag];
-        }else if(str[i] === '\\' && str[i+1] === 'n'){
-            //匹配 \n 两个字符
-            html += "<br>";
-            i += 2;
-            continue;
-        }else{
-            let c=str[i];
-            html += `<span style="color:${nowColor};${nowStyle}">${c}</span>`;
+        if(str[i]==="§" && i+1<str.length){
+            let tag = "§"+str[++i]; i++;
+            if(colorMap[tag]){ nowColor=colorMap[tag]; nowStyle=""; }
+            else if(fmtMap[tag]) nowStyle += fmtMap[tag];
+        } else if(str[i]==="\n"){
+            html += "<br>"; i++;
+        } else {
+            html += `<span style="color:${nowColor};${nowStyle}">${str[i]}</span>`;
             i++;
         }
     }
@@ -395,14 +369,15 @@ function parseMcText(str){
 
 function updatePreview(){
     let t = txtInput.value;
-    previewDom.innerHTML = t?parseMcText(t):"<span style='color:#aaa'>输入示例：§a第一行\\n第二行</span>";
+    previewDom.innerHTML = t ? parseMcText(t) : "<span style='color:#aaa'>输入示例：§a第一行\\n第二行</span>";
 }
+
 function refreshAllGamePreview(){
-    preTitleDom.innerHTML=parseMcText(saveData.title);
-    preSubDom.innerHTML=parseMcText(saveData.subtitle);
-    preActionDom.innerHTML=parseMcText(saveData.actionbar);
+    preTitleDom.innerHTML = parseMcText(saveData.title);
+    preSubDom.innerHTML = parseMcText(saveData.subtitle);
+    preActionDom.innerHTML = parseMcText(saveData.actionbar);
 }
-//新增：清除画面预览函数
+
 function clearGamePreview(){
     saveData = {title:"",subtitle:"",actionbar:""};
     preTitleDom.innerHTML = "";
@@ -410,7 +385,7 @@ function clearGamePreview(){
     preActionDom.innerHTML = "";
 }
 
-//切换类型面板
+// 切换类型面板
 const typeSel = document.getElementById('type');
 const textCfg = document.getElementById('textCfg');
 const scoreCfg = document.getElementById('scoreCfg');
@@ -420,29 +395,30 @@ const transCondCfg = document.getElementById('transCondCfg');
 
 typeSel.onchange=()=>{
     let v=typeSel.value;
-    textCfg.style.display=v=='text'?'block':'none';
-    scoreCfg.style.display=v=='score'?'block':'none';
-    selCfg.style.display=v=='selector'?'block':'none';
-    transOriginCfg.style.display=v=='translate_origin'?'block':'none';
-    transCondCfg.style.display=v=='translate_cond'?'block':'none';
+    textCfg.style.display = v=='text' ? 'block' : 'none';
+    scoreCfg.style.display = v=='score' ? 'block' : 'none';
+    selCfg.style.display = v=='selector' ? 'block' : 'none';
+    transOriginCfg.style.display = v=='translate_origin' ? 'block' : 'none';
+    transCondCfg.style.display = v=='translate_cond' ? 'block' : 'none';
     if(v !== 'translate_cond') withItemArr = [];
     renderWithList();
 }
 
-//自定义选择器
+// 自定义选择器
 const selMain = document.getElementById('selector');
 const selCustom = document.getElementById('customSel');
 selMain.onchange=()=>selCustom.style.display=selMain.value==='custom'?'block':'none';
 
-//with添加五种组件
+// With 列表
 document.getElementById('addWithItem').onclick=()=>{
     let t=document.getElementById('withAddType').value;
     let val=document.getElementById('withAddVal').value.trim();
-    if(!val){alert("填写内容");return;}
+    if(!val){alert("请填写内容");return;}
     withItemArr.push({type:t,val:val});
     document.getElementById('withAddVal').value="";
     renderWithList();
 }
+
 function renderWithList(){
     withListDom.innerHTML='<div class="tip">列表顺序=%%1、%%2、%%3...</div>';
     const nameMap={text:"文本",score:"纯计分",selector:"选择器",textscore:"带计分文本",nesttrans:"嵌套Translate"};
@@ -456,38 +432,40 @@ function renderWithList(){
     })
 }
 
-//拼接条件版with json
+// 构建with：输出 {"rawtext":[全部组件]}
 function buildWithJson(){
-    let arr=[];
+    let rawtextItems = [];
     withItemArr.forEach(it=>{
         let v=it.val.replace(/"/g,'\\"');
         if(it.type==='text'){
-            arr.push(`{"text":"${v}"}`);
-        }else if(it.type==='score'){
+            rawtextItems.push(`{"text":"${v}"}`);
+        }
+        else if(it.type==='score'){
             let sp=it.val.split("|");
-            let p=sp[0]||"@s",obj=sp[1]||sp[0];
-            arr.push(`{"score":{"name":"${p}","objective":"${obj}"}}`);
-        }else if(it.type==='selector'){
-            arr.push(`{"selector":"${v}"}`);
-        }else if(it.type==='textscore'){
+            let p=sp[0]||"@s", obj=sp[1]||sp[0];
+            rawtextItems.push(`{"score":{"name":"${p}","objective":"${obj}"}}`);
+        }
+        else if(it.type==='selector'){
+            rawtextItems.push(`{"selector":"${v}"}`);
+        }
+        else if(it.type==='textscore'){
             let sp=it.val.split("|");
-            let tx=sp[0]||"",p=sp[1]||"@s",obj=sp[2]||"";
-            arr.push(`{"text":"${tx}","score":{"name":"${p}","objective":"${obj}"}}`);
-        }else if(it.type==='nesttrans'){
+            let tx=sp[0]||"", p=sp[1]||"@s", obj=sp[2]||"";
+            rawtextItems.push(`{"text":"${tx}","score":{"name":"${p}","objective":"${obj}"}}`);
+        }
+        else if(it.type==='nesttrans'){
             let sp=it.val.split("|");
             let k=sp[0];
-            let para=sp[1]?sp[1].split(',').map(x=>`"${x.trim().replace(/"/g,'\\"')}"`):[];
-            if(para.length>0){
-                arr.push(`{"translate":"${k}","with":[${para.join(',')}]}`);
-            }else{
-                arr.push(`{"translate":"${k}"}`);
-            }
+            let para=sp[1] ? sp[1].split(',').map(x=>`"${x.trim().replace(/"/g,'\\"')}"`).join(',') : "";
+            let item = para ? `{"translate":"${k}","with":[${para}]}` : `{"translate":"${k}"}`;
+            rawtextItems.push(item);
         }
-    })
-    return arr.join(',');
+    });
+    if(rawtextItems.length === 0) return "";
+    return `{"rawtext":[${rawtextItems.join(',')}]}`;
 }
 
-//添加片段
+// 添加片段
 document.getElementById('addPart').onclick=()=>{
     let t=typeSel.value;let part=null;
     if(t==='text'){
@@ -507,19 +485,13 @@ document.getElementById('addPart').onclick=()=>{
         let wStr=document.getElementById('originWith').value.trim();
         if(!k){alert("请填写原版Key");return;}
         let kk=k.replace(/"/g,'\\"');
-        let json;
-        if(wStr){
-            let pArr=wStr.split(',').map(x=>`"${x.trim().replace(/"/g,'\\"')}"`);
-            json=`{"translate":"${kk}","with":[${pArr.join(',')}]}`;
-        }else{
-            json=`{"translate":"${kk}"}`;
-        }
+        let json = wStr ? `{"translate":"${kk}","with":[${wStr.split(',').map(x=>`"${x.trim().replace(/"/g,'\\"')}"`).join(',')}]}`:`{"translate":"${kk}"}`;
         part={type:'originTrans',data:json,rawTxt:`[原版本地化:${k}]`};
     }else if(t==='translate_cond'){
         let key=condKeyDom.value.trim();if(!key){alert("条件文案不能为空");return;}
-        let kk = key.replace(/"/g,'\\"');
         let wstr=buildWithJson();
-        let json= wstr?`{"translate":"${kk}","with":[${wstr}]}`:`{"translate":"${kk}"}`;
+        // 关键修改：去掉with外层[] → "with":${wstr}
+        let json= wstr?`{"translate":"${key.replace(/"/g,'\\"')}","with":${wstr}}`:`{"translate":"${key.replace(/"/g,'\\"')}"}`;
         part={type:'condTrans',data:json,rawTxt:`[条件Translate:${key}]`};
     }
     rawTextArr.push(part); renderPartList();
@@ -537,36 +509,45 @@ function renderPartList(){
     })
 }
 
-//生成指令
+// 生成指令
 document.getElementById('gen').onclick=()=>{
-    if(rawTextArr.length===0){alert("先添加片段");return;}
+    if(rawTextArr.length===0){alert("请先添加片段");return;}
     let tar = selMain.value==='custom'?selCustom.value.trim():selMain.value;
-    if(selMain.value==='custom'&&!tar){alert("填写自定义选择器");return;}
+    if(selMain.value==='custom'&&!tar){alert("请填写自定义选择器");return;}
     let pos=document.getElementById('pos').value;
     let rawStr=rawTextArr.map(i=>i.data).join(',');
     let cmd=`titleraw ${tar} ${pos} {"rawtext":[${rawStr}]}`;
     document.getElementById('result').value=cmd;
-    saveData[pos]=rawTextArr.map(x=>x.rawTxt).join("");
+    saveData[pos] = rawTextArr.map(x=>x.rawTxt).join("");
     refreshAllGamePreview();
 }
 
-//复制
+// 复制（优化兼容性）
 document.getElementById('copy').onclick=async()=>{
-    let res=document.getElementById('result').value;
-    if(!res){alert("无指令");return;}
-    try{await navigator.clipboard.writeText(res);alert("复制成功")}catch(e){
-        let ta=document.getElementById('result');ta.select();document.execCommand('copy');alert("复制成功")
+    let res=document.getElementById('result').value.trim();
+    if(!res){alert("暂无指令可复制");return;}
+    try {
+        await navigator.clipboard.writeText(res);
+        alert("✅ 复制成功！");
+    } catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = res; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert("✅ 复制成功！");
     }
 }
+
+// 绑定按钮
 document.getElementById('clearInput').onclick=()=>{txtInput.value="";updatePreview()};
 document.getElementById('clearAllPart').onclick=()=>{rawTextArr=[];renderPartList()};
 document.getElementById('clearResult').onclick=()=>document.getElementById('result').value="";
-//绑定清除预览按钮事件
 document.getElementById('clearPreview').onclick = clearGamePreview;
-document.getElementById('pos').onchange=()=>nowPos=document.getElementById('pos').value;
 txtInput.oninput=updatePreview;
 
-updatePreview();refreshAllGamePreview();renderPartList();
+updatePreview();
+refreshAllGamePreview();
+renderPartList();
 </script>
 </body>
 </html>
