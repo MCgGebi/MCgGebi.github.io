@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC Dialog 编辑器</title>
+    <link href="https://cdn.jsdelivr.net/npm/@chinese-fonts/unifont@1.0.0/dist/unifont.css" rel="stylesheet">
+    <style>
+        :root{--bg:#1a1a1a;--panel:#2b2b2b;--border:#444;--text:#e0e0e0;--accent:#3b8526;--danger:#c0392b;--blue:#2980b9;--purple:#8e44ad;--warn:#f39c12;--nav-bg:#222;--mc-font:'Unifont','Microsoft YaHei',monospace}
+        *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+        .navbar{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;height:48px;flex-shrink:0;position:sticky;top:0;z-index:100}
+        .nav-brand{font-size:15px;font-weight:bold;color:#fff;display:flex;align-items:center;gap:8px;white-space:nowrap}
+        .nav-brand .version{font-size:10px;background:var(--accent);color:#fff;padding:2px 6px;border-radius:3px;font-weight:normal}
+        .nav-spacer{flex:1}
+        .nav-menu-toggle{background:none;border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s}
+        .nav-menu-toggle:hover{background:rgba(255,255,255,.08);border-color:var(--accent)}
+        .nav-dropdown{position:absolute;top:48px;right:20px;background:var(--panel);border:1px solid var(--border);border-radius:6px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;max-height:0;opacity:0;transition:max-height .25s ease,opacity .2s ease;pointer-events:none;z-index:101}
+        .nav-dropdown.open{max-height:300px;opacity:1;pointer-events:auto}
+        .nav-dropdown button{display:block;width:100%;padding:10px 16px;background:none;border:none;color:var(--text);text-align:left;font-size:13px;cursor:pointer;transition:background .15s}
+        .nav-dropdown button:hover{background:rgba(255,255,255,.06)}
+        .nav-dropdown button:not(:last-child){border-bottom:1px solid rgba(255,255,255,.06)}
+        .main-content{display:flex;gap:20px;padding:20px;flex:1;min-height:0}
+        @media(max-width:1000px){.main-content{flex-direction:column}}
+        .editor,.preview-panel{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+        label{font-size:12px;color:#aaa;margin-bottom:2px;display:block}
+        input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px;border-radius:4px;outline:none;font-size:13px}
+        input:focus,select:focus{border-color:var(--accent)}
+        ::placeholder{color:#666!important;opacity:1!important;font-style:italic}
+        button.ui-btn{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;transition:opacity .2s}
+        button.ui-btn:hover{opacity:.85}
+        .btn-add{background:var(--accent);color:white}.btn-add-alt{background:var(--blue);color:white}
+        .btn-del{background:var(--danger);color:white;width:22px;height:22px;padding:0;font-size:12px;line-height:22px;text-align:center;border-radius:3px;border:none;cursor:pointer;flex-shrink:0}
+        .card{background:var(--panel);border:1px solid var(--border);border-radius:6px;position:relative;overflow:hidden;margin-bottom:8px;transition:border-color .2s}
+        .card.open{border-color:var(--accent)}
+        .card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;background:rgba(255,255,255,.02)}
+        .card-header:hover{background:rgba(255,255,255,.05)}
+        .card-arrow{font-size:10px;color:#666;transition:transform .2s;width:12px;text-align:center}
+        .card.open .card-arrow{transform:rotate(90deg);color:var(--accent)}
+        .card-body{max-height:0;overflow:hidden;transition:max-height .3s ease-out,padding .3s ease-out;padding:0 12px;display:flex;flex-direction:column;gap:6px}
+        .card.open .card-body{max-height:2000px;padding:12px;transition:max-height .4s ease-in,padding .3s ease-in}
+        .row{display:flex;gap:6px;flex-wrap:wrap}.row>*{flex:1;min-width:60px}
+        .section-title{font-size:13px;font-weight:bold;margin-top:8px;color:#f1c40f;display:flex;justify-content:space-between;align-items:center}
+        .badge{font-size:9px;font-weight:bold;padding:2px 5px;border-radius:3px;flex-shrink:0}
+        .style-toggles{display:flex;gap:3px;margin-top:2px;flex-wrap:wrap}
+        .style-btn{min-width:28px;flex:0 0 auto;padding:4px 0;background:#3a3a3a;color:#888;border:1px solid var(--border);border-radius:3px;cursor:pointer;text-align:center;font-size:12px;user-select:none}
+        .style-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+        .extra-segment{background:#222;border:1px dashed #555;border-radius:4px;padding:6px;margin-top:4px;position:relative}
+        
+        /* ✅ TC 事件编辑区样式 */
+        .tc-events-section{margin-top:8px;border-top:1px dashed #444;padding-top:8px}
+        .tc-events-toggle{font-size:11px;color:#888;cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;margin-bottom:6px}
+        .tc-events-toggle:hover{color:var(--accent)}
+        .tc-events-toggle .arrow{transition:transform .2s;font-size:9px}
+        .tc-events-toggle.open .arrow{transform:rotate(90deg)}
+        .tc-events-body{display:none;gap:6px;flex-direction:column}
+        .tc-events-body.open{display:flex}
+        .event-group{background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:8px}
+        .event-group label{font-size:11px;color:var(--accent);margin-bottom:4px;font-weight:bold}
+        .event-row{display:flex;gap:6px;align-items:center}
+        .event-row select{flex:0 0 140px}
+        .event-row input{flex:1}
+        .event-remove{background:none;border:none;color:#666;cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0}
+        .event-remove:hover{color:var(--danger)}
+        .event-add-btn{background:none;border:1px dashed #555;color:#888;border-radius:3px;padding:3px 8px;font-size:11px;cursor:pointer;text-align:center;transition:all .15s}
+        .event-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+        
+        .json-status{font-size:11px;padding:4px 8px;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;gap:6px;font-weight:bold}
+        .json-status.valid{background:rgba(59,133,38,.2);color:#6ddb89}
+        .json-status.invalid{background:rgba(192,57,43,.2);color:#e74c3c}
+        .json-status.warn{background:rgba(243,156,18,.2);color:#f1c40f}
+        #jsonEditor{background:#111;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'Consolas','Monaco',monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-all;overflow-y:auto;min-height:150px;max-height:400px;color:#d4d4d4;outline:none;tab-size:2;caret-color:#fff}
+        #jsonEditor:focus{border-color:var(--accent)}
+        .json-key{color:#9cdcfe}.json-string{color:#ce9178}.json-number{color:#b5cea8}.json-boolean{color:#569cd6}.json-null{color:#569cd6}.json-bracket{color:#ffd700}
+        .preview-header{display:flex;align-items:center;gap:8px}
+        .preview-header h2{flex:1;margin:0}
+        .btn-refresh-mini{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--panel);color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s;flex-shrink:0;padding:0;line-height:1}
+        .btn-refresh-mini:hover{border-color:var(--accent);color:var(--accent);background:rgba(59,133,38,.1)}
+        .btn-refresh-mini.spinning svg{animation:spin .5s ease}
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        .preview-controls{display:flex;align-items:center;gap:10px;background:var(--panel);padding:8px 12px;border-radius:6px;border:1px solid var(--border);font-size:12px}
+        .preview-controls input[type=range]{flex:1}
+        .mc-preview-wrapper{flex:1;display:flex;align-items:center;justify-content:center;background:#000;border-radius:8px;overflow:hidden;position:relative;aspect-ratio:16/9;max-height:600px;width:100%}
+        .mc-dirt-bg{position:absolute;inset:0;z-index:0;background-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/block/dirt.png');image-rendering:pixelated;background-size:64px 64px}
+        .mc-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:1}
+        .mc-dialog-wrapper{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:95vw;max-height:100%;padding:20px;box-sizing:border-box;margin:auto}
+        .mc-text{font-family:var(--mc-font)!important;line-height:1.5;-webkit-font-smoothing:none;image-rendering:pixelated}
+        .mc-title-outer{flex-shrink:0;text-shadow:1px 1px 0 #3f3f3f;text-align:center}
+        .mc-panel{flex:1 1 auto;min-height:0;max-height:100%;width:300px;max-width:100%;background:rgba(0,0,0,.75);border:2px solid #555;border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/container/background.png') 2 stretch;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;overflow-y:auto;box-sizing:border-box}
+        .mc-panel::-webkit-scrollbar{width:6px}.mc-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:3px}
+        .mc-body-text{white-space:pre-wrap;text-shadow:1px 1px 0 #3f3f3f}
+        .mc-actions-grid{display:grid;gap:4px;justify-content:center;width:100%;margin-top:4px;overflow:hidden}
+        .mc-button{font-family:var(--mc-font)!important;line-height:1.4;padding:6px 4px;min-height:20px;color:#FFF;cursor:pointer;text-align:center;word-break:break-word;border:2px solid transparent;border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/widget/button.png') 2 fill stretch;background:transparent;text-shadow:1px 1px 0 #3f3f3f;width:100%!important}
+        .mc-button:hover{border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/widget/button_highlighted.png') 2 fill stretch;color:#FFFF00!important}
+        .mc-exit-btn{flex-shrink:0;margin-top:4px;width:300px;max-width:100%}
+        .action-hint{font-size:11px;color:#888;margin-top:2px;padding:4px 6px;background:#1a1a1a;border-radius:3px;font-family:'Consolas',monospace;line-height:1.4}
+        .action-hint code{color:var(--accent);font-weight:bold}
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-brand">⚙️ MC Dialog 编辑器 <span class="version">1.21.6+</span></div>
+    <div class="nav-spacer"></div>
+    <button class="nav-menu-toggle" onclick="toggleNavMenu()" title="快捷操作菜单">☰</button>
+    <div class="nav-dropdown" id="navDropdown">
+        <button onclick="showImportModal();closeNavMenu()">📥 导入 JSON</button>
+        <button onclick="copyJson();closeNavMenu()">📋 复制 JSON</button>
+        <button onclick="downloadJson();closeNavMenu()">💾 下载 JSON</button>
+        <button onclick="resetAll();closeNavMenu()">🔄 重置编辑器</button>
+    </div>
+</nav>
+
+<div class="main-content">
+    <div class="editor">
+        <div class="card open">
+            <div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#f1c40f;color:#000;">ROOT</span><span style="flex:1;font-size:12px;color:#ccc;" id="headerPreview">全局设置</span></div>
+            <div class="card-body">
+                <div class="row">
+                    <div><label>对话框类型</label><select id="dialogType" onchange="generate()"><option value="minecraft:multi_action">multi_action</option><option value="minecraft:confirmation">confirmation</option><option value="minecraft:notice">notice</option></select></div>
+                    <div><label>列数</label><input type="number" id="columns" value="2" min="1" max="10" placeholder="按钮排列列数" onchange="generate()"></div>
+                </div>
+                <label>主标题 (TextComponent)</label><div id="titleEditor"></div>
+                <label>外部标题 (纯文本)</label><input id="extTitleInput" placeholder="可选，留空则不显示" oninput="state.external_title=this.value;generate()">
+                <div class="row"><div><label>ESC关闭</label><select id="escClose" onchange="generate()"><option value="true">是</option><option value="false">否</option></select></div></div>
+            </div>
+        </div>
+        <div class="section-title">📝 正文内容 <button class="ui-btn btn-add" style="padding:2px 8px;" onclick="addBody()">+ 添加</button></div>
+        <div id="bodyList"></div>
+        <div class="section-title">🔘 面板内按钮 <button class="ui-btn btn-add-alt" style="padding:2px 8px;" onclick="addAction()">+ 添加</button></div>
+        <div id="actionList"></div>
+        <div class="section-title">🚪 退出按钮</div>
+        <div id="exitActionEditor"></div>
+    </div>
+
+    <div class="preview-panel">
+        <div class="preview-header">
+            <h2>🎮 游戏内预览</h2>
+            <button class="btn-refresh-mini" onclick="manualRefreshPreview(this)" title="手动刷新预览">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+            </button>
+        </div>
+        <div class="preview-controls">
+            <label>字号:</label>
+            <input type="range" id="previewFontSize" min="4" max="24" value="8" step="1" oninput="updatePreviewFontSize(this.value)">
+            <span id="fontSizeDisplay" style="min-width:30px;text-align:right;color:var(--accent);font-weight:bold;">8px</span>
+            <button class="ui-btn" style="background:#555;color:#fff;padding:2px 8px;" onclick="resetPreviewFontSize()">↺</button>
+        </div>
+        <div class="mc-preview-wrapper">
+            <div class="mc-dirt-bg"></div><div class="mc-overlay"></div>
+            <div class="mc-dialog-wrapper">
+                <div class="mc-title-outer mc-text" id="pvTitle"></div>
+                <div class="mc-panel">
+                    <div id="pvContent" style="display:flex;flex-direction:column;gap:6px;align-items:center;"></div>
+                    <div class="mc-actions-grid" id="pvActions"></div>
+                </div>
+                <div class="mc-exit-btn" id="pvExitAction"></div>
+            </div>
+        </div>
+        <div class="card open" id="jsonCard" style="margin-top:12px;">
+            <div class="card-header" onclick="toggleCard(this)">
+                <span class="card-arrow">▶</span>
+                <span style="font-size:14px;font-weight:bold;color:#fff;flex:1;">📋 JSON 数据</span>
+            </div>
+            <div class="card-body">
+                <div id="jsonStatus" class="json-status valid">✅ JSON 格式正确</div>
+                <pre id="jsonEditor" contenteditable="true" spellcheck="false"></pre>
+                <div class="row" style="margin-top:6px;">
+                    <button class="ui-btn btn-add" onclick="showImportModal()">📥 导入</button>
+                    <button class="ui-btn btn-add-alt" id="btnApplyJson" onclick="applyJsonToEditor()" disabled>🔄 应用</button>
+                    <button class="ui-btn btn-add" onclick="copyJson()">📋 复制</button>
+                    <button class="ui-btn" style="background:#555;color:#fff;" onclick="downloadJson()">💾 下载</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="importModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:center;justify-content:center;">
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;width:600px;max-width:90vw;display:flex;flex-direction:column;gap:10px;">
+        <h3 style="color:#fff;">📥 导入 Dialog JSON</h3>
+        <textarea id="importInput" style="height:300px;font-family:Consolas,monospace;font-size:12px;background:#111;color:#d4d4d4;border:1px solid var(--border);padding:10px;border-radius:4px;resize:vertical;" placeholder="在此粘贴完整的 dialog JSON..."></textarea>
+        <div id="importStatus" class="json-status valid" style="display:none;"></div>
+        <div class="row">
+            <button class="ui-btn btn-add" onclick="confirmImport()">✅ 确认导入</button>
+            <button class="ui-btn" style="background:#555;color:#fff;" onclick="closeImportModal()">❌ 取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var COLORS=[{v:"white",l:"白色"},{v:"black",l:"黑色"},{v:"dark_blue",l:"深蓝"},{v:"dark_green",l:"深绿"},{v:"dark_aqua",l:"深青"},{v:"dark_red",l:"深红"},{v:"dark_purple",l:"深紫"},{v:"gold",l:"金色"},{v:"gray",l:"灰色"},{v:"dark_gray",l:"深灰"},{v:"blue",l:"蓝色"},{v:"green",l:"绿色"},{v:"aqua",l:"青色"},{v:"red",l:"红色"},{v:"light_purple",l:"浅紫"},{v:"yellow",l:"黄色"}];
+var STYLES=['bold','italic','underlined','strikethrough','obfuscated'];
+var STYLE_LABELS={bold:'<b>B</b>',italic:'<i>I</i>',underlined:'<u>U</u>',strikethrough:'<s>S</s>',obfuscated:'§k'};
+var ACTION_TYPES=[{value:"minecraft:run_command",label:"执行命令",hint:"语法: <code>/say hello</code>"},{value:"minecraft:show_dialog",label:"打开对话框",hint:"语法: <code>namespace:dialog_id</code>"},{value:"minecraft:open_url",label:"打开链接",hint:"语法: <code>https://example.com</code>"}];
+var DEFAULT_BTN_WIDTH=140;
+
+// ✅ 事件类型定义
+var CLICK_EVENT_TYPES=[
+    {value:"",label:"无点击事件"},
+    {value:"open_url",label:"打开链接",placeholder:"https://example.com"},
+    {value:"run_command",label:"执行命令",placeholder:"/say hello"},
+    {value:"suggest_command",label:"建议命令",placeholder:"/msg @p "},
+    {value:"change_page",label:"翻书页码",placeholder:"2"},
+    {value:"show_dialog",label:"显示对话框",placeholder:"namespace:dialog_id"}
+];
+var HOVER_EVENT_TYPES=[
+    {value:"",label:"无悬停事件"},
+    {value:"show_text",label:"显示文本",placeholder:"悬停提示文本..."},
+    {value:"show_item",label:"显示物品",placeholder:'{"id":"diamond","count":1}'},
+    {value:"show_entity",label:"显示实体",placeholder:'{"type":"pig","id":"uuid"}'}
+];
+
+var defaultState=function(){return{type:"minecraft:multi_action",title:{text:"Dialog Title",color:"gold",bold:true},external_title:"",columns:2,can_close_with_escape:true,body:[{type:"minecraft:plain_message",contents:{text:"Hello World!",color:"white"},width:300}],actions:[{label:{text:"Click Me",color:"aqua"},width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}}],exit_action:{enabled:true,label:{text:"Exit",color:"red"},width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}}};};
+var state=defaultState();
+var tcEditorCreated={},actionTypeCache={},isSyncingJson=false,highlightTimer=null,exitCache='';
+
+/** ==================== 导航栏 ==================== */
+function toggleNavMenu(){document.getElementById('navDropdown').classList.toggle('open');}
+function closeNavMenu(){document.getElementById('navDropdown').classList.remove('open');}
+document.addEventListener('click',function(e){var dd=document.getElementById('navDropdown');var toggle=document.querySelector('.nav-menu-toggle');if(dd.classList.contains('open')&&!dd.contains(e.target)&&!toggle.contains(e.target)){closeNavMenu();}});
+function manualRefreshPreview(btn){btn.classList.add('spinning');try{renderPreview(JSON.parse(getJsonText()));}catch(e){generate();}setTimeout(function(){btn.classList.remove('spinning');},500);}
+function resetAll(){if(!confirm('确定要重置所有内容吗？'))return;state=defaultState();tcEditorCreated={};actionTypeCache={};exitCache='';document.getElementById('titleEditor').innerHTML='';document.getElementById('bodyList').innerHTML='';document.getElementById('actionList').innerHTML='';document.getElementById('dialogType').value=state.type;document.getElementById('columns').value=state.columns;document.getElementById('escClose').value=state.can_close_with_escape;document.getElementById('extTitleInput').value=state.external_title;ensureTCEditor('titleEditor','title');renderBodies();renderActions();initExitAction();generate();}
+
+/** ==================== JSON 高亮 ==================== */
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlightJson(jsonStr){if(!jsonStr)return '';var safe=escapeHtml(jsonStr);return safe.replace(/("(\\u[a-zA-Z0-9]{4}|\$$^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,function(match){var cls='json-number';if(/^"/.test(match)){cls=/:$/.test(match)?'json-key':'json-string';}else if(/true|false/.test(match)){cls='json-boolean';}else if(/null/.test(match)){cls='json-null';}return '<span class="'+cls+'">'+match+'</span>';}).replace(/([{}$$$$])/g,'<span class="json-bracket">$1</span>');}
+function getJsonText(){var el=document.getElementById('jsonEditor');return el.innerText||el.textContent||'';}
+function setJsonHighlighted(str,preserveCursor){var el=document.getElementById('jsonEditor');var offset=0;if(preserveCursor){var sel=window.getSelection();if(sel.rangeCount>0){var range=sel.getRangeAt(0);var preRange=range.cloneRange();preRange.selectNodeContents(el);preRange.setEnd(range.startContainer,range.startOffset);offset=preRange.toString().length;}}el.innerHTML=highlightJson(str);if(preserveCursor&&offset>0){try{var newRange=document.createRange();var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null,false);var charCount=0,node=null;while(node=walker.nextNode()){var len=node.length;if(charCount+len>=offset){newRange.setStart(node,offset-charCount);newRange.collapse(true);var sel2=window.getSelection();sel2.removeAllRanges();sel2.addRange(newRange);break;}charCount+=len;}}catch(e){}}}
+function onJsonInput(){clearTimeout(highlightTimer);var str=getJsonText();validateJson(str,false);highlightTimer=setTimeout(function(){setJsonHighlighted(str,true);},300);}
+
+/** ==================== 基础工具 ==================== */
+function createTC(t,c,s,e){return{text:t||"",color:c||"white",extra:e||[],bold:s&&s.bold,italic:s&&s.italic,underlined:s&&s.underlined,strikethrough:s&&s.strikethrough,obfuscated:s&&s.obfuscated};}
+function toggleCard(el){el.closest('.card').classList.toggle('open');}
+function updateHeaderPreview(id,text){var el=document.getElementById(id);if(el)el.textContent=text||'(空)';}
+function buildColorOpts(sel){var h="";for(var i=0;i<COLORS.length;i++)h+='<option value="'+COLORS[i].v+'"'+(sel===COLORS[i].v?' selected':'')+'>'+COLORS[i].l+'</option>';return h;}
+function getVal(p){var ps=p.split('.'),o=state;for(var i=0;i<ps.length;i++){if(o==null)return;o=o[ps[i]];}return o;}
+function setVal(p,k,v){var ps=p.split('.'),o=state;for(var i=0;i<ps.length-1;i++)o=o[ps[i]];o[ps[ps.length-1]][k]=v;}
+
+/** ==================== ✅ TC 编辑器（含事件） ==================== */
+function ensureTCEditor(cid,path){
+    var c=document.getElementById(cid);if(!c)return;
+    if(tcEditorCreated[cid]){syncTCValues(cid,path);return;}
+    tcEditorCreated[cid]=true;
+    
+    // 构建事件选项 HTML
+    var clickOpts=CLICK_EVENT_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('');
+    var hoverOpts=HOVER_EVENT_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('');
+    
+    c.innerHTML='<div class="row"><div><label>文本</label><input data-p="'+path+'" data-k="text" placeholder="输入显示文本..." oninput="onTCInput(this)"></div><div><label>颜色</label><select data-p="'+path+'" data-k="color" onchange="onTCInput(this)">'+buildColorOpts('white')+'</select></div></div>'
+    +'<div class="style-toggles" id="'+cid+'_st">'+STYLES.map(function(s){return '<div class="style-btn" data-s="'+s+'" onclick="toggleStyle(\''+path+'\',\''+s+'\',\''+cid+'_st\')">'+STYLE_LABELS[s]+'</div>';}).join('')+'</div>'
+    +'<div style="margin-top:6px;font-size:11px;color:#888;display:flex;justify-content:space-between;">Extra <button class="ui-btn btn-add" style="padding:1px 6px;font-size:10px;" onclick="addExtra(\''+path+'\',\''+cid+'\')">+</button></div><div id="'+cid+'_ex"></div>'
+    // ✅ 事件编辑区
+    +'<div class="tc-events-section">'
+    +'<div class="tc-events-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><span class="arrow">▶</span> ⚡ 交互事件 (点击/悬停)</div>'
+    +'<div class="tc-events-body" id="'+cid+'_events">'
+    +'<div class="event-group"><label>🖱️ 点击事件 clickEvent</label><div class="event-row"><select id="'+cid+'_clickType" onchange="onTCEventTypeChange(\''+path+'\',\'click\',this.value,\''+cid+'\')">'+clickOpts+'</select><input id="'+cid+'_clickVal" placeholder="选择事件类型后填写值..." oninput="onTCEventValChange(\''+path+'\',\'click\',this.value)"></div></div>'
+    +'<div class="event-group"><label>💬 悬停事件 hoverEvent</label><div class="event-row"><select id="'+cid+'_hoverType" onchange="onTCEventTypeChange(\''+path+'\',\'hover\',this.value,\''+cid+'\')">'+hoverOpts+'</select><input id="'+cid+'_hoverVal" placeholder="选择事件类型后填写值..." oninput="onTCEventValChange(\''+path+'\',\'hover\',this.value)"></div></div>'
+    +'</div></div>';
+    
+    syncTCValues(cid,path);
+}
+
+function syncTCValues(cid,path){
+    var tc=getVal(path),c=document.getElementById(cid);if(!tc||!c)return;
+    var els=c.querySelectorAll('[data-k]');
+    for(var i=0;i<els.length;i++){var k=els[i].dataset.k,v=tc[k]||'';if(document.activeElement!==els[i])els[i].tagName==='SELECT'?els[i].value=v||'white':els[i].value=v;}
+    for(var j=0;j<STYLES.length;j++)updateBtnState(cid+'_st',STYLES[j],!!tc[STYLES[j]]);
+    syncExtras(cid,path);
+    syncEvents(cid,path);
+}
+
+// ✅ 同步事件 UI
+function syncEvents(cid,path){
+    var tc=getVal(path);if(!tc)return;
+    // clickEvent
+    var clickSel=document.getElementById(cid+'_clickType');
+    var clickInp=document.getElementById(cid+'_clickVal');
+    if(clickSel&&document.activeElement!==clickSel){
+        var cType=(tc.clickEvent&&tc.clickEvent.action)||'';
+        clickSel.value=cType;
+        var cVal='';
+        if(cType==='open_url')cVal=tc.clickEvent.url||'';
+        else if(cType==='run_command'||cType==='suggest_command')cVal=tc.clickEvent.command||'';
+        else if(cType==='change_page')cVal=tc.clickEvent.page||'';
+        else if(cType==='show_dialog')cVal=tc.clickEvent.dialog||'';
+        if(clickInp&&document.activeElement!==clickInp){clickInp.value=cVal;clickInp.placeholder=getEventPlaceholder('click',cType);}
+    }
+    // hoverEvent
+    var hoverSel=document.getElementById(cid+'_hoverType');
+    var hoverInp=document.getElementById(cid+'_hoverVal');
+    if(hoverSel&&document.activeElement!==hoverSel){
+        var hType=(tc.hoverEvent&&tc.hoverEvent.action)||'';
+        hoverSel.value=hType;
+        var hVal='';
+        if(hType==='show_text'){
+            // show_text 的值可能是字符串或 TextComponent
+            var ht=tc.hoverEvent.contents||tc.hoverEvent.value||'';
+            hVal=(typeof ht==='string')?ht:(ht.text||JSON.stringify(ht));
+        }else if(hType==='show_item')hVal=JSON.stringify(tc.hoverEvent.contents||{});
+        else if(hType==='show_entity')hVal=JSON.stringify(tc.hoverEvent.contents||{});
+        if(hoverInp&&document.activeElement!==hoverInp){hoverInp.value=hVal;hoverInp.placeholder=getEventPlaceholder('hover',hType);}
+    }
+}
+
+function getEventPlaceholder(category,type){
+    var list=category==='click'?CLICK_EVENT_TYPES:HOVER_EVENT_TYPES;
+    for(var i=0;i<list.length;i++)if(list[i].value===type)return list[i].placeholder||'';
+    return '选择事件类型后填写值...';
+}
+
+// ✅ 事件类型切换
+function onTCEventTypeChange(path,category,type,cid){
+    var tc=getVal(path);if(!tc)return;
+    if(!type){
+        delete tc.clickEvent;delete tc.hoverEvent;
+    }else if(category==='click'){
+        tc.clickEvent={action:type};
+    }else{
+        tc.hoverEvent={action:type};
+    }
+    // 更新 placeholder
+    var inp=document.getElementById(cid+'_'+category+'Val');
+    if(inp)inp.placeholder=getEventPlaceholder(category,type);
+    generate();
+}
+
+// ✅ 事件值变更
+function onTCEventValChange(path,category,val){
+    var tc=getVal(path);if(!tc)return;
+    if(category==='click'&&tc.clickEvent){
+        var t=tc.clickEvent.action;
+        if(t==='open_url')tc.clickEvent.url=val;
+        else if(t==='run_command'||t==='suggest_command')tc.clickEvent.command=val;
+        else if(t==='change_page')tc.clickEvent.page=val;
+        else if(t==='show_dialog')tc.clickEvent.dialog=val;
+    }else if(category==='hover'&&tc.hoverEvent){
+        var ht=tc.hoverEvent.action;
+        if(ht==='show_text')tc.hoverEvent.contents=val;
+        else if(ht==='show_item'||ht==='show_entity'){
+            try{tc.hoverEvent.contents=JSON.parse(val);}catch(e){tc.hoverEvent.contents=val;}
+        }
+    }
+    generate();
+}
+
+function onTCInput(el){setVal(el.dataset.p,el.dataset.k,el.value);generate();}
+function toggleStyle(p,s,cid){var t=getVal(p);if(!t)return;t[s]=!t[s];updateBtnState(cid,s,t[s]);generate();}
+function updateBtnState(cid,s,a){var c=document.getElementById(cid);if(!c)return;var bs=c.querySelectorAll('.style-btn');for(var i=0;i<bs.length;i++)if(bs[i].dataset.s===s)bs[i].classList.toggle('active',a);}
+function addExtra(p,cid){var t=getVal(p);if(!t)return;if(!t.extra)t.extra=[];t.extra.push(createTC("text","white"));syncExtras(cid,p);generate();}
+function removeExtra(p,i,cid){var t=getVal(p);if(!t||!t.extra)return;t.extra.splice(i,1);syncExtras(cid,p);generate();}
+function toggleExtraStyle(p,i,s,cid){var t=getVal(p);if(!t||!t.extra||!t.extra[i])return;t.extra[i][s]=!t.extra[i][s];updateBtnState(cid,s,t.extra[i][s]);generate();}
+function syncExtras(cid,path){var el=document.getElementById(cid+"_ex");if(!el)return;var t=getVal(path),ex=(t&&t.extra)||[];if(el.children.length!==ex.length){var h="";for(var i=0;i<ex.length;i++){var ep=path+'.extra.'+i,sid=cid+'_ex'+i;h+='<div class="extra-segment" data-i="'+i+'"><div style="display:flex;justify-content:flex-end;"><button class="btn-del" onclick="removeExtra(\''+path+'\','+i+',\''+cid+'\')">✕</button></div><div class="row"><div><input data-p="'+ep+'" data-k="text" placeholder="附加文本..." oninput="onTCInput(this)"></div><div><select data-p="'+ep+'" data-k="color" onchange="onTCInput(this)">'+buildColorOpts(ex[i].color)+'</select></div></div><div class="style-toggles" id="'+sid+'">'+STYLES.map(function(s){return '<div class="style-btn '+(ex[i][s]?'active':'')+'" data-s="'+s+'" onclick="toggleExtraStyle(\''+path+'\','+i+',\''+s+'\',\''+sid+'\')">'+STYLE_LABELS[s]+'</div>';}).join('')+'</div></div>';}el.innerHTML=h;}else{for(var m=0;m<ex.length;m++){var seg=el.querySelector('[data-i="'+m+'"]');if(!seg)continue;var ins=seg.querySelectorAll('[data-k]');for(var n=0;n<ins.length;n++){var k=ins[n].dataset.k,v=ex[m][k]||'';if(document.activeElement!==ins[n])ins[n].tagName==='SELECT'?ins[n].value=v||'white':ins[n].value=v;}for(var p=0;p<STYLES.length;p++)updateBtnState(cid+'_ex'+m,STYLES[p],!!ex[m][STYLES[p]]);}}}
+
+/** ==================== 列表渲染 ==================== */
+function renderBodies(){var c=document.getElementById('bodyList');while(c.children.length>state.body.length)c.lastChild.remove();for(var i=0;i<state.body.length;i++){var d=c.children[i];if(!d){d=document.createElement('div');d.className='card open';d.innerHTML='<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#2980b9;color:#fff;">BODY</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="bp_'+i+'"></span><button class="btn-del" onclick="event.stopPropagation();state.body.splice('+i+',1);renderBodies();generate()">✕</button></div><div class="card-body"><div id="btc_'+i+'"></div><div class="row"><div><label>宽度(px)</label><input type="number" id="bw_'+i+'" placeholder="默认自适应" oninput="state.body['+i+'].width=parseInt(this.value)||undefined;generate()"></div></div></div>';c.appendChild(d);}updateHeaderPreview('bp_'+i,state.body[i].contents.text);var w=document.getElementById('bw_'+i);if(w&&document.activeElement!==w)w.value=state.body[i].width||'';ensureTCEditor('btc_'+i,'body.'+i+'.contents');}}
+function getHint(type){for(var i=0;i<ACTION_TYPES.length;i++)if(ACTION_TYPES[i].value===type)return '<div class="action-hint">'+ACTION_TYPES[i].hint+'</div>';return '';}
+function renderActions(){var c=document.getElementById('actionList');while(c.children.length>state.actions.length)c.lastChild.remove();for(var i=0;i<state.actions.length;i++){var d=c.children[i];if(!d){d=document.createElement('div');d.className='card';d.innerHTML='<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#8e44ad;color:#fff;">BTN</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="ap_'+i+'"></span><button class="btn-del" onclick="event.stopPropagation();state.actions.splice('+i+',1);renderActions();generate()">✕</button></div><div class="card-body"><label>按钮文本</label><div id="al_'+i+'"></div><label>Tooltip</label><input id="at_'+i+'" placeholder="鼠标悬停时显示的提示..." oninput="state.actions['+i+'].tooltip=this.value;generate()"><div class="row"><div><label>宽度(px)</label><input type="number" id="aw_'+i+'" placeholder="'+DEFAULT_BTN_WIDTH+'" oninput="state.actions['+i+'].width=parseInt(this.value)||undefined;generate()"></div><div><label>动作类型</label><select id="aty_'+i+'" onchange="onActType('+i+',this.value)">'+ACTION_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('')+'</select></div></div><div id="av_'+i+'"></div></div>';c.appendChild(d);}updateHeaderPreview('ap_'+i,state.actions[i].label.text);var tt=document.getElementById('at_'+i);if(tt&&document.activeElement!==tt)tt.value=state.actions[i].tooltip||'';var aw=document.getElementById('aw_'+i);if(aw&&document.activeElement!==aw)aw.value=state.actions[i].width||'';var as=document.getElementById('aty_'+i);if(as&&document.activeElement!==as)as.value=state.actions[i].action.type||ACTION_TYPES[0].value;var ct=state.actions[i].action.type||ACTION_TYPES[0].value;if(actionTypeCache[i]!==ct){actionTypeCache[i]=ct;var vk=ct==='minecraft:run_command'?'command':ct==='minecraft:show_dialog'?'dialog':'url';var ph=ct==='minecraft:run_command'?'/say hello':ct==='minecraft:show_dialog'?'namespace:dialog_id':'https://example.com';document.getElementById('av_'+i).innerHTML='<label>动作值</label><input id="avi_'+i+'" placeholder="'+ph+'" oninput="onActVal('+i+',this.value)">'+getHint(ct);var vi=document.getElementById('avi_'+i);if(vi)vi.value=state.actions[i].action[vk]||'';}else{var vi2=document.getElementById('avi_'+i);var vk2=ct==='minecraft:run_command'?'command':ct==='minecraft:show_dialog'?'dialog':'url';if(vi2&&document.activeElement!==vi2)vi2.value=state.actions[i].action[vk2]||'';}ensureTCEditor('al_'+i,'actions.'+i+'.label');}}
+function onActType(i,t){state.actions[i].action={type:t};delete actionTypeCache[i];renderActions();generate();}
+function onActVal(i,v){var t=state.actions[i].action.type;state.actions[i].action={type:t};var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';state.actions[i].action[k]=v;generate();}
+function addBody(){state.body.push({type:"minecraft:plain_message",contents:createTC("New Body","white"),width:undefined});renderBodies();generate();}
+function addAction(){state.actions.push({label:createTC("Button","white"),width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}});renderActions();generate();}
+
+/** ==================== JSON 生成（含事件序列化） ==================== */
+function cleanTC(tc){
+    if(!tc)return tc;
+    var r={text:tc.text||"",color:tc.color||"white"};
+    for(var i=0;i<STYLES.length;i++)if(tc[STYLES[i]])r[STYLES[i]]=true;
+    if(tc.extra&&tc.extra.length)r.extra=tc.extra.map(cleanTC);
+    // ✅ 序列化 clickEvent
+    if(tc.clickEvent&&tc.clickEvent.action){
+        var ce={action:tc.clickEvent.action};
+        if(tc.clickEvent.action==='open_url')ce.url=tc.clickEvent.url||"";
+        else if(tc.clickEvent.action==='run_command'||tc.clickEvent.action==='suggest_command')ce.command=tc.clickEvent.command||"";
+        else if(tc.clickEvent.action==='change_page')ce.page=tc.clickEvent.page||"";
+        else if(tc.clickEvent.action==='show_dialog')ce.dialog=tc.clickEvent.dialog||"";
+        r.clickEvent=ce;
+    }
+    // ✅ 序列化 hoverEvent
+    if(tc.hoverEvent&&tc.hoverEvent.action){
+        var he={action:tc.hoverEvent.action};
+        if(tc.hoverEvent.action==='show_text')he.contents=tc.hoverEvent.contents||"";
+        else if(tc.hoverEvent.action==='show_item'||tc.hoverEvent.action==='show_entity')he.contents=tc.hoverEvent.contents||{};
+        r.hoverEvent=he;
+    }
+    return r;
+}
+
+function generate(){
+    if(isSyncingJson)return;
+    try{
+        state.type=document.getElementById('dialogType').value;state.columns=parseInt(document.getElementById('columns').value)||1;state.can_close_with_escape=document.getElementById('escClose').value==='true';
+        var json={type:state.type,title:cleanTC(state.title),body:state.body.map(function(b){var m={type:b.type||"minecraft:plain_message",contents:cleanTC(b.contents)};if(b.width)m.width=b.width;return m;}),inputs:[],can_close_with_escape:state.can_close_with_escape,columns:state.columns,actions:state.actions.map(function(a){var act={type:a.action.type};var k=a.action.type==='minecraft:run_command'?'command':a.action.type==='minecraft:show_dialog'?'dialog':'url';act[k]=a.action[k]||"";var r={label:cleanTC(a.label),action:act};if(a.tooltip)r.tooltip=a.tooltip;if(a.width)r.width=a.width;return r;})};
+        if(state.external_title)json.external_title=state.external_title;
+        if(state.exit_action.enabled){var ea=state.exit_action,act={type:ea.action.type};var k=ea.action.type==='minecraft:run_command'?'command':ea.action.type==='minecraft:show_dialog'?'dialog':'url';act[k]=ea.action[k]||"";json.exit_action={label:cleanTC(ea.label),action:act};if(ea.tooltip)json.exit_action.tooltip=ea.tooltip;if(ea.width)json.exit_action.width=ea.width;}
+        var str=JSON.stringify(json,null,2);
+        setJsonHighlighted(str,false);validateJson(str,true);renderPreview(json);
+    }catch(e){console.error(e);}
+}
+
+function validateJson(str,isInternal){var statusEl=document.getElementById('jsonStatus'),applyBtn=document.getElementById('btnApplyJson');if(!str.trim()){statusEl.className='json-status warn';statusEl.innerHTML='⚠️ JSON 为空';applyBtn.disabled=true;return null;}try{var obj=JSON.parse(str);if(!obj.type||!obj.title||!Array.isArray(obj.actions))throw new Error("缺少必要字段");statusEl.className='json-status valid';statusEl.innerHTML='✅ JSON 格式正确';applyBtn.disabled=!isInternal;return obj;}catch(e){statusEl.className='json-status invalid';statusEl.innerHTML='❌ '+e.message;applyBtn.disabled=true;return null;}}
+
+// ✅ 导入时解析事件到 state
+function parseTCFromJson(tc){
+    if(!tc)return createTC("","white");
+    var r=createTC(tc.text,tc.color);
+    r.bold=!!tc.bold;r.italic=!!tc.italic;r.underlined=!!tc.underlined;r.strikethrough=!!tc.strikethrough;r.obfuscated=!!tc.obfuscated;
+    if(tc.extra&&tc.extra.length)r.extra=tc.extra.map(parseTCFromJson);
+    if(tc.clickEvent)r.clickEvent=Object.assign({},tc.clickEvent);
+    if(tc.hoverEvent)r.hoverEvent=Object.assign({},tc.hoverEvent);
+    return r;
+}
+
+function applyJsonToEditor(){
+    var str=getJsonText();var obj=validateJson(str,false);if(!obj)return;
+    isSyncingJson=true;
+    try{
+        state.type=obj.type||"minecraft:multi_action";
+        state.title=parseTCFromJson(obj.title);
+        state.external_title=obj.external_title||"";
+        state.columns=obj.columns||1;
+        state.can_close_with_escape=obj.can_close_with_escape!==false;
+        state.body=(obj.body||[]).map(function(b){return{type:b.type,contents:parseTCFromJson(b.contents),width:b.width};});
+        state.actions=(obj.actions||[]).map(function(a){return{label:parseTCFromJson(a.label),tooltip:a.tooltip||"",width:(a.width!==undefined&&a.width!==null)?a.width:DEFAULT_BTN_WIDTH,action:a.action||{type:"minecraft:run_command",command:""}};});
+        if(obj.exit_action){state.exit_action={enabled:true,label:parseTCFromJson(obj.exit_action.label),tooltip:obj.exit_action.tooltip||"",width:(obj.exit_action.width!==undefined&&obj.exit_action.width!==null)?obj.exit_action.width:DEFAULT_BTN_WIDTH,action:obj.exit_action.action||{type:"minecraft:run_command",command:""}};}
+        else{state.exit_action={enabled:false,label:createTC("Exit","red"),width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}};}
+        document.getElementById('dialogType').value=state.type;document.getElementById('columns').value=state.columns;document.getElementById('escClose').value=state.can_close_with_escape;document.getElementById('extTitleInput').value=state.external_title;
+        tcEditorCreated={};actionTypeCache={};exitCache='';
+        document.getElementById('titleEditor').innerHTML='';document.getElementById('bodyList').innerHTML='';document.getElementById('actionList').innerHTML='';
+        ensureTCEditor('titleEditor','title');renderBodies();renderActions();initExitAction();generate();
+    }catch(e){alert("❌ 应用失败: "+e.message);}finally{isSyncingJson=false;}
+}
+
+function showImportModal(){document.getElementById('importModal').style.display='flex';document.getElementById('importInput').value='';document.getElementById('importStatus').style.display='none';}
+function closeImportModal(){document.getElementById('importModal').style.display='none';}
+function confirmImport(){var str=document.getElementById('importInput').value;try{var obj=JSON.parse(str);if(!obj.type)throw new Error("不是有效的 Dialog JSON");setJsonHighlighted(str,false);applyJsonToEditor();closeImportModal();}catch(e){var s=document.getElementById('importStatus');s.style.display='flex';s.className='json-status invalid';s.innerHTML='❌ '+e.message;}}
+
+/** ==================== 预览（不执行事件） ==================== */
+var currentFontSize=8;
+function updatePreviewFontSize(v){currentFontSize=parseInt(v)||8;document.getElementById('fontSizeDisplay').textContent=currentFontSize+'px';applyFontSize();}
+function resetPreviewFontSize(){updatePreviewFontSize(8);document.getElementById('previewFontSize').value=8;}
+function applyFontSize(){var els=document.querySelectorAll('.mc-text');for(var i=0;i<els.length;i++)els[i].style.fontSize=currentFontSize+'px';}
+function renderPreview(json){
+    var pt=document.getElementById('pvTitle');pt.innerHTML='';rTC(pt,json.title);
+    var pc=document.getElementById('pvContent');pc.innerHTML='';
+    for(var i=0;i<(json.body||[]).length;i++){var b=json.body[i];var d=document.createElement('div');d.className='mc-body-text mc-text';d.style.fontSize=currentFontSize+'px';if(b.width)d.style.width=b.width+'px';rTC(d,b.contents);pc.appendChild(d);}
+    var pa=document.getElementById('pvActions');pa.innerHTML='';pa.style.gridTemplateColumns='repeat('+(json.columns||1)+',1fr)';
+    for(var j=0;j<(json.actions||[]).length;j++){var a=json.actions[j];var btn=document.createElement('div');btn.className='mc-button mc-text';btn.style.fontSize=currentFontSize+'px';rTC(btn,a.label);pa.appendChild(btn);}
+    var pe=document.getElementById('pvExitAction');pe.innerHTML='';
+    if(json.exit_action){var eb=document.createElement('div');eb.className='mc-button mc-text';eb.style.fontSize=currentFontSize+'px';rTC(eb,json.exit_action.label);pe.appendChild(eb);}
+}
+// ✅ 预览仅渲染样式，忽略 clickEvent/hoverEvent
+function rTC(c,tc){if(!tc)return;var s=document.createElement('span');s.textContent=tc.text||'';s.style.color=tc.color||'white';if(tc.bold)s.style.fontWeight='bold';if(tc.italic)s.style.fontStyle='italic';var d=[];if(tc.underlined)d.push('underline');if(tc.strikethrough)d.push('line-through');if(d.length)s.style.textDecoration=d.join(' ');c.appendChild(s);if(tc.extra)for(var i=0;i<tc.extra.length;i++)rTC(c,tc.extra[i]);}
+function copyJson(){navigator.clipboard.writeText(getJsonText());}
+function downloadJson(){var b=new Blob([getJsonText()],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='dialog.json';a.click();}
+
+/** ==================== Exit Action ==================== */
+function initExitAction(){var c=document.getElementById('exitActionEditor');c.innerHTML='<div class="card open"><div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#c0392b;color:#fff;">EXIT</span><span style="flex:1;font-size:12px;color:#ccc;" id="exitPv"></span></div><div class="card-body"><label>启用</label><select id="exitEn" onchange="state.exit_action.enabled=this.value===\'true\';generate()"><option value="true">是</option><option value="false">否</option></select><label>按钮文本</label><div id="exitTc"></div><label>Tooltip</label><input id="exitTt" placeholder="鼠标悬停时显示的提示..." oninput="state.exit_action.tooltip=this.value;generate()"><div class="row"><div><label>宽度(px)</label><input type="number" id="exitW" placeholder="'+DEFAULT_BTN_WIDTH+'" oninput="state.exit_action.width=parseInt(this.value)||undefined;generate()"></div><div><label>动作类型</label><select id="exitTy" onchange="onExitType(this.value)">'+ACTION_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('')+'</select></div></div><div id="exitVa"></div></div></div>';ensureTCEditor('exitTc','exit_action.label');updateHeaderPreview('exitPv',state.exit_action.label.text);document.getElementById('exitTt').value=state.exit_action.tooltip||'';document.getElementById('exitW').value=state.exit_action.width||'';document.getElementById('exitTy').value=state.exit_action.action.type||ACTION_TYPES[0].value;renderExitVal();}
+function renderExitVal(){var t=state.exit_action.action.type||ACTION_TYPES[0].value;if(exitCache===t){var inp=document.getElementById('exitVi');var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';if(inp&&document.activeElement!==inp)inp.value=state.exit_action.action[k]||'';return;}exitCache=t;var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';var ph=t==='minecraft:run_command'?'/say hello':t==='minecraft:show_dialog'?'namespace:dialog_id':'https://example.com';document.getElementById('exitVa').innerHTML='<label>动作值</label><input id="exitVi" placeholder="'+ph+'" oninput="onExitVal(this.value)">'+getHint(t);document.getElementById('exitVi').value=state.exit_action.action[k]||'';}
+function onExitType(t){state.exit_action.action={type:t};exitCache='';renderExitVal();generate();}
+function onExitVal(v){var t=state.exit_action.action.type;state.exit_action.action={type:t};var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';state.exit_action.action[k]=v;generate();}
+
+/** ==================== 启动 ==================== */
+setTimeout(function(){
+    var editor=document.getElementById('jsonEditor');
+    editor.addEventListener('input',onJsonInput);
+    editor.addEventListener('paste',function(e){e.preventDefault();var text=(e.clipboardData||window.clipboardData).getData('text/plain');document.execCommand('insertText',false,text);});
+    ensureTCEditor('titleEditor','title');renderBodies();renderActions();initExitAction();generate();applyFontSize();
+},0);
+</script>
+</body>
+</html>
