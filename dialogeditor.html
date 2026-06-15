@@ -216,7 +216,7 @@ function buildColorOpts(sel){var h="";for(var i=0;i<COLORS.length;i++)h+='<optio
 function getVal(p){var ps=p.split('.'),o=state;for(var i=0;i<ps.length;i++){if(o==null)return;o=o[ps[i]];}return o;}
 function setVal(p,k,v){var ps=p.split('.'),o=state;for(var i=0;i<ps.length-1;i++)o=o[ps[i]];o[ps[ps.length-1]][k]=v;}
 
-/** ==================== ✅ TC 编辑器（含事件 + 修复 Extra） ==================== */
+/** ==================== TC 编辑器（含事件 + Extra 增量同步） ==================== */
 function ensureTCEditor(cid,path){
     var c=document.getElementById(cid);if(!c)return;
     if(tcEditorCreated[cid]){syncTCValues(cid,path);return;}
@@ -261,69 +261,87 @@ function addExtra(p,cid){var t=getVal(p);if(!t)return;if(!t.extra)t.extra=[];t.e
 function removeExtra(p,i,cid){var t=getVal(p);if(!t||!t.extra)return;t.extra.splice(i,1);syncExtras(cid,p);generate();}
 function toggleExtraStyle(p,i,s,cid){var t=getVal(p);if(!t||!t.extra||!t.extra[i])return;t.extra[i][s]=!t.extra[i][s];updateBtnState(cid,s,t.extra[i][s]);generate();}
 
-/**
- * ✅ 核心修复：Extra 列表增量 DOM 同步
- * 不再整体 innerHTML 重建，而是：
- * 1. 多余的 DOM 节点 → 移除
- * 2. 缺少的 DOM 节点 → 追加创建
- * 3. 已有的 DOM 节点 → 仅同步值（跳过当前聚焦的输入框）
- */
+/** ✅ Extra 增量 DOM 同步（上一轮修复保留） */
 function syncExtras(cid,path){
     var el=document.getElementById(cid+"_ex");if(!el)return;
     var t=getVal(path),ex=(t&&t.extra)||[];
     var segments=el.querySelectorAll('.extra-segment');
-    
-    // 1. 移除多余节点
-    while(segments.length>ex.length){
-        el.removeChild(el.lastElementChild);
-        segments=el.querySelectorAll('.extra-segment');
-    }
-    
-    // 2. 追加缺少的节点
+    while(segments.length>ex.length){el.removeChild(el.lastElementChild);segments=el.querySelectorAll('.extra-segment');}
     for(var i=segments.length;i<ex.length;i++){
         var ep=path+'.extra.'+i,sid=cid+'_ex'+i;
-        var div=document.createElement('div');
-        div.className='extra-segment';div.dataset.i=i;
+        var div=document.createElement('div');div.className='extra-segment';div.dataset.i=i;
         div.innerHTML='<div style="display:flex;justify-content:flex-end;"><button class="btn-del" onclick="removeExtra(\''+path+'\','+i+',\''+cid+'\')">✕</button></div>'
             +'<div class="row"><div><input data-p="'+ep+'" data-k="text" placeholder="附加文本..." oninput="onTCInput(this)"></div>'
             +'<div><select data-p="'+ep+'" data-k="color" onchange="onTCInput(this)">'+buildColorOpts(ex[i].color)+'</select></div></div>'
-            +'<div class="style-toggles" id="'+sid+'">'+STYLES.map(function(s){
-                return '<div class="style-btn '+(ex[i][s]?'active':'')+'" data-s="'+s+'" onclick="toggleExtraStyle(\''+path+'\','+i+',\''+s+'\',\''+sid+'\')">'+STYLE_LABELS[s]+'</div>';
-            }).join('')+'</div>';
+            +'<div class="style-toggles" id="'+sid+'">'+STYLES.map(function(s){return '<div class="style-btn '+(ex[i][s]?'active':'')+'" data-s="'+s+'" onclick="toggleExtraStyle(\''+path+'\','+i+',\''+s+'\',\''+sid+'\')">'+STYLE_LABELS[s]+'</div>';}).join('')+'</div>';
         el.appendChild(div);
     }
-    
-    // 3. 同步已有节点的值（不重建 DOM）
     segments=el.querySelectorAll('.extra-segment');
     for(var m=0;m<Math.min(segments.length,ex.length);m++){
-        var seg=segments[m];
-        // ✅ 关键：更新 data-i 和 onclick 中的索引（防止删除中间项后索引错位）
-        seg.dataset.i=m;
-        var delBtn=seg.querySelector('.btn-del');
-        if(delBtn)delBtn.setAttribute('onclick','removeExtra(\''+path+'\','+m+',\''+cid+'\')');
-        
-        // 同步输入框值（跳过当前聚焦的）
+        var seg=segments[m];seg.dataset.i=m;
+        var delBtn=seg.querySelector('.btn-del');if(delBtn)delBtn.setAttribute('onclick','removeExtra(\''+path+'\','+m+',\''+cid+'\')');
         var ins=seg.querySelectorAll('[data-k]');
-        for(var n=0;n<ins.length;n++){
-            if(document.activeElement===ins[n])continue;
-            var k=ins[n].dataset.k,v=ex[m][k]||'';
-            if(ins[n].tagName==='SELECT')ins[n].value=v||'white';
-            else ins[n].value=v;
-        }
-        // 同步样式按钮状态
-        for(var p=0;p<STYLES.length;p++){
-            updateBtnState(cid+'_ex'+m,STYLES[p],!!ex[m][STYLES[p]]);
-        }
+        for(var n=0;n<ins.length;n++){if(document.activeElement===ins[n])continue;var k=ins[n].dataset.k,v=ex[m][k]||'';if(ins[n].tagName==='SELECT')ins[n].value=v||'white';else ins[n].value=v;}
+        for(var p=0;p<STYLES.length;p++)updateBtnState(cid+'_ex'+m,STYLES[p],!!ex[m][STYLES[p]]);
     }
 }
 
-/** ==================== 列表渲染 ==================== */
-function renderBodies(){var c=document.getElementById('bodyList');while(c.children.length>state.body.length)c.lastChild.remove();for(var i=0;i<state.body.length;i++){var d=c.children[i];if(!d){d=document.createElement('div');d.className='card open';d.innerHTML='<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#2980b9;color:#fff;">BODY</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="bp_'+i+'"></span><button class="btn-del" onclick="event.stopPropagation();state.body.splice('+i+',1);renderBodies();generate()">✕</button></div><div class="card-body"><div id="btc_'+i+'"></div><div class="row"><div><label>宽度(px)</label><input type="number" id="bw_'+i+'" placeholder="默认自适应" oninput="state.body['+i+'].width=parseInt(this.value)||undefined;generate()"></div></div></div>';c.appendChild(d);}updateHeaderPreview('bp_'+i,state.body[i].contents.text);var w=document.getElementById('bw_'+i);if(w&&document.activeElement!==w)w.value=state.body[i].width||'';ensureTCEditor('btc_'+i,'body.'+i+'.contents');}}
+/**
+ * ✅ 核心修复：Body 列表全量重建
+ * 采用用户建议的 "写入JSON → 从JSON读回编辑器" 策略
+ * 增删 Body 时强制清空 DOM + 清除 TC 编辑器缓存，确保索引永远正确
+ */
+function rebuildBodyList(){
+    // 1. 先通过 generate() 将当前 state 写入 JSON（保证数据一致性）
+    //    注意：这里不能调 generate()，因为 generate 会触发 renderPreview 等副作用
+    //    我们只需要确保 state 是最新的即可（增删操作已直接修改了 state）
+    
+    // 2. 清空 Body DOM 和对应的 TC 编辑器缓存
+    document.getElementById('bodyList').innerHTML = '';
+    // 清除所有 body.* 开头的 TC 编辑器创建标记
+    var keysToDelete = [];
+    for(var key in tcEditorCreated){
+        if(key.indexOf('btc_') === 0) keysToDelete.push(key);
+    }
+    for(var k=0;k<keysToDelete.length;k++) delete tcEditorCreated[keysToDelete[k]];
+    
+    // 3. 重新渲染（从零创建所有 Body 卡片，索引与 state.body 严格对应）
+    renderBodies();
+}
+
+/** ✅ renderBodies 简化为纯创建逻辑（不再尝试复用 DOM） */
+function renderBodies(){
+    var c=document.getElementById('bodyList');
+    // 全量重建模式下，调用前已由 rebuildBodyList 清空，此处仅做追加
+    for(var i=0;i<state.body.length;i++){
+        var d=document.createElement('div');d.className='card open';
+        d.innerHTML='<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#2980b9;color:#fff;">BODY</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="bp_'+i+'"></span><button class="btn-del" onclick="event.stopPropagation();removeBody('+i+')">✕</button></div><div class="card-body"><div id="btc_'+i+'"></div><div class="row"><div><label>宽度(px)</label><input type="number" id="bw_'+i+'" placeholder="默认自适应" oninput="state.body['+i+'].width=parseInt(this.value)||undefined;generate()"></div></div></div>';
+        c.appendChild(d);
+        updateHeaderPreview('bp_'+i,state.body[i].contents.text);
+        var w=document.getElementById('bw_'+i);if(w)w.value=state.body[i].width||'';
+        ensureTCEditor('btc_'+i,'body.'+i+'.contents');
+    }
+}
+
+/** ✅ 新增：安全的 Body 删除函数 */
+function removeBody(index){
+    state.body.splice(index,1);
+    rebuildBodyList();
+    generate();
+}
+
+/** ✅ 修改：Body 添加后使用全量重建 */
+function addBody(){
+    state.body.push({type:"minecraft:plain_message",contents:createTC("New Body","white"),width:undefined});
+    rebuildBodyList();
+    generate();
+}
+
+/** ==================== Action 列表渲染 ==================== */
 function getHint(type){for(var i=0;i<ACTION_TYPES.length;i++)if(ACTION_TYPES[i].value===type)return '<div class="action-hint">'+ACTION_TYPES[i].hint+'</div>';return '';}
 function renderActions(){var c=document.getElementById('actionList');while(c.children.length>state.actions.length)c.lastChild.remove();for(var i=0;i<state.actions.length;i++){var d=c.children[i];if(!d){d=document.createElement('div');d.className='card';d.innerHTML='<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#8e44ad;color:#fff;">BTN</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="ap_'+i+'"></span><button class="btn-del" onclick="event.stopPropagation();state.actions.splice('+i+',1);renderActions();generate()">✕</button></div><div class="card-body"><label>按钮文本</label><div id="al_'+i+'"></div><label>Tooltip</label><input id="at_'+i+'" placeholder="鼠标悬停时显示的提示..." oninput="state.actions['+i+'].tooltip=this.value;generate()"><div class="row"><div><label>宽度(px)</label><input type="number" id="aw_'+i+'" placeholder="'+DEFAULT_BTN_WIDTH+'" oninput="state.actions['+i+'].width=parseInt(this.value)||undefined;generate()"></div><div><label>动作类型</label><select id="aty_'+i+'" onchange="onActType('+i+',this.value)">'+ACTION_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('')+'</select></div></div><div id="av_'+i+'"></div></div>';c.appendChild(d);}updateHeaderPreview('ap_'+i,state.actions[i].label.text);var tt=document.getElementById('at_'+i);if(tt&&document.activeElement!==tt)tt.value=state.actions[i].tooltip||'';var aw=document.getElementById('aw_'+i);if(aw&&document.activeElement!==aw)aw.value=state.actions[i].width||'';var as=document.getElementById('aty_'+i);if(as&&document.activeElement!==as)as.value=state.actions[i].action.type||ACTION_TYPES[0].value;var ct=state.actions[i].action.type||ACTION_TYPES[0].value;if(actionTypeCache[i]!==ct){actionTypeCache[i]=ct;var vk=ct==='minecraft:run_command'?'command':ct==='minecraft:show_dialog'?'dialog':'url';var ph=ct==='minecraft:run_command'?'/say hello':ct==='minecraft:show_dialog'?'namespace:dialog_id':'https://example.com';document.getElementById('av_'+i).innerHTML='<label>动作值</label><input id="avi_'+i+'" placeholder="'+ph+'" oninput="onActVal('+i+',this.value)">'+getHint(ct);var vi=document.getElementById('avi_'+i);if(vi)vi.value=state.actions[i].action[vk]||'';}else{var vi2=document.getElementById('avi_'+i);var vk2=ct==='minecraft:run_command'?'command':ct==='minecraft:show_dialog'?'dialog':'url';if(vi2&&document.activeElement!==vi2)vi2.value=state.actions[i].action[vk2]||'';}ensureTCEditor('al_'+i,'actions.'+i+'.label');}}
 function onActType(i,t){state.actions[i].action={type:t};delete actionTypeCache[i];renderActions();generate();}
 function onActVal(i,v){var t=state.actions[i].action.type;state.actions[i].action={type:t};var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';state.actions[i].action[k]=v;generate();}
-function addBody(){state.body.push({type:"minecraft:plain_message",contents:createTC("New Body","white"),width:undefined});renderBodies();generate();}
 function addAction(){state.actions.push({label:createTC("Button","white"),width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}});renderActions();generate();}
 
 /** ==================== JSON 生成 ==================== */
