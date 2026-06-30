@@ -3,20 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Dialog 编辑器</title>
+    <title>MC Dialog Editor (Extra样式修复版)</title>
     <link href="https://cdn.jsdelivr.net/npm/@chinese-fonts/unifont@1.0.0/dist/unifont.css" rel="stylesheet">
     <style>
-        :root{--bg:#1a1a1a;--panel:#2b2b2b;--border:#444;--text:#e0e0e0;--accent:#3b8526;--danger:#c0392b;--blue:#2980b9;--purple:#8e44ad;--warn:#f39c12;--nav-bg:#222;--mc-font:'Unifont','Microsoft YaHei',monospace}
+        :root{--bg:#1a1a1a;--panel:#2b2b2b;--border:#444;--text:#e0e0e0;--accent:#3b8526;--danger:#c0392b;--blue:#2980b9;--purple:#8e44ad;--warn:#f39c12;--nav-bg:#222;--mc-font:'Unifont','Microsoft YaHei',monospace;--je-font:'Consolas','Monaco',monospace;--je-size:12px;--je-lh:1.5;--je-pad:10px;--je-ln-w:40px}
         *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
         body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+        
+        /* 初始化弹窗样式 */
+        .init-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+        .init-modal-overlay.show {
+            display: flex;
+        }
+        .init-modal {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 420px;
+            width: 90vw;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+        .init-modal h3 {
+            color: #fff;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+        .init-progress {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .init-progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+        .init-modal p {
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 20px;
+            min-height: 20px;
+        }
+        .init-force-close {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .init-force-close:hover {
+            opacity: 0.85;
+        }
+        
+        /* 原有样式 */
         .navbar{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;height:48px;flex-shrink:0;position:sticky;top:0;z-index:100}
         .nav-brand{font-size:15px;font-weight:bold;color:#fff;display:flex;align-items:center;gap:8px;white-space:nowrap}
         .nav-brand .version{font-size:10px;background:var(--accent);color:#fff;padding:2px 6px;border-radius:3px;font-weight:normal}
         .nav-spacer{flex:1}
         .nav-menu-toggle{background:none;border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s}
         .nav-menu-toggle:hover{background:rgba(255,255,255,.08);border-color:var(--accent)}
-        .nav-dropdown{position:absolute;top:48px;right:20px;background:var(--panel);border:1px solid var(--border);border-radius:6px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;max-height:0;opacity:0;transition:max-height .25s ease,opacity .2s ease;pointer-events:none;z-index:101}
-        .nav-dropdown.open{max-height:300px;opacity:1;pointer-events:auto}
+        .nav-menu-toggle.active{border-color:var(--accent);color:var(--accent);background:rgba(59,133,38,.1)}
+        .nav-dropdown{position:absolute;top:48px;right:20px;background:var(--panel);border:1px solid var(--border);border-radius:6px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;max-height:0;opacity:0;transition:max-height .2s ease,opacity .15s ease;pointer-events:none;z-index:101}
+        .nav-dropdown.open{max-height:400px;opacity:1;pointer-events:auto}
         .nav-dropdown button{display:block;width:100%;padding:10px 16px;background:none;border:none;color:var(--text);text-align:left;font-size:13px;cursor:pointer;transition:background .15s}
         .nav-dropdown button:hover{background:rgba(255,255,255,.06)}
         .nav-dropdown button:not(:last-child){border-bottom:1px solid rgba(255,255,255,.06)}
@@ -40,7 +104,8 @@
         .card-body{max-height:0;overflow:hidden;transition:max-height .3s ease-out,padding .3s ease-out;padding:0 12px;display:flex;flex-direction:column;gap:6px}
         .card.open .card-body{max-height:2000px;padding:12px;transition:max-height .4s ease-in,padding .3s ease-in}
         .row{display:flex;gap:6px;flex-wrap:wrap}.row>*{flex:1;min-width:60px}
-        .section-title{font-size:13px;font-weight:bold;margin-top:8px;color:#f1c40f;display:flex;justify-content:space-between;align-items:center}
+        .section-title{font-size:13px;font-weight:bold;margin-top:8px;color:#f1c40f;display:flex;align-items:center;gap:8px}
+        .section-title .st-label{flex:1}
         .badge{font-size:9px;font-weight:bold;padding:2px 5px;border-radius:3px;flex-shrink:0}
         .style-toggles{display:flex;gap:3px;margin-top:2px;flex-wrap:wrap}
         .style-btn{min-width:28px;flex:0 0 auto;padding:4px 0;background:#3a3a3a;color:#888;border:1px solid var(--border);border-radius:3px;cursor:pointer;text-align:center;font-size:12px;user-select:none}
@@ -58,89 +123,143 @@
         .event-row{display:flex;gap:6px;align-items:center}
         .event-row select{flex:0 0 140px}
         .event-row input{flex:1}
-        .json-status{font-size:11px;padding:4px 8px;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;gap:6px;font-weight:bold}
+        .json-status{font-size:11px;padding:4px 8px;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;gap:6px;font-weight:bold;flex-wrap:wrap}
         .json-status.valid{background:rgba(59,133,38,.2);color:#6ddb89}
         .json-status.invalid{background:rgba(192,57,43,.2);color:#e74c3c}
         .json-status.warn{background:rgba(243,156,18,.2);color:#f1c40f}
-        #jsonEditor{background:#111;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'Consolas','Monaco',monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-all;overflow-y:auto;min-height:150px;max-height:400px;color:#d4d4d4;outline:none;tab-size:2;caret-color:#fff}
-        #jsonEditor:focus{border-color:var(--accent)}
+        .json-editor-wrapper{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#111;min-height:150px;max-height:400px}
+        .json-line-numbers{width:var(--je-ln-w);flex-shrink:0;background:#0d0d0d;color:#555;font-family:var(--je-font);font-size:var(--je-size);line-height:var(--je-lh);padding:var(--je-pad) 0;text-align:right;user-select:none;overflow-y:scroll;border-right:1px solid var(--border);scrollbar-width:none}
+        .json-line-numbers::-webkit-scrollbar{display:none}
+        .json-line-numbers .ln{display:block;padding:0 6px 0 2px;height:calc(var(--je-size) * var(--je-lh));line-height:var(--je-lh)}
+        .json-line-numbers .ln.error-line{background:rgba(192,57,43,.35);color:#e74c3c;font-weight:bold}
+        .json-editor-wrapper.hide-line-numbers .json-line-numbers{display:none}
+        #jsonEditor{flex:1;background:#111;border:none;padding:var(--je-pad);font-family:var(--je-font);font-size:var(--je-size);line-height:var(--je-lh);white-space:pre-wrap;word-break:break-all;overflow-y:auto;overflow-x:hidden;color:#d4d4d4;outline:none;tab-size:2;caret-color:#fff;margin:0;scrollbar-gutter:stable}
+        #jsonEditor:focus{box-shadow:inset 0 0 0 1px var(--accent)}
         .json-key{color:#9cdcfe}.json-string{color:#ce9178}.json-number{color:#b5cea8}.json-boolean{color:#569cd6}.json-null{color:#569cd6}.json-bracket{color:#ffd700}
+        @keyframes errorFlash{0%,100%{background:rgba(192,57,43,.35)}50%{background:rgba(192,57,43,.6)}}
+        .json-line-numbers .ln.flash{animation:errorFlash .4s ease 3}
+        .json-jump-btn{background:var(--danger);color:#fff;border:none;padding:2px 8px;border-radius:3px;font-size:11px;cursor:pointer;font-weight:bold;margin-left:auto;white-space:nowrap}
+        .json-jump-btn:hover{opacity:.85}
         .preview-header{display:flex;align-items:center;gap:8px}
         .preview-header h2{flex:1;margin:0}
+        .preview-disclaimer{font-size:10px;color:#666;margin-top:-6px;margin-bottom:4px;font-style:italic}
         .btn-refresh-mini{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--panel);color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s;flex-shrink:0;padding:0;line-height:1}
         .btn-refresh-mini:hover{border-color:var(--accent);color:var(--accent);background:rgba(59,133,38,.1)}
         .btn-refresh-mini.spinning svg{animation:spin .5s ease}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         .preview-controls{display:flex;align-items:center;gap:10px;background:var(--panel);padding:8px 12px;border-radius:6px;border:1px solid var(--border);font-size:12px}
         .preview-controls input[type=range]{flex:1}
-        .mc-preview-wrapper{flex:1;display:flex;align-items:center;justify-content:center;background:#000;border-radius:8px;overflow:hidden;position:relative;aspect-ratio:16/9;max-height:600px;width:100%}
+        .mc-preview-wrapper{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;background:#000;border-radius:8px;overflow:hidden;position:relative;width:100%;max-height:600px}
         .mc-dirt-bg{position:absolute;inset:0;z-index:0;background-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/block/dirt.png');image-rendering:pixelated;background-size:64px 64px}
         .mc-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:1}
-        .mc-dialog-wrapper{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:95vw;max-height:100%;padding:20px;box-sizing:border-box;margin:auto}
-        .mc-text{font-family:var(--mc-font)!important;line-height:1.5;-webkit-font-smoothing:none;image-rendering:pixelated}
+        .mc-dialog-wrapper{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:95vw;max-height:100%;padding:20px;box-sizing:border-box;margin:auto;width:100%;flex:1}
         .mc-title-outer{flex-shrink:0;text-shadow:1px 1px 0 #3f3f3f;text-align:center}
-        .mc-panel{flex:1 1 auto;min-height:0;max-height:100%;width:300px;max-width:100%;background:rgba(0,0,0,.75);border:2px solid #555;border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/container/background.png') 2 stretch;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;overflow-y:auto;box-sizing:border-box}
+        .mc-panel{flex:1 1 auto;min-height:0;max-height:100%;width:100%;background:rgba(0,0,0,.75);border:2px solid #555;border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/container/background.png') 2 stretch;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;overflow-y:auto;box-sizing:border-box}
         .mc-panel::-webkit-scrollbar{width:6px}.mc-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:3px}
         .mc-body-text{white-space:pre-wrap;text-shadow:1px 1px 0 #3f3f3f}
         .mc-actions-grid{display:grid;gap:4px;justify-content:center;width:100%;margin-top:4px;overflow:hidden}
-        .mc-button{font-family:var(--mc-font)!important;line-height:1.4;padding:6px 4px;min-height:20px;color:#FFF;cursor:pointer;text-align:center;word-break:break-word;border:2px solid transparent;border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/widget/button.png') 2 fill stretch;background:transparent;text-shadow:1px 1px 0 #3f3f3f;width:100%!important}
+        .mc-button{font-family:var(--mc-font)!important;line-height:1.4;padding:6px 4px;min-height:20px;color:#FFF;cursor:pointer;text-align:center;word-break:break-word;border:2px solid transparent;border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/widget/button.png') 2 fill stretch;background:transparent;text-shadow:1px 1px 0 #3f3f3f;box-sizing:border-box}
         .mc-button:hover{border-image:url('https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/widget/button_highlighted.png') 2 fill stretch;color:#FFFF00!important}
-        .mc-exit-btn{flex-shrink:0;margin-top:4px;width:300px;max-width:100%}
+        .mc-exit-btn{flex-shrink:0;margin-top:4px;width:100%;display:flex;justify-content:center}
         .action-hint{font-size:11px;color:#888;margin-top:2px;padding:4px 6px;background:#1a1a1a;border-radius:3px;font-family:'Consolas',monospace;line-height:1.4}
         .action-hint code{color:var(--accent);font-weight:bold}
+        .collapse-toggle{background:none;border:1px solid var(--border);color:#888;width:24px;height:24px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;padding:0;line-height:1;flex-shrink:0}
+        .collapse-toggle:hover{border-color:var(--accent);color:var(--accent);background:rgba(59,133,38,.1)}
+        @keyframes modalBgIn{from{opacity:0}to{opacity:1}}
+        @keyframes modalBgOut{from{opacity:1}to{opacity:0}}
+        @keyframes modalBoxIn{from{opacity:0;transform:scale(.9) translateY(-12px)}to{opacity:1,transform:scale(1) translateY(0)}}
+        @keyframes modalBoxOut{from{opacity:1,transform:scale(1) translateY(0)}to{opacity:0,transform:scale(.9) translateY(-12px)}}
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+        .modal-overlay.z-top{z-index:1100}
+        .modal-overlay.show{display:flex;animation:modalBgIn .2s ease forwards}
+        .modal-overlay.show .modal-box{animation:modalBoxIn .25s cubic-bezier(.34,1.56,.64,1) forwards}
+        .modal-overlay.closing{display:flex;animation:modalBgOut .18s ease forwards}
+        .modal-overlay.closing .modal-box{animation:modalBoxOut .18s ease forwards}
+        .modal-box{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;max-width:500px;width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+        .modal-box.danger{border-color:var(--danger)}
+        .modal-box h3{margin-bottom:10px;font-size:15px;display:flex;align-items:center;gap:6px}
+        .modal-box.danger h3{color:#e74c3c}
+        .modal-box:not(.danger) h3{color:#fff}
+        .modal-box p{color:var(--text);font-size:13px;line-height:1.6;margin-bottom:14px;word-break:break-all;font-family:'Consolas',monospace;background:#111;padding:8px;border-radius:4px}
+        .modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+        .force-import-warn{font-size:11px;color:var(--warn);line-height:1.4;margin-top:-6px;margin-bottom:8px;padding:6px 8px;background:rgba(243,156,18,.1);border-radius:4px;border-left:3px solid var(--warn)}
+        .setting-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+        .setting-item:last-child{border-bottom:none}
+        .setting-item .setting-label{font-size:13px;color:var(--text)}
+        .setting-item .setting-desc{font-size:11px;color:#888;margin-top:2px}
+        .setting-hint{font-size:11px;color:var(--warn);margin-top:4px;line-height:1.4;display:flex;align-items:flex-start;gap:4px}
+        .setting-hint::before{content:"💡";flex-shrink:0}
+        .toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0}
+        .toggle-switch input{opacity:0;width:0;height:0}
+        .toggle-slider{position:absolute;cursor:pointer;inset:0;background:#555;border-radius:22px;transition:.2s}
+        .toggle-slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+        .toggle-switch input:checked+.toggle-slider{background:var(--accent)}
+        .toggle-switch input:checked+.toggle-slider:before{transform:translateX(18px)}
+        .lang-selector{display:flex;gap:4px;flex-shrink:0}
+        .lang-btn{padding:3px 10px;border:1px solid var(--border);border-radius:3px;background:none;color:#888;font-size:11px;cursor:pointer;transition:all .15s}
+        .lang-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+        .lang-btn:hover:not(.active){border-color:var(--accent);color:var(--text)}
+        .preview-panel.hidden{display:none}
     </style>
 </head>
 <body>
 
+<!-- 初始化进度弹窗 -->
+<div class="init-modal-overlay" id="initModal">
+    <div class="init-modal">
+        <h3>⏳ 编辑器初始化中...</h3>
+        <div class="init-progress">
+            <div class="init-progress-bar" id="initProgressBar"></div>
+        </div>
+        <p id="initProgressText">正在准备...</p>
+        <button class="init-force-close" onclick="forceCloseInit()">强制关闭</button>
+    </div>
+</div>
+
 <nav class="navbar">
-    <div class="nav-brand">⚙️ MC Dialog 编辑器 <span class="version">1.21.6+</span></div>
+    <div class="nav-brand">⚙️ <span data-i18n="appTitle">MC Dialog 编辑器</span> <span class="version">1.21.6+</span></div>
     <div class="nav-spacer"></div>
-    <button class="nav-menu-toggle" onclick="toggleNavMenu()" title="快捷操作菜单">☰</button>
+    <button class="nav-menu-toggle" id="navToggle" onclick="toggleNavMenu()" title="Menu">☰</button>
     <div class="nav-dropdown" id="navDropdown">
-        <button onclick="showImportModal();closeNavMenu()">📥 导入 JSON</button>
-        <button onclick="copyJson();closeNavMenu()">📋 复制 JSON</button>
-        <button onclick="downloadJson();closeNavMenu()">💾 下载 JSON</button>
-        <button onclick="resetAll();closeNavMenu()">🔄 重置编辑器</button>
+        <button onclick="showImportModal();closeNavMenu()" data-i18n="menuImport">📥 导入 JSON</button>
+        <button onclick="copyJson();closeNavMenu()" data-i18n="menuCopy">📋 复制 JSON</button>
+        <button onclick="downloadJson();closeNavMenu()" data-i18n="menuDownload">💾 下载 JSON</button>
+        <button onclick="resetAll();closeNavMenu()" data-i18n="menuReset">🔄 重置编辑器</button>
+        <button onclick="showSettingsModal();closeNavMenu()" data-i18n="menuSettings">⚙️ 设置</button>
     </div>
 </nav>
 
 <div class="main-content">
     <div class="editor">
         <div class="card open">
-            <div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#f1c40f;color:#000;">ROOT</span><span style="flex:1;font-size:12px;color:#ccc;" id="headerPreview">全局设置</span></div>
+            <div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#f1c40f;color:#000;">ROOT</span><span style="flex:1;font-size:12px;color:#ccc;" id="headerPreview" data-i18n="globalSettings">全局设置</span></div>
             <div class="card-body">
                 <div class="row">
-                    <div><label>对话框类型</label><select id="dialogType" onchange="generate()"><option value="minecraft:multi_action">multi_action</option><option value="minecraft:confirmation">confirmation</option><option value="minecraft:notice">notice</option></select></div>
-                    <div><label>列数</label><input type="number" id="columns" value="2" min="1" max="10" placeholder="按钮排列列数" onchange="generate()"></div>
+                    <div><label data-i18n="labelDialogType">对话框类型</label><select id="dialogType" onchange="generate()"><option value="minecraft:multi_action">multi_action</option><option value="minecraft:confirmation">confirmation</option><option value="minecraft:notice">notice</option></select></div>
+                    <div><label data-i18n="labelColumns">列数</label><input type="number" id="columns" value="2" min="1" max="10" placeholder="Columns" onchange="generate()"></div>
                 </div>
-                <label>主标题 (TextComponent)</label><div id="titleEditor"></div>
-                <label>外部标题 (纯文本)</label><input id="extTitleInput" placeholder="可选，留空则不显示" oninput="state.external_title=this.value;generate()">
-                <div class="row"><div><label>ESC关闭</label><select id="escClose" onchange="generate()"><option value="true">是</option><option value="false">否</option></select></div></div>
+                <label data-i18n="labelTitle">主标题 (TextComponent)</label><div id="titleEditor"></div>
+                <label data-i18n="labelExtTitle">外部标题 (纯文本)</label><input id="extTitleInput" placeholder="Optional" oninput="state.external_title=this.value;generate()">
+                <div class="row"><div><label data-i18n="labelEscClose">ESC关闭</label><select id="escClose" onchange="generate()"><option value="true" data-i18n="yes">是</option><option value="false" data-i18n="no">否</option></select></div></div>
             </div>
         </div>
-        <div class="section-title">📝 正文内容 <button class="ui-btn btn-add" style="padding:2px 8px;" onclick="addBody()">+ 添加</button></div>
+        <div class="section-title"><span class="st-label" data-i18n="sectionBody">📝 正文内容</span><button class="collapse-toggle" onclick="toggleAllCards('bodyList',true)" title="Expand All">▼</button><button class="collapse-toggle" onclick="toggleAllCards('bodyList',false)" title="Collapse All">▲</button><button class="ui-btn btn-add" style="padding:2px 8px;" onclick="addBody()" data-i18n="btnAdd">+ 添加</button></div>
         <div id="bodyList"></div>
-        <div class="section-title">🔘 面板内按钮 <button class="ui-btn btn-add-alt" style="padding:2px 8px;" onclick="addAction()">+ 添加</button></div>
+        <div class="section-title"><span class="st-label" data-i18n="sectionActions">🔘 面板内按钮</span><button class="collapse-toggle" onclick="toggleAllCards('actionList',true)">▼</button><button class="collapse-toggle" onclick="toggleAllCards('actionList',false)">▲</button><button class="ui-btn btn-add-alt" style="padding:2px 8px;" onclick="addAction()" data-i18n="btnAdd">+ 添加</button></div>
         <div id="actionList"></div>
-        <div class="section-title">🚪 退出按钮</div>
+        <div class="section-title"><span class="st-label" data-i18n="sectionExit">🚪 退出按钮</span><button class="collapse-toggle" onclick="toggleExitCard(true)">▼</button><button class="collapse-toggle" onclick="toggleExitCard(false)">▲</button></div>
         <div id="exitActionEditor"></div>
     </div>
-
-    <div class="preview-panel">
+    <div class="preview-panel" id="previewPanel">
         <div class="preview-header">
-            <h2>🎮 游戏内预览</h2>
-            <button class="btn-refresh-mini" onclick="manualRefreshPreview(this)" title="手动刷新预览">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-            </button>
+            <h2 data-i18n="previewTitle">🎮 结构预览</h2>
+            <button class="btn-refresh-mini" onclick="manualRefreshPreview(this)" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></button>
         </div>
-        <div class="preview-controls">
-            <label>字号:</label>
-            <input type="range" id="previewFontSize" min="4" max="24" value="8" step="1" oninput="updatePreviewFontSize(this.value)">
-            <span id="fontSizeDisplay" style="min-width:30px;text-align:right;color:var(--accent);font-weight:bold;">8px</span>
-            <button class="ui-btn" style="background:#555;color:#fff;padding:2px 8px;" onclick="resetPreviewFontSize()">↺</button>
-        </div>
+        <div class="preview-disclaimer" data-i18n="previewDisclaimer">⚠️ 仅为结构示意图，实际效果以游戏内画面为准</div>
+        <div class="preview-controls"><label data-i18n="labelFontSize">字号:</label><input type="range" id="previewFontSize" min="4" max="24" value="8" step="1" oninput="updatePreviewFontSize(this.value)"><span id="fontSizeDisplay" style="min-width:30px;text-align:right;color:var(--accent);font-weight:bold;">8px</span><button class="ui-btn" style="background:#555;color:#fff;padding:2px 8px;" onclick="resetPreviewFontSize()">↺</button></div>
         <div class="mc-preview-wrapper">
-            <div class="mc-dirt-bg"></div><div class="mc-overlay"></div>
+            <div class="mc-dirt-bg"></div>
+            <div class="mc-overlay"></div>
             <div class="mc-dialog-wrapper">
                 <div class="mc-title-outer mc-text" id="pvTitle"></div>
                 <div class="mc-panel">
@@ -151,37 +270,227 @@
             </div>
         </div>
         <div class="card open" id="jsonCard" style="margin-top:12px;">
-            <div class="card-header" onclick="toggleCard(this)">
-                <span class="card-arrow">▶</span>
-                <span style="font-size:14px;font-weight:bold;color:#fff;flex:1;">📋 JSON 数据</span>
-            </div>
+            <div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span style="font-size:14px;font-weight:bold;color:#fff;flex:1;" data-i18n="sectionJson">📋 JSON 数据</span></div>
             <div class="card-body">
-                <div id="jsonStatus" class="json-status valid">✅ JSON 格式正确</div>
-                <pre id="jsonEditor" contenteditable="true" spellcheck="false"></pre>
+                <div id="jsonStatus" class="json-status valid">✅ JSON OK</div>
+                <div class="json-editor-wrapper" id="jsonEditorWrapper"><div class="json-line-numbers" id="jsonLineNumbers"><span class="ln">1</span></div><pre id="jsonEditor" contenteditable="true" spellcheck="false"></pre></div>
                 <div class="row" style="margin-top:6px;">
-                    <button class="ui-btn btn-add" onclick="showImportModal()">📥 导入</button>
-                    <button class="ui-btn btn-add-alt" id="btnApplyJson" onclick="applyJsonToEditor()" disabled>🔄 应用</button>
-                    <button class="ui-btn btn-add" onclick="copyJson()">📋 复制</button>
-                    <button class="ui-btn" style="background:#555;color:#fff;" onclick="downloadJson()">💾 下载</button>
+                    <button class="ui-btn btn-add" onclick="showImportModal()" data-i18n="btnImport">📥 导入</button>
+                    <button class="ui-btn btn-add-alt" id="btnApplyJson" onclick="applyJsonToEditor()" disabled data-i18n="btnApply">🔄 应用</button>
+                    <button class="ui-btn btn-add" onclick="copyJson()" data-i18n="btnCopy">📋 复制</button>
+                    <button class="ui-btn" style="background:#555;color:#fff;" onclick="downloadJson()" data-i18n="btnDownload">💾 下载</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div id="importModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:center;justify-content:center;">
-    <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;width:600px;max-width:90vw;display:flex;flex-direction:column;gap:10px;">
-        <h3 style="color:#fff;">📥 导入 Dialog JSON</h3>
-        <textarea id="importInput" style="height:300px;font-family:Consolas,monospace;font-size:12px;background:#111;color:#d4d4d4;border:1px solid var(--border);padding:10px;border-radius:4px;resize:vertical;" placeholder="在此粘贴完整的 dialog JSON..."></textarea>
-        <div id="importStatus" class="json-status valid" style="display:none;"></div>
-        <div class="row">
-            <button class="ui-btn btn-add" onclick="confirmImport()">✅ 确认导入</button>
-            <button class="ui-btn" style="background:#555;color:#fff;" onclick="closeImportModal()">❌ 取消</button>
+<div class="modal-overlay z-top" id="errorModal">
+    <div class="modal-box danger">
+        <h3 data-i18n="errorTitle">❌ 操作被阻止</h3>
+        <p id="errorModalMsg"></p>
+        <div class="force-import-warn" id="forceImportWarn" style="display:none;" data-i18n="forceImportWarn">⚠️ 忽略校验后，非标准字段可能导致编辑器预览异常或数据丢失。建议仅在你了解 JSON 结构时使用。</div>
+        <div class="modal-actions">
+            <button class="ui-btn" style="background:#555;color:#fff;" onclick="closeModal('errorModal')" data-i18n="btnGotIt">知道了</button>
+            <button class="ui-btn" id="btnForceImport" style="background:var(--warn);color:#000;display:none;" onclick="forceImportFromError()" data-i18n="btnForceImport">⚠️ 忽略校验导入</button>
         </div>
     </div>
 </div>
 
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+        <h3 data-i18n="settingsTitle">⚙️ 编辑器设置</h3>
+        <div class="setting-item">
+            <div><div class="setting-label" data-i18n="settingLang">语言 / Language</div></div>
+            <div class="lang-selector">
+                <button class="lang-btn active" id="langZh" onclick="setLanguage('zh')">中文</button>
+                <button class="lang-btn" id="langEn" onclick="setLanguage('en')">EN</button>
+            </div>
+        </div>
+        <div class="setting-item">
+            <div><div class="setting-label" data-i18n="settingLineNumbers">显示行号</div><div class="setting-desc" data-i18n="settingLineNumbersDesc">在 JSON 编辑器左侧显示行号</div><div class="setting-hint" data-i18n="settingLineNumbersHint">建议关闭语法高亮以获得最佳行号对齐效果</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="settingLineNumbers" checked onchange="onSettingChange('lineNumbers',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-item">
+            <div><div class="setting-label" data-i18n="settingHighlight">语法高亮</div><div class="setting-desc" data-i18n="settingHighlightDesc">对 JSON 内容进行颜色高亮渲染</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="settingHighlight" checked onchange="onSettingChange('highlight',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-item">
+            <div><div class="setting-label" data-i18n="settingPreview">显示预览面板</div><div class="setting-desc" data-i18n="settingPreviewDesc">在右侧显示结构预览和 JSON 数据</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="settingPreview" checked onchange="onSettingChange('showPreview',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="modal-actions" style="margin-top:14px;"><button class="ui-btn btn-add" onclick="closeModal('settingsModal')" data-i18n="btnDone">完成</button></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="importModal">
+    <div class="modal-box" style="max-width:600px;">
+        <h3 data-i18n="importTitle">📥 导入 Dialog JSON</h3>
+        <textarea id="importInput" style="height:300px;width:100%;font-family:Consolas,monospace;font-size:12px;background:#111;color:#d4d4d4;border:1px solid var(--border);padding:10px;border-radius:4px;resize:vertical;margin-bottom:8px;" placeholder="Paste dialog JSON here..."></textarea>
+        <div id="importStatus" class="json-status valid" style="display:none;"></div>
+        <div class="modal-actions"><button class="ui-btn btn-add" onclick="confirmImport()" data-i18n="btnConfirmImport">✅ 确认导入</button><button class="ui-btn" style="background:#555;color:#fff;" onclick="closeModal('importModal')" data-i18n="btnCancel">❌ 取消</button></div>
+    </div>
+</div>
+
 <script>
+/* ================================================================
+   ✅ i18n 国际化系统
+   ================================================================ */
+var I18N = {
+    zh: {
+        appTitle: 'MC Dialog 编辑器',
+        menuImport: '📥 导入 JSON', menuCopy: '📋 复制 JSON', menuDownload: '💾 下载 JSON',
+        menuReset: '🔄 重置编辑器', menuSettings: '⚙️ 设置',
+        globalSettings: '全局设置',
+        labelDialogType: '对话框类型', labelColumns: '列数', labelTitle: '主标题 (TextComponent)',
+        labelExtTitle: '外部标题 (纯文本)', labelEscClose: 'ESC关闭', yes: '是', no: '否',
+        sectionBody: '📝 正文内容', sectionActions: '🔘 面板内按钮', sectionExit: '🚪 退出按钮',
+        sectionJson: '📋 JSON 数据',
+        btnAdd: '+ 添加', btnImport: '📥 导入', btnApply: '🔄 应用', btnCopy: '📋 复制', btnDownload: '💾 下载',
+        previewTitle: '🎮 结构预览',
+        previewDisclaimer: '⚠️ 仅为结构示意图，实际效果以游戏内画面为准',
+        labelFontSize: '字号:',
+        errorTitle: '❌ 操作被阻止', btnGotIt: '知道了', btnForceImport: '⚠️ 忽略校验导入',
+        forceImportWarn: '⚠️ 忽略校验后，非标准字段可能导致编辑器预览异常或数据丢失。建议仅在你了解 JSON 结构时使用。',
+        settingsTitle: '⚙️ 编辑器设置', btnDone: '完成',
+        settingLang: '语言 / Language',
+        settingLineNumbers: '显示行号', settingLineNumbersDesc: '在 JSON 编辑器左侧显示行号',
+        settingLineNumbersHint: '建议关闭语法高亮以获得最佳行号对齐效果',
+        settingHighlight: '语法高亮', settingHighlightDesc: '对 JSON 内容进行颜色高亮渲染',
+        settingPreview: '显示预览面板', settingPreviewDesc: '在右侧显示结构预览和 JSON 数据',
+        importTitle: '📥 导入 Dialog JSON', btnConfirmImport: '✅ 确认导入', btnCancel: '❌ 取消',
+        labelText: '文本', labelColor: '颜色', labelWidth: '宽度(px)', labelTooltip: 'Tooltip',
+        labelActionType: '动作类型', labelActionValue: '动作值', labelEnabled: '启用',
+        labelBtnText: '按钮文本',
+        tcClickEvent: '🖱️ 点击事件 click_event', tcHoverEvent: '💬 悬停事件 hover_event',
+        tcEventsLabel: '⚡ 交互事件 (点击/悬停)',
+        extraLabel: 'Extra',
+        confirmReset: '确定要重置所有内容吗？',
+        copySuccess: '✅ 已复制', copyFail: '复制失败，请手动选中 JSON 内容复制',
+        applyFail: '❌ 应用失败: ',
+        jsonValid: '✅ JSON 格式正确', jsonEmpty: '⚠️ JSON 为空',
+        jumpToLine: '📍 跳转到第 ', lineSuffix: ' 行',
+        actRunCommand: '执行命令', actShowDialog: '打开对话框', actOpenUrl: '打开链接',
+        phCommand: '/say hello', phDialog: 'namespace:dialog_id', phUrl: 'https://example.com',
+        hintCommand: '语法: <code>/say hello</code>', hintDialog: '语法: <code>namespace:dialog_id</code>', hintUrl: '语法: <code>https://example.com</code>'
+    },
+    en: {
+        appTitle: 'MC Dialog Editor',
+        menuImport: '📥 Import JSON', menuCopy: '📋 Copy JSON', menuDownload: '💾 Download JSON',
+        menuReset: '🔄 Reset Editor', menuSettings: '⚙️ Settings',
+        globalSettings: 'Global Settings',
+        labelDialogType: 'Dialog Type', labelColumns: 'Columns', labelTitle: 'Title (TextComponent)',
+        labelExtTitle: 'External Title (Plain Text)', labelEscClose: 'ESC Close', yes: 'Yes', no: 'No',
+        sectionBody: '📝 Body Content', sectionActions: '🔘 Panel Buttons', sectionExit: '🚪 Exit Button',
+        sectionJson: '📋 JSON Data',
+        btnAdd: '+ Add', btnImport: '📥 Import', btnApply: '🔄 Apply', btnCopy: '📋 Copy', btnDownload: '💾 Download',
+        previewTitle: '🎮 Structure Preview',
+        previewDisclaimer: '⚠️ Structural preview only. Actual appearance may differ in-game.',
+        labelFontSize: 'Font Size:',
+        errorTitle: '❌ Action Blocked', btnGotIt: 'OK', btnForceImport: '⚠️ Force Import',
+        forceImportWarn: '⚠️ Non-standard fields may cause preview issues or data loss after bypassing validation. Use only if you understand the JSON structure.',
+        settingsTitle: '⚙️ Editor Settings', btnDone: 'Done',
+        settingLang: 'Language / 语言',
+        settingLineNumbers: 'Line Numbers', settingLineNumbersDesc: 'Show line numbers in JSON editor',
+        settingLineNumbersHint: 'Disable syntax highlighting for best line number alignment',
+        settingHighlight: 'Syntax Highlighting', settingHighlightDesc: 'Colorize JSON content',
+        settingPreview: 'Show Preview Panel', settingPreviewDesc: 'Display structure preview and JSON data on the right',
+        importTitle: '📥 Import Dialog JSON', btnConfirmImport: '✅ Confirm Import', btnCancel: '❌ Cancel',
+        labelText: 'Text', labelColor: 'Color', labelWidth: 'Width (px)', labelTooltip: 'Tooltip',
+        labelActionType: 'Action Type', labelActionValue: 'Action Value', labelEnabled: 'Enabled',
+        labelBtnText: 'Button Text',
+        tcClickEvent: '🖱️ Click Event', tcHoverEvent: '💬 Hover Event',
+        tcEventsLabel: '⚡ Interaction Events',
+        extraLabel: 'Extra',
+        confirmReset: 'Are you sure you want to reset everything?',
+        copySuccess: '✅ Copied', copyFail: 'Copy failed. Please manually select and copy the JSON.',
+        applyFail: '❌ Apply failed: ',
+        jsonValid: '✅ Valid JSON', jsonEmpty: '⚠️ JSON is empty',
+        jumpToLine: '📍 Jump to line ', lineSuffix: '',
+        actRunCommand: 'Run Command', actShowDialog: 'Show Dialog', actOpenUrl: 'Open URL',
+        phCommand: '/say hello', phDialog: 'namespace:dialog_id', phUrl: 'https://example.com',
+        hintCommand: 'Syntax: <code>/say hello</code>', hintDialog: 'Syntax: <code>namespace:dialog_id</code>', hintUrl: 'Syntax: <code>https://example.com</code>'
+    }
+};
+
+var currentLang = 'zh';
+try { var sl = localStorage.getItem('mc_dialog_lang'); if (sl && I18N[sl]) currentLang = sl; } catch(e) {}
+
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.zh[key]) || key; }
+
+function refreshI18n() {
+    var els = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < els.length; i++) {
+        var key = els[i].getAttribute('data-i18n');
+        var val = t(key);
+        if (val !== key) els[i].textContent = val;
+    }
+    document.getElementById('langZh').classList.toggle('active', currentLang === 'zh');
+    document.getElementById('langEn').classList.toggle('active', currentLang === 'en');
+    rebuildDynamicI18n();
+}
+
+function setLanguage(lang) {
+    currentLang = lang;
+    try { localStorage.setItem('mc_dialog_lang', lang); } catch(e) {}
+    refreshI18n();
+}
+
+function rebuildDynamicI18n() {
+    ACTION_TYPES[0].label = t('actRunCommand'); ACTION_TYPES[0].hint = t('hintCommand');
+    ACTION_TYPES[1].label = t('actShowDialog'); ACTION_TYPES[1].hint = t('hintDialog');
+    ACTION_TYPES[2].label = t('actOpenUrl'); ACTION_TYPES[2].hint = t('hintUrl');
+    initExitAction();
+    rebuildBodyList();
+    rebuildActionList();
+}
+
+/* ================================================================
+   ✅ 初始化进度管理（防卡死）
+   ================================================================ */
+let initSteps = 0;
+let totalInitSteps = 5;
+let initTimeout = null;
+
+function showInitModal() {
+    document.getElementById('initModal').classList.add('show');
+    updateInitProgress(0, '开始初始化...');
+    initTimeout = setTimeout(() => {
+        console.warn('初始化超时，自动关闭弹窗');
+        forceCloseInit();
+    }, 5000);
+}
+
+function updateInitProgress(step, text) {
+    const progressBar = document.getElementById('initProgressBar');
+    const progressText = document.getElementById('initProgressText');
+    const percent = Math.min((step / totalInitSteps) * 100, 100);
+    progressBar.style.width = `${percent}%`;
+    progressText.textContent = text;
+}
+
+function finishInit() {
+    clearTimeout(initTimeout);
+    const modal = document.getElementById('initModal');
+    modal.classList.remove('show');
+}
+
+function forceCloseInit() {
+    finishInit();
+    console.warn('用户强制关闭初始化弹窗');
+}
+
+/* ================================================================
+   Core Data & Constants
+   ================================================================ */
+var MC_COLOR_MAP={white:'#FFFFFF',black:'#000000',dark_blue:'#0000AA',dark_green:'#00AA00',dark_aqua:'#00AAAA',dark_red:'#AA0000',dark_purple:'#AA00AA',gold:'#FFAA00',gray:'#AAAAAA',dark_gray:'#555555',blue:'#5555FF',green:'#55FF55',aqua:'#55FFFF',red:'#FF5555',light_purple:'#FF55FF',yellow:'#FFFF55'};
+var VALID_MC_COLORS=Object.keys(MC_COLOR_MAP);
+var VALID_BODY_TYPES=['minecraft:plain_message','plain_message'];
+var VALID_DIALOG_TYPES=['minecraft:multi_action','minecraft:confirmation','minecraft:notice','multi_action','confirmation','notice'];
+var VALID_ACTION_TYPES=['minecraft:run_command','minecraft:show_dialog','minecraft:open_url','run_command','show_dialog','open_url'];
+var userSettings={lineNumbers:true,highlight:true,showPreview:true};
+try{var saved=localStorage.getItem('mc_dialog_settings');if(saved){var parsed=JSON.parse(saved);for(var sk in parsed)if(userSettings.hasOwnProperty(sk))userSettings[sk]=parsed[sk];}}catch(e){}
+var pendingForceImportStr='';
 var COLORS=[{v:"white",l:"白色"},{v:"black",l:"黑色"},{v:"dark_blue",l:"深蓝"},{v:"dark_green",l:"深绿"},{v:"dark_aqua",l:"深青"},{v:"dark_red",l:"深红"},{v:"dark_purple",l:"深紫"},{v:"gold",l:"金色"},{v:"gray",l:"灰色"},{v:"dark_gray",l:"深灰"},{v:"blue",l:"蓝色"},{v:"green",l:"绿色"},{v:"aqua",l:"青色"},{v:"red",l:"红色"},{v:"light_purple",l:"浅紫"},{v:"yellow",l:"黄色"}];
 var STYLES=['bold','italic','underlined','strikethrough','obfuscated'];
 var STYLE_LABELS={bold:'<b>B</b>',italic:'<i>I</i>',underlined:'<u>U</u>',strikethrough:'<s>S</s>',obfuscated:'§k'};
@@ -189,193 +498,438 @@ var ACTION_TYPES=[{value:"minecraft:run_command",label:"执行命令",hint:"语�
 var DEFAULT_BTN_WIDTH=140;
 var CLICK_EVENT_TYPES=[{value:"",label:"无点击事件"},{value:"open_url",label:"打开链接",placeholder:"https://example.com"},{value:"run_command",label:"执行命令",placeholder:"/say hello"},{value:"suggest_command",label:"建议命令",placeholder:"/msg @p "},{value:"change_page",label:"翻书页码",placeholder:"2"},{value:"show_dialog",label:"显示对话框",placeholder:"namespace:dialog_id"}];
 var HOVER_EVENT_TYPES=[{value:"",label:"无悬停事件"},{value:"show_text",label:"显示文本",placeholder:"悬停提示文本..."},{value:"show_item",label:"显示物品",placeholder:'{"id":"diamond","count":1}'},{value:"show_entity",label:"显示实体",placeholder:'{"type":"pig","id":"uuid"}'}];
-
 var defaultState=function(){return{type:"minecraft:multi_action",title:{text:"Dialog Title",color:"gold",bold:true},external_title:"",columns:2,can_close_with_escape:true,body:[{type:"minecraft:plain_message",contents:{text:"Hello World!",color:"white"},width:300}],actions:[{label:{text:"Click Me",color:"aqua"},width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}}],exit_action:{enabled:true,label:{text:"Exit",color:"red"},width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}}};};
 var state=defaultState();
-var tcEditorCreated={},actionTypeCache={},isSyncingJson=false,highlightTimer=null,exitCache='';
+var tcEditorCreated={},isSyncingJson=false,highlightTimer=null,currentErrorLine=-1,lastLineCount=0,scrollRafId=0;
 
-/** ==================== 导航栏 ==================== */
-function toggleNavMenu(){document.getElementById('navDropdown').classList.toggle('open');}
-function closeNavMenu(){document.getElementById('navDropdown').classList.remove('open');}
-document.addEventListener('click',function(e){var dd=document.getElementById('navDropdown');var toggle=document.querySelector('.nav-menu-toggle');if(dd.classList.contains('open')&&!dd.contains(e.target)&&!toggle.contains(e.target)){closeNavMenu();}});
+function normalizeType(type,validList){if(!type||typeof type!=='string')return type;if(validList.indexOf(type)!==-1){if(type.indexOf(':')===-1)return 'minecraft:'+type;return type;}return type;}
+
+/** ==================== Modal System ==================== */
+function openModal(id){document.getElementById(id).classList.remove('closing');document.getElementById(id).classList.add('show');}
+function closeModal(id){var el=document.getElementById(id);if(!el.classList.contains('show'))return;el.classList.add('closing');setTimeout(function(){el.classList.remove('show','closing');pendingForceImportStr='';},180);}
+
+/** ==================== Settings ==================== */
+function showSettingsModal(){
+    document.getElementById('settingLineNumbers').checked=userSettings.lineNumbers;
+    document.getElementById('settingHighlight').checked=userSettings.highlight;
+    document.getElementById('settingPreview').checked=userSettings.showPreview;
+    refreshI18n();
+    openModal('settingsModal');
+}
+function onSettingChange(key,value){
+    userSettings[key]=value;
+    try{localStorage.setItem('mc_dialog_settings',JSON.stringify(userSettings));}catch(e){}
+    applySettings();
+}
+function applySettings(){
+    var wrapper=document.getElementById('jsonEditorWrapper');
+    if(wrapper){if(userSettings.lineNumbers)wrapper.classList.remove('hide-line-numbers');else wrapper.classList.add('hide-line-numbers');}
+    var pp=document.getElementById('previewPanel');
+    if(pp){if(userSettings.showPreview)pp.classList.remove('hidden');else pp.classList.add('hidden');}
+    var str=getJsonText();if(str)setJsonHighlighted(str,false);
+}
+
+/** ==================== Navbar ==================== */
+function toggleNavMenu() {
+    var dd = document.getElementById('navDropdown');
+    var toggle = document.getElementById('navToggle');
+    dd.classList.toggle('open');
+    toggle.classList.toggle('active');
+}
+
+function closeNavMenu() {
+    var dd = document.getElementById('navDropdown');
+    var toggle = document.getElementById('navToggle');
+    dd.classList.remove('open');
+    toggle.classList.remove('active');
+}
+
+document.addEventListener('click', function(e) {
+    var dd = document.getElementById('navDropdown');
+    var toggle = document.getElementById('navToggle');
+    if (dd.classList.contains('open') && !dd.contains(e.target) && !toggle.contains(e.target)) {
+        closeNavMenu();
+    }
+});
+
 function manualRefreshPreview(btn){btn.classList.add('spinning');try{renderPreview(JSON.parse(getJsonText()));}catch(e){generate();}setTimeout(function(){btn.classList.remove('spinning');},500);}
-function resetAll(){if(!confirm('确定要重置所有内容吗？'))return;state=defaultState();tcEditorCreated={};actionTypeCache={};exitCache='';document.getElementById('titleEditor').innerHTML='';document.getElementById('bodyList').innerHTML='';document.getElementById('actionList').innerHTML='';document.getElementById('dialogType').value=state.type;document.getElementById('columns').value=state.columns;document.getElementById('escClose').value=state.can_close_with_escape;document.getElementById('extTitleInput').value=state.external_title;ensureTCEditor('titleEditor','title');renderBodies();renderActions();initExitAction();generate();}
+function resetAll(){if(!confirm(t('confirmReset')))return;state=defaultState();tcEditorCreated={};document.getElementById('titleEditor').innerHTML='';document.getElementById('bodyList').innerHTML='';document.getElementById('actionList').innerHTML='';document.getElementById('dialogType').value=state.type;document.getElementById('columns').value=state.columns;document.getElementById('escClose').value=state.can_close_with_escape;document.getElementById('extTitleInput').value=state.external_title;ensureTCEditor('titleEditor','title');rebuildBodyList();rebuildActionList();initExitAction();generate();}
 
-/** ==================== JSON 高亮 ==================== */
+/** ==================== JSON Highlight + Line Numbers ==================== */
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function highlightJson(jsonStr){if(!jsonStr)return '';var safe=escapeHtml(jsonStr);return safe.replace(/("(\\u[a-zA-Z0-9]{4}|\$$^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,function(match){var cls='json-number';if(/^"/.test(match)){cls=/:$/.test(match)?'json-key':'json-string';}else if(/true|false/.test(match)){cls='json-boolean';}else if(/null/.test(match)){cls='json-null';}return '<span class="'+cls+'">'+match+'</span>';}).replace(/([{}$$$$])/g,'<span class="json-bracket">$1</span>');}
+function highlightJson(jsonStr){if(!jsonStr)return '';var safe=escapeHtml(jsonStr);return safe.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,function(match){var cls='json-number';if(/^"/.test(match)){cls=/:$/.test(match)?'json-key':'json-string';}else if(/true|false/.test(match)){cls='json-boolean';}else if(/null/.test(match)){cls='json-null';}return '<span class="'+cls+'">'+match+'</span>';}).replace(/([{}\[\]])/g,'<span class="json-bracket">$1</span>');}
 function getJsonText(){var el=document.getElementById('jsonEditor');return el.innerText||el.textContent||'';}
-function setJsonHighlighted(str,preserveCursor){var el=document.getElementById('jsonEditor');var offset=0;if(preserveCursor){var sel=window.getSelection();if(sel.rangeCount>0){var range=sel.getRangeAt(0);var preRange=range.cloneRange();preRange.selectNodeContents(el);preRange.setEnd(range.startContainer,range.startOffset);offset=preRange.toString().length;}}el.innerHTML=highlightJson(str);if(preserveCursor&&offset>0){try{var newRange=document.createRange();var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null,false);var charCount=0,node=null;while(node=walker.nextNode()){var len=node.length;if(charCount+len>=offset){newRange.setStart(node,offset-charCount);newRange.collapse(true);var sel2=window.getSelection();sel2.removeAllRanges();sel2.addRange(newRange);break;}charCount+=len;}}catch(e){}}}
-function onJsonInput(){clearTimeout(highlightTimer);var str=getJsonText();validateJson(str,false);highlightTimer=setTimeout(function(){setJsonHighlighted(str,true);},300);}
+function updateLineNumbers(str,errorLine){var lnEl=document.getElementById('jsonLineNumbers');if(!lnEl)return;var lines=(str||'').split('\n');var renderCount=lines.length+50;if(renderCount!==lastLineCount||lnEl.dataset.err!=String(errorLine)){lastLineCount=renderCount;lnEl.dataset.err=String(errorLine);var html='';for(var i=1;i<=renderCount;i++){var cls='ln';if(i===errorLine)cls+=' error-line flash';html+='<span class="'+cls+'" data-line="'+i+'">'+i+'</span>';}lnEl.innerHTML=html;}else if(errorLine>0){var prev=lnEl.querySelector('.ln.error-line');if(prev)prev.className='ln';var target=lnEl.querySelector('.ln[data-line="'+errorLine+'"]');if(target)target.className='ln error-line flash';}}
+function syncLineNumberScroll(){if(scrollRafId)return;scrollRafId=requestAnimationFrame(function(){var editor=document.getElementById('jsonEditor');var lnEl=document.getElementById('jsonLineNumbers');if(editor&&lnEl)lnEl.scrollTop=editor.scrollTop;scrollRafId=0;});}
+function setJsonHighlighted(str,preserveCursor){var el=document.getElementById('jsonEditor');var offset=0;if(preserveCursor){var sel=window.getSelection();if(sel.rangeCount>0){var range=sel.getRangeAt(0);var preRange=range.cloneRange();preRange.selectNodeContents(el);preRange.setEnd(range.startContainer,range.startOffset);offset=preRange.toString().length;}}updateLineNumbers(str,currentErrorLine);if(userSettings.highlight)el.innerHTML=highlightJson(str);else el.textContent=str;if(preserveCursor&&offset>0){try{var newRange=document.createRange();var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null,false);var charCount=0,node=null;while(node=walker.nextNode()){var len=node.length;if(charCount+len>=offset){newRange.setStart(node,offset-charCount);newRange.collapse(true);var sel2=window.getSelection();sel2.removeAllRanges();sel2.addRange(newRange);break;}charCount+=len;}}catch(e){}}syncLineNumberScroll();}
+function onJsonInput(){clearTimeout(highlightTimer);var str=getJsonText();validateJson(str,false);highlightTimer=setTimeout(function(){setJsonHighlighted(str,true);},150);}
 
-/** ==================== 基础工具 ==================== */
+/** ==================== Utilities ==================== */
 function createTC(t,c,s,e){return{text:t||"",color:c||"white",extra:e||[],bold:s&&s.bold,italic:s&&s.italic,underlined:s&&s.underlined,strikethrough:s&&s.strikethrough,obfuscated:s&&s.obfuscated};}
 function toggleCard(el){el.closest('.card').classList.toggle('open');}
 function updateHeaderPreview(id,text){var el=document.getElementById(id);if(el)el.textContent=text||'(空)';}
 function buildColorOpts(sel){var h="";for(var i=0;i<COLORS.length;i++)h+='<option value="'+COLORS[i].v+'"'+(sel===COLORS[i].v?' selected':'')+'>'+COLORS[i].l+'</option>';return h;}
 function getVal(p){var ps=p.split('.'),o=state;for(var i=0;i<ps.length;i++){if(o==null)return;o=o[ps[i]];}return o;}
 function setVal(p,k,v){var ps=p.split('.'),o=state;for(var i=0;i<ps.length-1;i++)o=o[ps[i]];o[ps[ps.length-1]][k]=v;}
+function onTCInput(el){setVal(el.dataset.p,el.dataset.k,el.value);var path=el.dataset.p;if(path.indexOf('.extra.')!==-1){generate();return;}if(path==='title')updateHeaderPreview('headerPreview',state.title.text||'(空)');else if(path.indexOf('body.')===0&&path.indexOf('.contents')!==-1){var idx=parseInt(path.split('.')[1]);if(!isNaN(idx))updateHeaderPreview('bp_'+idx,(state.body[idx]&&state.body[idx].contents&&state.body[idx].contents.text)||'(空)');}else if(path.indexOf('actions.')===0&&path.indexOf('.label')!==-1){var aidx=parseInt(path.split('.')[1]);if(!isNaN(aidx))updateHeaderPreview('ap_'+aidx,(state.actions[aidx]&&state.actions[aidx].label&&state.actions[aidx].label.text)||'(空)');}else if(path==='exit_action.label')updateHeaderPreview('exitPv',(state.exit_action&&state.exit_action.label&&state.exit_action.label.text)||'(空)');generate();}
 
-/** ==================== TC 编辑器（含事件 + Extra 增量同步） ==================== */
+/**
+ * ✅ TC 编辑器（统一使用 toggleStyle 函数）
+ */
 function ensureTCEditor(cid,path){
     var c=document.getElementById(cid);if(!c)return;
     if(tcEditorCreated[cid]){syncTCValues(cid,path);return;}
     tcEditorCreated[cid]=true;
-    var clickOpts=CLICK_EVENT_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('');
-    var hoverOpts=HOVER_EVENT_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('');
-    c.innerHTML='<div class="row"><div><label>文本</label><input data-p="'+path+'" data-k="text" placeholder="输入显示文本..." oninput="onTCInput(this)"></div><div><label>颜色</label><select data-p="'+path+'" data-k="color" onchange="onTCInput(this)">'+buildColorOpts('white')+'</select></div></div>'
+    var clickOpts=CLICK_EVENT_TYPES.map(function(ct){return '<option value="'+ct.value+'">'+ct.label+'</option>';}).join('');
+    var hoverOpts=HOVER_EVENT_TYPES.map(function(ht){return '<option value="'+ht.value+'">'+ht.label+'</option>';}).join('');
+    c.innerHTML='<div class="row"><div><label>'+t('labelText')+'</label><input data-p="'+path+'" data-k="text" placeholder="'+t('labelText')+'..." oninput="onTCInput(this)"></div><div><label>'+t('labelColor')+'</label><select data-p="'+path+'" data-k="color" onchange="onTCInput(this)">'+buildColorOpts('white')+'</select></div></div>'
     +'<div class="style-toggles" id="'+cid+'_st">'+STYLES.map(function(s){return '<div class="style-btn" data-s="'+s+'" onclick="toggleStyle(\''+path+'\',\''+s+'\',\''+cid+'_st\')">'+STYLE_LABELS[s]+'</div>';}).join('')+'</div>'
-    +'<div style="margin-top:6px;font-size:11px;color:#888;display:flex;justify-content:space-between;">Extra <button class="ui-btn btn-add" style="padding:1px 6px;font-size:10px;" onclick="addExtra(\''+path+'\',\''+cid+'\')">+</button></div><div id="'+cid+'_ex"></div>'
+    +'<div style="margin-top:6px;font-size:11px;color:#888;display:flex;justify-content:space-between;">'+t('extraLabel')+' <button class="ui-btn btn-add" style="padding:1px 6px;font-size:10px;" onclick="addExtra(\''+path+'\',\''+cid+'\')">+</button></div><div id="'+cid+'_ex"></div>'
     +'<div class="tc-events-section">'
-    +'<div class="tc-events-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><span class="arrow">▶</span> ⚡ 交互事件 (点击/悬停)</div>'
+    +'<div class="tc-events-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><span class="arrow">▶</span> '+t('tcEventsLabel')+'</div>'
     +'<div class="tc-events-body" id="'+cid+'_events">'
-    +'<div class="event-group"><label>🖱️ 点击事件 clickEvent</label><div class="event-row"><select id="'+cid+'_clickType" onchange="onTCEventTypeChange(\''+path+'\',\'click\',this.value,\''+cid+'\')">'+clickOpts+'</select><input id="'+cid+'_clickVal" placeholder="选择事件类型后填写值..." oninput="onTCEventValChange(\''+path+'\',\'click\',this.value)"></div></div>'
-    +'<div class="event-group"><label>💬 悬停事件 hoverEvent</label><div class="event-row"><select id="'+cid+'_hoverType" onchange="onTCEventTypeChange(\''+path+'\',\'hover\',this.value,\''+cid+'\')">'+hoverOpts+'</select><input id="'+cid+'_hoverVal" placeholder="选择事件类型后填写值..." oninput="onTCEventValChange(\''+path+'\',\'hover\',this.value)"></div></div>'
+    +'<div class="event-group"><label>'+t('tcClickEvent')+'</label><div class="event-row"><select id="'+cid+'_clickType" onchange="onTCEventTypeChange(\''+path+'\',\'click\',this.value,\''+cid+'\')">'+clickOpts+'</select><input id="'+cid+'_clickVal" placeholder="" oninput="onTCEventValChange(\''+path+'\',\'click\',this.value)"></div></div>'
+    +'<div class="event-group"><label>'+t('tcHoverEvent')+'</label><div class="event-row"><select id="'+cid+'_hoverType" onchange="onTCEventTypeChange(\''+path+'\',\'hover\',this.value,\''+cid+'\')">'+hoverOpts+'</select><input id="'+cid+'_hoverVal" placeholder="" oninput="onTCEventValChange(\''+path+'\',\'hover\',this.value)"></div></div>'
     +'</div></div>';
     syncTCValues(cid,path);
 }
-
-function syncTCValues(cid,path){
-    var tc=getVal(path),c=document.getElementById(cid);if(!tc||!c)return;
-    var els=c.querySelectorAll('[data-k]');
-    for(var i=0;i<els.length;i++){var k=els[i].dataset.k,v=tc[k]||'';if(document.activeElement!==els[i])els[i].tagName==='SELECT'?els[i].value=v||'white':els[i].value=v;}
-    for(var j=0;j<STYLES.length;j++)updateBtnState(cid+'_st',STYLES[j],!!tc[STYLES[j]]);
-    syncExtras(cid,path);
-    syncEvents(cid,path);
+function syncTCValues(cid,path){var tc=getVal(path),c=document.getElementById(cid);if(!tc||!c)return;var els=c.querySelectorAll('[data-k]');for(var i=0;i<els.length;i++){var k=els[i].dataset.k,v=tc[k]||'';if(document.activeElement!==els[i])els[i].tagName==='SELECT'?els[i].value=v||'white':els[i].value=v;}for(var j=0;j<STYLES.length;j++)updateBtnState(cid+'_st',STYLES[j],!!tc[STYLES[j]]);syncExtras(cid,path);syncEvents(cid,path);}
+function syncEvents(cid,path){var tc=getVal(path);if(!tc)return;var clickSel=document.getElementById(cid+'_clickType'),clickInp=document.getElementById(cid+'_clickVal');if(clickSel&&document.activeElement!==clickSel){var cType=(tc.click_event&&tc.click_event.action)||'';clickSel.value=cType;var cVal='';if(cType==='open_url')cVal=tc.click_event.url||'';else if(cType==='run_command'||cType==='suggest_command')cVal=tc.click_event.command||'';else if(cType==='change_page')cVal=tc.click_event.page||'';else if(cType==='show_dialog')cVal=tc.click_event.dialog||'';if(clickInp&&document.activeElement!==clickInp){clickInp.value=cVal;clickInp.placeholder=getEventPlaceholder('click',cType);}}var hoverSel=document.getElementById(cid+'_hoverType'),hoverInp=document.getElementById(cid+'_hoverVal');if(hoverSel&&document.activeElement!==hoverSel){var hType=(tc.hover_event&&tc.hover_event.action)||'';hoverSel.value=hType;var hVal='';if(hType==='show_text'){var ht=tc.hover_event.value||'';hVal=(typeof ht==='string')?ht:(ht.text||JSON.stringify(ht));}else if(hType==='show_item'||hType==='show_entity')hVal=JSON.stringify(tc.hover_event.value||{});if(hoverInp&&document.activeElement!==hoverInp){hoverInp.value=hVal;hoverInp.placeholder=getEventPlaceholder('hover',hType);}}}
+function getEventPlaceholder(category,type){var list=category==='click'?CLICK_EVENT_TYPES:HOVER_EVENT_TYPES;for(var i=0;i<list.length;i++)if(list[i].value===type)return list[i].placeholder||'';return '';}
+function onTCEventTypeChange(path,category,type,cid){var tc=getVal(path);if(!tc)return;if(!type){delete tc.click_event;delete tc.hover_event;}else if(category==='click')tc.click_event={action:type};else tc.hover_event={action:type};var inp=document.getElementById(cid+'_'+category+'Val');if(inp)inp.placeholder=getEventPlaceholder(category,type);generate();}
+function onTCEventValChange(path,category,val){var tc=getVal(path);if(!tc)return;if(category==='click'&&tc.click_event){var ct=tc.click_event.action;if(ct==='open_url')tc.click_event.url=val;else if(ct==='run_command'||ct==='suggest_command')tc.click_event.command=val;else if(ct==='change_page')tc.click_event.page=val;else if(ct==='show_dialog')tc.click_event.dialog=val;}else if(category==='hover'&&tc.hover_event){var ht=tc.hover_event.action;if(ht==='show_text')tc.hover_event.value=val;else if(ht==='show_item'||ht==='show_entity'){try{tc.hover_event.value=JSON.parse(val);}catch(e){tc.hover_event.value=val;}}}generate();}
+function toggleStyle(p,s,cid){
+    var tc=getVal(p);
+    if(!tc)return;
+    tc[s]=!tc[s];
+    updateBtnState(cid,s,tc[s]);
+    generate();
 }
-
-function syncEvents(cid,path){
-    var tc=getVal(path);if(!tc)return;
-    var clickSel=document.getElementById(cid+'_clickType'),clickInp=document.getElementById(cid+'_clickVal');
-    if(clickSel&&document.activeElement!==clickSel){var cType=(tc.clickEvent&&tc.clickEvent.action)||'';clickSel.value=cType;var cVal='';if(cType==='open_url')cVal=tc.clickEvent.url||'';else if(cType==='run_command'||cType==='suggest_command')cVal=tc.clickEvent.command||'';else if(cType==='change_page')cVal=tc.clickEvent.page||'';else if(cType==='show_dialog')cVal=tc.clickEvent.dialog||'';if(clickInp&&document.activeElement!==clickInp){clickInp.value=cVal;clickInp.placeholder=getEventPlaceholder('click',cType);}}
-    var hoverSel=document.getElementById(cid+'_hoverType'),hoverInp=document.getElementById(cid+'_hoverVal');
-    if(hoverSel&&document.activeElement!==hoverSel){var hType=(tc.hoverEvent&&tc.hoverEvent.action)||'';hoverSel.value=hType;var hVal='';if(hType==='show_text'){var ht=tc.hoverEvent.contents||tc.hoverEvent.value||'';hVal=(typeof ht==='string')?ht:(ht.text||JSON.stringify(ht));}else if(hType==='show_item'||hType==='show_entity')hVal=JSON.stringify(tc.hoverEvent.contents||{});if(hoverInp&&document.activeElement!==hoverInp){hoverInp.value=hVal;hoverInp.placeholder=getEventPlaceholder('hover',hType);}}
+function updateBtnState(cid,s,a){
+    var c=document.getElementById(cid);
+    if(!c)return;
+    var bs=c.querySelectorAll('.style-btn');
+    for(var i=0;i<bs.length;i++)if(bs[i].dataset.s===s)bs[i].classList.toggle('active',a);
 }
-function getEventPlaceholder(category,type){var list=category==='click'?CLICK_EVENT_TYPES:HOVER_EVENT_TYPES;for(var i=0;i<list.length;i++)if(list[i].value===type)return list[i].placeholder||'';return '选择事件类型后填写值...';}
-function onTCEventTypeChange(path,category,type,cid){var tc=getVal(path);if(!tc)return;if(!type){delete tc.clickEvent;delete tc.hoverEvent;}else if(category==='click'){tc.clickEvent={action:type};}else{tc.hoverEvent={action:type};}var inp=document.getElementById(cid+'_'+category+'Val');if(inp)inp.placeholder=getEventPlaceholder(category,type);generate();}
-function onTCEventValChange(path,category,val){var tc=getVal(path);if(!tc)return;if(category==='click'&&tc.clickEvent){var t=tc.clickEvent.action;if(t==='open_url')tc.clickEvent.url=val;else if(t==='run_command'||t==='suggest_command')tc.clickEvent.command=val;else if(t==='change_page')tc.clickEvent.page=val;else if(t==='show_dialog')tc.clickEvent.dialog=val;}else if(category==='hover'&&tc.hoverEvent){var ht=tc.hoverEvent.action;if(ht==='show_text')tc.hoverEvent.contents=val;else if(ht==='show_item'||ht==='show_entity'){try{tc.hoverEvent.contents=JSON.parse(val);}catch(e){tc.hoverEvent.contents=val;}}}generate();}
-function onTCInput(el){setVal(el.dataset.p,el.dataset.k,el.value);generate();}
-function toggleStyle(p,s,cid){var t=getVal(p);if(!t)return;t[s]=!t[s];updateBtnState(cid,s,t[s]);generate();}
-function updateBtnState(cid,s,a){var c=document.getElementById(cid);if(!c)return;var bs=c.querySelectorAll('.style-btn');for(var i=0;i<bs.length;i++)if(bs[i].dataset.s===s)bs[i].classList.toggle('active',a);}
-function addExtra(p,cid){var t=getVal(p);if(!t)return;if(!t.extra)t.extra=[];t.extra.push(createTC("text","white"));syncExtras(cid,p);generate();}
-function removeExtra(p,i,cid){var t=getVal(p);if(!t||!t.extra)return;t.extra.splice(i,1);syncExtras(cid,p);generate();}
-function toggleExtraStyle(p,i,s,cid){var t=getVal(p);if(!t||!t.extra||!t.extra[i])return;t.extra[i][s]=!t.extra[i][s];updateBtnState(cid,s,t.extra[i][s]);generate();}
-
-/** ✅ Extra 增量 DOM 同步（上一轮修复保留） */
-function syncExtras(cid,path){
-    var el=document.getElementById(cid+"_ex");if(!el)return;
-    var t=getVal(path),ex=(t&&t.extra)||[];
-    var segments=el.querySelectorAll('.extra-segment');
-    while(segments.length>ex.length){el.removeChild(el.lastElementChild);segments=el.querySelectorAll('.extra-segment');}
-    for(var i=segments.length;i<ex.length;i++){
-        var ep=path+'.extra.'+i,sid=cid+'_ex'+i;
-        var div=document.createElement('div');div.className='extra-segment';div.dataset.i=i;
-        div.innerHTML='<div style="display:flex;justify-content:flex-end;"><button class="btn-del" onclick="removeExtra(\''+path+'\','+i+',\''+cid+'\')">✕</button></div>'
-            +'<div class="row"><div><input data-p="'+ep+'" data-k="text" placeholder="附加文本..." oninput="onTCInput(this)"></div>'
-            +'<div><select data-p="'+ep+'" data-k="color" onchange="onTCInput(this)">'+buildColorOpts(ex[i].color)+'</select></div></div>'
-            +'<div class="style-toggles" id="'+sid+'">'+STYLES.map(function(s){return '<div class="style-btn '+(ex[i][s]?'active':'')+'" data-s="'+s+'" onclick="toggleExtraStyle(\''+path+'\','+i+',\''+s+'\',\''+sid+'\')">'+STYLE_LABELS[s]+'</div>';}).join('')+'</div>';
-        el.appendChild(div);
-    }
-    segments=el.querySelectorAll('.extra-segment');
-    for(var m=0;m<Math.min(segments.length,ex.length);m++){
-        var seg=segments[m];seg.dataset.i=m;
-        var delBtn=seg.querySelector('.btn-del');if(delBtn)delBtn.setAttribute('onclick','removeExtra(\''+path+'\','+m+',\''+cid+'\')');
-        var ins=seg.querySelectorAll('[data-k]');
-        for(var n=0;n<ins.length;n++){if(document.activeElement===ins[n])continue;var k=ins[n].dataset.k,v=ex[m][k]||'';if(ins[n].tagName==='SELECT')ins[n].value=v||'white';else ins[n].value=v;}
-        for(var p=0;p<STYLES.length;p++)updateBtnState(cid+'_ex'+m,STYLES[p],!!ex[m][STYLES[p]]);
-    }
-}
+function addExtra(p,cid){var tc=getVal(p);if(!tc)return;if(!tc.extra)tc.extra=[];tc.extra.push(createTC("text","white"));syncExtras(cid,p);generate();}
 
 /**
- * ✅ 核心修复：Body 列表全量重建
- * 采用用户建议的 "写入JSON → 从JSON读回编辑器" 策略
- * 增删 Body 时强制清空 DOM + 清除 TC 编辑器缓存，确保索引永远正确
+ * ✅ 修复：Extra样式按钮使用与主字段相同的更新逻辑
  */
-function rebuildBodyList(){
-    // 1. 先通过 generate() 将当前 state 写入 JSON（保证数据一致性）
-    //    注意：这里不能调 generate()，因为 generate 会触发 renderPreview 等副作用
-    //    我们只需要确保 state 是最新的即可（增删操作已直接修改了 state）
+function syncExtras(cid, path) {
+    var el = document.getElementById(cid + "_ex");
+    if (!el) return;
+    var tc = getVal(path);
+    var ex = (tc && tc.extra) || [];
+    el.innerHTML = "";
     
-    // 2. 清空 Body DOM 和对应的 TC 编辑器缓存
-    document.getElementById('bodyList').innerHTML = '';
-    // 清除所有 body.* 开头的 TC 编辑器创建标记
-    var keysToDelete = [];
-    for(var key in tcEditorCreated){
-        if(key.indexOf('btc_') === 0) keysToDelete.push(key);
+    var clickOpts = CLICK_EVENT_TYPES.map(function (ct) {
+        return '<option value="' + ct.value + '">' + ct.label + '</option>';
+    }).join('');
+    var hoverOpts = HOVER_EVENT_TYPES.map(function (ht) {
+        return '<option value="' + ht.value + '">' + ht.label + '</option>';
+    }).join('');
+
+    for (var i = 0; i < ex.length; i++) {
+        var ep = path + '.extra.' + i;
+        var sid = cid + '_ex' + i;  // Extra段落容器ID
+        var stid = cid + '_st_' + i; // 样式按钮容器ID（新格式）
+        
+        var div = document.createElement('div');
+        div.className = 'extra-segment';
+        div.dataset.i = i;
+        div.innerHTML =
+            '<div style="display:flex;justify-content:flex-end;"><button class="btn-del" onclick="removeExtra(\'' + path + '\',' + i + ',\'' + cid + '\')">✕</button></div>' +
+            '<div class="row"><div><input data-p="' + ep + '" data-k="text" placeholder="' + t('labelText') + '..." oninput="onTCInput(this)"></div>' +
+            '<div><select data-p="' + ep + '" data-k="color" onchange="onTCInput(this)">' + buildColorOpts(ex[i].color) + '</select></div></div>' +
+            '<div class="style-toggles" id="' + stid + '">' +
+            STYLES.map(function (s) {
+                return '<div class="style-btn ' + (ex[i][s] ? 'active' : '') + '" data-s="' + s + '" onclick="toggleStyle(\'' + ep + '\',\'' + s + '\',\'' + stid + '\')">' + STYLE_LABELS[s] + '</div>';
+            }).join('') +
+            '</div>' +
+            '<div class="tc-events-section"><div class="tc-events-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><span class="arrow">▶</span> ' + t('tcEventsLabel') + '</div>' +
+            '<div class="tc-events-body" id="' + sid + '_events">' +
+            '<div class="event-group"><label>' + t('tcClickEvent') + '</label><div class="event-row"><select id="' + sid + '_clickType" onchange="onTCEventTypeChange(\'' + ep + '\',\'click\',this.value,\'' + sid + '\')">' + clickOpts + '</select><input id="' + sid + '_clickVal" placeholder="" oninput="onTCEventValChange(\'' + ep + '\',\'click\',this.value)"></div></div>' +
+            '<div class="event-group"><label>' + t('tcHoverEvent') + '</label><div class="event-row"><select id="' + sid + '_hoverType" onchange="onTCEventTypeChange(\'' + ep + '\',\'hover\',this.value,\'' + sid + '\')">' + hoverOpts + '</select><input id="' + sid + '_hoverVal" placeholder="" oninput="onTCEventValChange(\'' + ep + '\',\'hover\',this.value)"></div></div>' +
+            '</div></div>';
+        el.appendChild(div);
     }
-    for(var k=0;k<keysToDelete.length;k++) delete tcEditorCreated[keysToDelete[k]];
-    
-    // 3. 重新渲染（从零创建所有 Body 卡片，索引与 state.body 严格对应）
-    renderBodies();
-}
 
-/** ✅ renderBodies 简化为纯创建逻辑（不再尝试复用 DOM） */
-function renderBodies(){
-    var c=document.getElementById('bodyList');
-    // 全量重建模式下，调用前已由 rebuildBodyList 清空，此处仅做追加
-    for(var i=0;i<state.body.length;i++){
-        var d=document.createElement('div');d.className='card open';
-        d.innerHTML='<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#2980b9;color:#fff;">BODY</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="bp_'+i+'"></span><button class="btn-del" onclick="event.stopPropagation();removeBody('+i+')">✕</button></div><div class="card-body"><div id="btc_'+i+'"></div><div class="row"><div><label>宽度(px)</label><input type="number" id="bw_'+i+'" placeholder="默认自适应" oninput="state.body['+i+'].width=parseInt(this.value)||undefined;generate()"></div></div></div>';
-        c.appendChild(d);
-        updateHeaderPreview('bp_'+i,state.body[i].contents.text);
-        var w=document.getElementById('bw_'+i);if(w)w.value=state.body[i].width||'';
-        ensureTCEditor('btc_'+i,'body.'+i+'.contents');
+    for (var i = 0; i < ex.length; i++) {
+        var ep = path + '.extra.' + i;
+        var sid = cid + '_ex' + i;
+        syncEvents(sid, ep);
     }
 }
 
-/** ✅ 新增：安全的 Body 删除函数 */
-function removeBody(index){
-    state.body.splice(index,1);
-    rebuildBodyList();
-    generate();
+function removeExtra(p,i,cid){var tc=getVal(p);if(!tc||!tc.extra)return;tc.extra.splice(i,1);syncExtras(cid,p);generate();}
+
+/** ==================== 性能优化：无延迟生成 ==================== */
+var generateDebounceTimer = null;
+function generate() {
+    if (isSyncingJson) return;
+    clearTimeout(generateDebounceTimer);
+    generateDebounceTimer = setTimeout(function() {
+        try {
+            state.type = document.getElementById('dialogType').value;
+            state.columns = parseInt(document.getElementById('columns').value) || 1;
+            state.can_close_with_escape = document.getElementById('escClose').value === 'true';
+            var json = {
+                type: state.type,
+                title: cleanTC(state.title),
+                body: state.body.map(function(b) {
+                    var m = { type: b.type || "minecraft:plain_message", contents: cleanTC(b.contents) };
+                    if (b.width) m.width = b.width;
+                    return m;
+                }),
+                inputs: [],
+                can_close_with_escape: state.can_close_with_escape,
+                columns: state.columns,
+                actions: state.actions.map(function(a) {
+                    var act = { type: a.action.type };
+                    var k = a.action.type === 'minecraft:run_command' ? 'command' : a.action.type === 'minecraft:show_dialog' ? 'dialog' : 'url';
+                    act[k] = a.action[k] || "";
+                    var r = { label: cleanTC(a.label), action: act };
+                    if (a.tooltip) r.tooltip = a.tooltip;
+                    if (a.width) r.width = a.width;
+                    return r;
+                })
+            };
+            if (state.external_title) json.external_title = state.external_title;
+            if (state.exit_action.enabled) {
+                var ea = state.exit_action, act = { type: ea.action.type };
+                var k = ea.action.type === 'minecraft:run_command' ? 'command' : ea.action.type === 'minecraft:show_dialog' ? 'dialog' : 'url';
+                act[k] = ea.action[k] || "";
+                json.exit_action = { label: cleanTC(ea.label), action: act };
+                if (ea.tooltip) json.exit_action.tooltip = ea.tooltip;
+                if (ea.width) json.exit_action.width = ea.width;
+            }
+            var str = JSON.stringify(json, null, 2);
+            setJsonHighlighted(str, false);
+            validateJson(str, true);
+            renderPreview(json);
+        } catch(e) {
+            console.error(e);
+        }
+    }, 0);
 }
 
-/** ✅ 修改：Body 添加后使用全量重建 */
-function addBody(){
-    state.body.push({type:"minecraft:plain_message",contents:createTC("New Body","white"),width:undefined});
-    rebuildBodyList();
-    generate();
+/** ==================== Body / Action ==================== */
+function rebuildBodyList() {
+    var container = document.getElementById('bodyList');
+    var fragment = document.createDocumentFragment();
+    container.innerHTML = "";
+    for (var key in tcEditorCreated) {
+        if (key.indexOf('btc_') === 0) {
+            delete tcEditorCreated[key];
+        }
+    }
+    for (var i = 0; i < state.body.length; i++) {
+        var d = document.createElement('div');
+        d.className = 'card open';
+        d.innerHTML =
+            '<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#2980b9;color:#fff;">BODY</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="bp_' + i + '"></span><button class="btn-del" onclick="event.stopPropagation();removeBody(' + i + ')">✕</button></div>' +
+            '<div class="card-body"><div id="btc_' + i + '"></div><div class="row"><div><label>' + t('labelWidth') + '</label><input type="number" id="bw_' + i + '" placeholder="Auto" oninput="state.body[' + i + '].width=parseInt(this.value)||undefined;generate()"></div></div></div>';
+        fragment.appendChild(d);
+    }
+    container.appendChild(fragment);
+    for (var i = 0; i < state.body.length; i++) {
+        updateHeaderPreview('bp_' + i, state.body[i].contents.text);
+        var w = document.getElementById('bw_' + i);
+        if (w) w.value = state.body[i].width || '';
+        ensureTCEditor('btc_' + i, 'body.' + i + '.contents');
+    }
 }
 
-/** ==================== Action 列表渲染 ==================== */
+function removeBody(index){state.body.splice(index,1);rebuildBodyList();generate();}
+function addBody(){state.body.push({type:"minecraft:plain_message",contents:createTC("New Body","white"),width:undefined});rebuildBodyList();generate();}
+
+function rebuildActionList() {
+    var container = document.getElementById('actionList');
+    var fragment = document.createDocumentFragment();
+    container.innerHTML = "";
+    for (var key in tcEditorCreated) {
+        if (key.indexOf('al_') === 0) {
+            delete tcEditorCreated[key];
+        }
+    }
+    for (var i = 0; i < state.actions.length; i++) {
+        var a = state.actions[i];
+        var actType = a.action.type || ACTION_TYPES[0].value;
+        var vk = actType === 'minecraft:run_command' ? 'command' : actType === 'minecraft:show_dialog' ? 'dialog' : 'url';
+        var ph = actType === 'minecraft:run_command' ? t('phCommand') : actType === 'minecraft:show_dialog' ? t('phDialog') : t('phUrl');
+        var d = document.createElement('div');
+        d.className = 'card open';
+        d.innerHTML =
+            '<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#8e44ad;color:#fff;">BTN</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="ap_' + i + '"></span><button class="btn-del" onclick="event.stopPropagation();removeAction(' + i + ')">✕</button></div>' +
+            '<div class="card-body"><label>' + t('labelBtnText') + '</label><div id="al_' + i + '"></div><label>' + t('labelTooltip') + '</label><input id="at_' + i + '" placeholder="' + t('labelTooltip') + '..." oninput="state.actions[' + i + '].tooltip=this.value;generate()"><div class="row"><div><label>' + t('labelWidth') + '</label><input type="number" id="aw_' + i + '" placeholder="' + DEFAULT_BTN_WIDTH + '" oninput="state.actions[' + i + '].width=parseInt(this.value)||undefined;generate()"></div><div><label>' + t('labelActionType') + '</label><select id="aty_' + i + '" onchange="onActType(' + i + ',this.value)">' + ACTION_TYPES.map(function(at){return '<option value="'+at.value+'"'+(at.value===actType?' selected':'')+'>'+at.label+'</option>';}).join('')+'</select></div></div><div id="av_'+i+'"><label>'+t('labelActionValue')+'</label><input id="avi_'+i+'" placeholder="'+ph+'" oninput="onActVal('+i+',this.value)">'+getHint(actType)+'</div></div>';
+        fragment.appendChild(d);
+    }
+    container.appendChild(fragment);
+    for (var i = 0; i < state.actions.length; i++) {
+        var a = state.actions[i];
+        updateHeaderPreview('ap_' + i, a.label.text);
+        var tt = document.getElementById('at_' + i);
+        if (tt) tt.value = a.tooltip || '';
+        var aw = document.getElementById('aw_' + i);
+        if (aw) aw.value = a.width || '';
+        var avi = document.getElementById('avi_' + i);
+        var actType = a.action.type || ACTION_TYPES[0].value;
+        var vk = actType === 'minecraft:run_command' ? 'command' : actType === 'minecraft:show_dialog' ? 'dialog' : 'url';
+        if (avi) avi.value = a.action[vk] || '';
+        ensureTCEditor('al_' + i, 'actions.' + i + '.label');
+    }
+}
+
 function getHint(type){for(var i=0;i<ACTION_TYPES.length;i++)if(ACTION_TYPES[i].value===type)return '<div class="action-hint">'+ACTION_TYPES[i].hint+'</div>';return '';}
-function renderActions(){var c=document.getElementById('actionList');while(c.children.length>state.actions.length)c.lastChild.remove();for(var i=0;i<state.actions.length;i++){var d=c.children[i];if(!d){d=document.createElement('div');d.className='card';d.innerHTML='<div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#8e44ad;color:#fff;">BTN</span><span style="flex:1;font-size:12px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="ap_'+i+'"></span><button class="btn-del" onclick="event.stopPropagation();state.actions.splice('+i+',1);renderActions();generate()">✕</button></div><div class="card-body"><label>按钮文本</label><div id="al_'+i+'"></div><label>Tooltip</label><input id="at_'+i+'" placeholder="鼠标悬停时显示的提示..." oninput="state.actions['+i+'].tooltip=this.value;generate()"><div class="row"><div><label>宽度(px)</label><input type="number" id="aw_'+i+'" placeholder="'+DEFAULT_BTN_WIDTH+'" oninput="state.actions['+i+'].width=parseInt(this.value)||undefined;generate()"></div><div><label>动作类型</label><select id="aty_'+i+'" onchange="onActType('+i+',this.value)">'+ACTION_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('')+'</select></div></div><div id="av_'+i+'"></div></div>';c.appendChild(d);}updateHeaderPreview('ap_'+i,state.actions[i].label.text);var tt=document.getElementById('at_'+i);if(tt&&document.activeElement!==tt)tt.value=state.actions[i].tooltip||'';var aw=document.getElementById('aw_'+i);if(aw&&document.activeElement!==aw)aw.value=state.actions[i].width||'';var as=document.getElementById('aty_'+i);if(as&&document.activeElement!==as)as.value=state.actions[i].action.type||ACTION_TYPES[0].value;var ct=state.actions[i].action.type||ACTION_TYPES[0].value;if(actionTypeCache[i]!==ct){actionTypeCache[i]=ct;var vk=ct==='minecraft:run_command'?'command':ct==='minecraft:show_dialog'?'dialog':'url';var ph=ct==='minecraft:run_command'?'/say hello':ct==='minecraft:show_dialog'?'namespace:dialog_id':'https://example.com';document.getElementById('av_'+i).innerHTML='<label>动作值</label><input id="avi_'+i+'" placeholder="'+ph+'" oninput="onActVal('+i+',this.value)">'+getHint(ct);var vi=document.getElementById('avi_'+i);if(vi)vi.value=state.actions[i].action[vk]||'';}else{var vi2=document.getElementById('avi_'+i);var vk2=ct==='minecraft:run_command'?'command':ct==='minecraft:show_dialog'?'dialog':'url';if(vi2&&document.activeElement!==vi2)vi2.value=state.actions[i].action[vk2]||'';}ensureTCEditor('al_'+i,'actions.'+i+'.label');}}
-function onActType(i,t){state.actions[i].action={type:t};delete actionTypeCache[i];renderActions();generate();}
-function onActVal(i,v){var t=state.actions[i].action.type;state.actions[i].action={type:t};var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';state.actions[i].action[k]=v;generate();}
-function addAction(){state.actions.push({label:createTC("Button","white"),width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}});renderActions();generate();}
+function onActType(i,at){state.actions[i].action={type:at};rebuildActionList();generate();}
+function onActVal(i,v){var at=state.actions[i].action.type;state.actions[i].action={type:at};var k=at==='minecraft:run_command'?'command':at==='minecraft:show_dialog'?'dialog':'url';state.actions[i].action[k]=v;generate();}
+function removeAction(index){state.actions.splice(index,1);rebuildActionList();generate();}
+function addAction(){state.actions.push({label:createTC("Button","white"),width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}});rebuildActionList();generate();}
 
-/** ==================== JSON 生成 ==================== */
-function cleanTC(tc){if(!tc)return tc;var r={text:tc.text||"",color:tc.color||"white"};for(var i=0;i<STYLES.length;i++)if(tc[STYLES[i]])r[STYLES[i]]=true;if(tc.extra&&tc.extra.length)r.extra=tc.extra.map(cleanTC);if(tc.clickEvent&&tc.clickEvent.action){var ce={action:tc.clickEvent.action};if(tc.clickEvent.action==='open_url')ce.url=tc.clickEvent.url||"";else if(tc.clickEvent.action==='run_command'||tc.clickEvent.action==='suggest_command')ce.command=tc.clickEvent.command||"";else if(tc.clickEvent.action==='change_page')ce.page=tc.clickEvent.page||"";else if(tc.clickEvent.action==='show_dialog')ce.dialog=tc.clickEvent.dialog||"";r.clickEvent=ce;}if(tc.hoverEvent&&tc.hoverEvent.action){var he={action:tc.hoverEvent.action};if(tc.hoverEvent.action==='show_text')he.contents=tc.hoverEvent.contents||"";else if(tc.hoverEvent.action==='show_item'||tc.hoverEvent.action==='show_entity')he.contents=tc.hoverEvent.contents||{};r.hoverEvent=he;}return r;}
-function generate(){if(isSyncingJson)return;try{state.type=document.getElementById('dialogType').value;state.columns=parseInt(document.getElementById('columns').value)||1;state.can_close_with_escape=document.getElementById('escClose').value==='true';var json={type:state.type,title:cleanTC(state.title),body:state.body.map(function(b){var m={type:b.type||"minecraft:plain_message",contents:cleanTC(b.contents)};if(b.width)m.width=b.width;return m;}),inputs:[],can_close_with_escape:state.can_close_with_escape,columns:state.columns,actions:state.actions.map(function(a){var act={type:a.action.type};var k=a.action.type==='minecraft:run_command'?'command':a.action.type==='minecraft:show_dialog'?'dialog':'url';act[k]=a.action[k]||"";var r={label:cleanTC(a.label),action:act};if(a.tooltip)r.tooltip=a.tooltip;if(a.width)r.width=a.width;return r;})};if(state.external_title)json.external_title=state.external_title;if(state.exit_action.enabled){var ea=state.exit_action,act={type:ea.action.type};var k=ea.action.type==='minecraft:run_command'?'command':ea.action.type==='minecraft:show_dialog'?'dialog':'url';act[k]=ea.action[k]||"";json.exit_action={label:cleanTC(ea.label),action:act};if(ea.tooltip)json.exit_action.tooltip=ea.tooltip;if(ea.width)json.exit_action.width=ea.width;}var str=JSON.stringify(json,null,2);setJsonHighlighted(str,false);validateJson(str,true);renderPreview(json);}catch(e){console.error(e);}}
-function validateJson(str,isInternal){var statusEl=document.getElementById('jsonStatus'),applyBtn=document.getElementById('btnApplyJson');if(!str.trim()){statusEl.className='json-status warn';statusEl.innerHTML='⚠️ JSON 为空';applyBtn.disabled=true;return null;}try{var obj=JSON.parse(str);if(!obj.type||!obj.title||!Array.isArray(obj.actions))throw new Error("缺少必要字段");statusEl.className='json-status valid';statusEl.innerHTML='✅ JSON 格式正确';applyBtn.disabled=!isInternal;return obj;}catch(e){statusEl.className='json-status invalid';statusEl.innerHTML='❌ '+e.message;applyBtn.disabled=true;return null;}}
-function parseTCFromJson(tc){if(!tc)return createTC("","white");var r=createTC(tc.text,tc.color);r.bold=!!tc.bold;r.italic=!!tc.italic;r.underlined=!!tc.underlined;r.strikethrough=!!tc.strikethrough;r.obfuscated=!!tc.obfuscated;if(tc.extra&&tc.extra.length)r.extra=tc.extra.map(parseTCFromJson);if(tc.clickEvent)r.clickEvent=Object.assign({},tc.clickEvent);if(tc.hoverEvent)r.hoverEvent=Object.assign({},tc.hoverEvent);return r;}
-function applyJsonToEditor(){var str=getJsonText();var obj=validateJson(str,false);if(!obj)return;isSyncingJson=true;try{state.type=obj.type||"minecraft:multi_action";state.title=parseTCFromJson(obj.title);state.external_title=obj.external_title||"";state.columns=obj.columns||1;state.can_close_with_escape=obj.can_close_with_escape!==false;state.body=(obj.body||[]).map(function(b){return{type:b.type,contents:parseTCFromJson(b.contents),width:b.width};});state.actions=(obj.actions||[]).map(function(a){return{label:parseTCFromJson(a.label),tooltip:a.tooltip||"",width:(a.width!==undefined&&a.width!==null)?a.width:DEFAULT_BTN_WIDTH,action:a.action||{type:"minecraft:run_command",command:""}};});if(obj.exit_action){state.exit_action={enabled:true,label:parseTCFromJson(obj.exit_action.label),tooltip:obj.exit_action.tooltip||"",width:(obj.exit_action.width!==undefined&&obj.exit_action.width!==null)?obj.exit_action.width:DEFAULT_BTN_WIDTH,action:obj.exit_action.action||{type:"minecraft:run_command",command:""}};}else{state.exit_action={enabled:false,label:createTC("Exit","red"),width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}};}document.getElementById('dialogType').value=state.type;document.getElementById('columns').value=state.columns;document.getElementById('escClose').value=state.can_close_with_escape;document.getElementById('extTitleInput').value=state.external_title;tcEditorCreated={};actionTypeCache={};exitCache='';document.getElementById('titleEditor').innerHTML='';document.getElementById('bodyList').innerHTML='';document.getElementById('actionList').innerHTML='';ensureTCEditor('titleEditor','title');renderBodies();renderActions();initExitAction();generate();}catch(e){alert("❌ 应用失败: "+e.message);}finally{isSyncingJson=false;}}
-function showImportModal(){document.getElementById('importModal').style.display='flex';document.getElementById('importInput').value='';document.getElementById('importStatus').style.display='none';}
-function closeImportModal(){document.getElementById('importModal').style.display='none';}
-function confirmImport(){var str=document.getElementById('importInput').value;try{var obj=JSON.parse(str);if(!obj.type)throw new Error("不是有效的 Dialog JSON");setJsonHighlighted(str,false);applyJsonToEditor();closeImportModal();}catch(e){var s=document.getElementById('importStatus');s.style.display='flex';s.className='json-status invalid';s.innerHTML='❌ '+e.message;}}
+/** ==================== JSON Validation ==================== */
+function cleanTC(tc){if(!tc)return tc;var r={text:tc.text||"",color:tc.color||"white"};for(var i=0;i<STYLES.length;i++)if(tc[STYLES[i]])r[STYLES[i]]=true;if(tc.extra&&tc.extra.length)r.extra=tc.extra.map(cleanTC);if(tc.click_event&&tc.click_event.action){var ce={action:tc.click_event.action};if(tc.click_event.action==='open_url')ce.url=tc.click_event.url||"";else if(tc.click_event.action==='run_command'||tc.click_event.action==='suggest_command')ce.command=tc.click_event.command||"";else if(tc.click_event.action==='change_page')ce.page=tc.click_event.page||"";else if(tc.click_event.action==='show_dialog')ce.dialog=tc.click_event.dialog||"";r.click_event=ce;}if(tc.hover_event&&tc.hover_event.action){var he={action:tc.hover_event.action};if(tc.hover_event.action==='show_text')he.value=tc.hover_event.value||"";else if(tc.hover_event.action==='show_item'||tc.hover_event.action==='show_entity')he.value=tc.hover_event.value||{};r.hover_event=he;}return r;}
+function estimateErrorLine(str,errMsg){if(!str||!errMsg)return -1;var pos=-1;var bodyMatch=errMsg.match(/body\[(\d+)\]/);var actionMatch=errMsg.match(/actions\[(\d+)\]/);if(bodyMatch){var bi=parseInt(bodyMatch[1]);var bodyArrPos=str.indexOf('"body"');if(bodyArrPos!==-1){var sub=str.substring(bodyArrPos);var count=0,inBody=false;for(var i=0;i<sub.length;i++){if(sub[i]==='['&&!inBody){inBody=true;continue;}if(inBody&&sub[i]==='{'){if(count===bi){pos=bodyArrPos+i;break;}count++;}}}}if(pos===-1&&actionMatch){var ai=parseInt(actionMatch[1]);var actArrPos=str.indexOf('"actions"');if(actArrPos!==-1){var sub2=str.substring(actArrPos);var count2=0,inAct=false;for(var j=0;j<sub2.length;j++){if(sub2[j]==='['&&!inAct){inAct=true;continue;}if(inAct&&sub2[j]==='{'){if(count2===ai){pos=actArrPos+j;break;}count2++;}}}}if(pos===-1){var fieldMatch=errMsg.match(/\.(\w+)\s/);if(fieldMatch){var fpos=str.indexOf('"'+fieldMatch[1]+'"');if(fpos!==-1)pos=fpos;}}if(pos===-1&&errMsg.indexOf('exit_action')!==-1){var epos=str.indexOf('"exit_action"');if(epos!==-1)pos=epos;}if(pos!==-1)return str.substring(0,pos).split('\n').length;return 1;}
+function validateJsonDeep(obj){if(!obj||typeof obj!=='object')return 'JSON root must be an object';if(typeof obj.type!=='string')return 'Missing required field: type (string)';if(VALID_DIALOG_TYPES.indexOf(obj.type)===-1)return 'type "'+obj.type+'" is not a valid dialog type';if(!obj.title||typeof obj.title!=='object')return 'Missing required field: title (object)';if(typeof obj.title.text!=='string')return 'title.text must be a string';if(obj.title.color&&VALID_MC_COLORS.indexOf(obj.title.color)===-1)return 'title.color "'+obj.title.color+'" is not a valid MC color';var SBF=['bold','italic','underlined','strikethrough','obfuscated'];for(var si=0;si<SBF.length;si++){if(obj.title[SBF[si]]!==undefined&&typeof obj.title[SBF[si]]!=='boolean')return 'title.'+SBF[si]+' must be boolean';}if(obj.body!==undefined&&obj.body!==null){if(!Array.isArray(obj.body))return 'body must be an array';for(var bi=0;bi<obj.body.length;bi++){var b=obj.body[bi];if(!b||typeof b!=='object')return 'body['+bi+'] must be an object';if(b.type&&VALID_BODY_TYPES.indexOf(b.type)===-1)return 'body['+bi+'].type "'+b.type+'" is not valid';if(!b.contents||typeof b.contents!=='object')return 'body['+bi+'].contents must be an object';if(typeof b.contents.text!=='string')return 'body['+bi+'].contents.text must be a string';if(b.contents.color&&VALID_MC_COLORS.indexOf(b.contents.color)===-1)return 'body['+bi+'].contents.color invalid';if(b.width!==undefined&&b.width!==null&&typeof b.width!=='number')return 'body['+bi+'].width must be number';}}if(obj.actions!==undefined&&obj.actions!==null){if(!Array.isArray(obj.actions))return 'actions must be an array';for(var ai=0;ai<obj.actions.length;ai++){var a=obj.actions[ai];if(!a||typeof a!=='object')return 'actions['+ai+'] must be an object';if(!a.label||typeof a.label!=='object')return 'actions['+ai+'].label must be an object';if(typeof a.label.text!=='string')return 'actions['+ai+'].label.text must be a string';if(a.label.color&&VALID_MC_COLORS.indexOf(a.label.color)===-1)return 'actions['+ai+'].label.color invalid';if(!a.action||typeof a.action!=='object')return 'actions['+ai+'].action must be an object';if(typeof a.action.type!=='string')return 'actions['+ai+'].action.type must be a string';if(VALID_ACTION_TYPES.indexOf(a.action.type)===-1)return 'actions['+ai+'].action.type "'+a.action.type+'" is not valid';if(a.width!==undefined&&a.width!==null&&typeof a.width!=='number')return 'actions['+ai+'].width must be number';}}if(obj.exit_action!==undefined&&obj.exit_action!==null){var ea=obj.exit_action;if(typeof ea!=='object')return 'exit_action must be an object';if(!ea.label||typeof ea.label!=='object')return 'exit_action.label must be an object';if(typeof ea.label.text!=='string')return 'exit_action.label.text must be a string';if(!ea.action||typeof ea.action!=='object')return 'exit_action.action must be an object';if(typeof ea.action.type!=='string')return 'exit_action.action.type must be a string';if(VALID_ACTION_TYPES.indexOf(ea.action.type)===-1)return 'exit_action.action.type "'+ea.action.type+'" is not valid';}return null;}
+function hasValidDialogType(str){try{var obj=JSON.parse(str);if(obj&&typeof obj.type==='string'&&VALID_DIALOG_TYPES.indexOf(obj.type)!==-1) return true;}catch(e){}return false;}
+function validateJson(str,isInternal){var statusEl=document.getElementById('jsonStatus'),applyBtn=document.getElementById('btnApplyJson');if(!str.trim()){statusEl.className='json-status warn';statusEl.innerHTML=t('jsonEmpty');applyBtn.disabled=true;currentErrorLine=-1;updateLineNumbers(str,-1);return null;}try{var obj=JSON.parse(str);var err=validateJsonDeep(obj);if(err){currentErrorLine=estimateErrorLine(str,err);statusEl.className='json-status invalid';statusEl.innerHTML='❌ '+err+' <button class="json-jump-btn" onclick="jumpToErrorLine()">'+t('jumpToLine')+currentErrorLine+t('lineSuffix')+'</button>';applyBtn.disabled=true;updateLineNumbers(str,currentErrorLine);return null;}currentErrorLine=-1;statusEl.className='json-status valid';statusEl.innerHTML=t('jsonValid');applyBtn.disabled=!isInternal;updateLineNumbers(str,-1);return obj;}catch(e){currentErrorLine=-1;var lineMatch=e.message.match(/position\s+(\d+)/);if(lineMatch){var pos=parseInt(lineMatch[1]);currentErrorLine=str.substring(0,pos).split('\n').length;}statusEl.className='json-status invalid';var msg='JSON parse error: '+e.message;if(currentErrorLine>0)msg+=' <button class="json-jump-btn" onclick="jumpToErrorLine()">'+t('jumpToLine')+currentErrorLine+t('lineSuffix')+'</button>';statusEl.innerHTML='❌ '+msg;applyBtn.disabled=true;updateLineNumbers(str,currentErrorLine);return null;}}
+function jumpToErrorLine(){if(currentErrorLine<1)return;var editor=document.getElementById('jsonEditor');var lineHeight=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--je-size'))*parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--je-lh'));var scrollTo=(currentErrorLine-1)*lineHeight-editor.clientHeight/3;editor.scrollTop=Math.max(0,scrollTo);syncLineNumberScroll();var lnEl=document.getElementById('jsonLineNumbers');var target=lnEl.querySelector('.ln[data-line="'+currentErrorLine+'"]');if(target){target.classList.remove('flash');void target.offsetWidth;target.classList.add('flash');}}
 
-/** ==================== 预览 ==================== */
+/** ==================== Error Modal ==================== */
+function showErrorModal(msg,forceStr,syntaxOk){
+    document.getElementById('errorModalMsg').textContent=msg;
+    var btnForce=document.getElementById('btnForceImport');
+    var warnEl=document.getElementById('forceImportWarn');
+    if(forceStr && syntaxOk && hasValidDialogType(forceStr)){
+        pendingForceImportStr=forceStr;
+        btnForce.style.display='';
+        warnEl.style.display='';
+    } else {
+        pendingForceImportStr='';
+        btnForce.style.display='none';
+        warnEl.style.display='none';
+    }
+    document.querySelector('#errorModal [data-i18n="errorTitle"]').textContent=t('errorTitle');
+    document.querySelector('#errorModal [data-i18n="btnGotIt"]').textContent=t('btnGotIt');
+    btnForce.textContent=t('btnForceImport');
+    warnEl.textContent=t('forceImportWarn');
+    openModal('errorModal');
+}
+function forceImportFromError(){if(!pendingForceImportStr)return;doForceImport(pendingForceImportStr);closeModal('errorModal');}
+
+function applyJsonToEditor(){var str=getJsonText();var errStr=null;try{var obj=JSON.parse(str);errStr=validateJsonDeep(obj);}catch(e){errStr='JSON parse error: '+e.message;}if(errStr){showErrorModal(errStr);return;}isSyncingJson=true;try{var obj2=JSON.parse(str);state.type=normalizeType(obj2.type||"minecraft:multi_action",VALID_DIALOG_TYPES);state.title=parseTCFromJson(obj2.title);state.external_title=obj2.external_title||"";state.columns=obj2.columns||1;state.can_close_with_escape=obj2.can_close_with_escape!==false;state.body=(obj2.body||[]).map(function(b){return{type:normalizeType(b.type,VALID_BODY_TYPES),contents:parseTCFromJson(b.contents),width:b.width};});state.actions=(obj2.actions||[]).map(function(a){return{label:parseTCFromJson(a.label),tooltip:a.tooltip||"",width:(a.width!==undefined&&a.width!==null)?a.width:DEFAULT_BTN_WIDTH,action:{type:normalizeType((a.action&&a.action.type)||"minecraft:run_command",VALID_ACTION_TYPES),command:(a.action&&a.action.command)||"",dialog:(a.action&&a.action.dialog)||"",url:(a.action&&a.action.url)||""}};});if(obj2.exit_action){var eaType=normalizeType((obj2.exit_action.action&&obj2.exit_action.action.type)||"minecraft:run_command",VALID_ACTION_TYPES);state.exit_action={enabled:true,label:parseTCFromJson(obj2.exit_action.label),tooltip:obj2.exit_action.tooltip||"",width:(obj2.exit_action.width!==undefined&&obj2.exit_action.width!==null)?obj2.exit_action.width:DEFAULT_BTN_WIDTH,action:{type:eaType,command:(obj2.exit_action.action&&obj2.exit_action.action.command)||"",dialog:(obj2.exit_action.action&&obj2.exit_action.action.dialog)||"",url:(obj2.exit_action.action&&obj2.exit_action.action.url)||""}};}else{state.exit_action={enabled:false,label:createTC("Exit","red"),width:DEFAULT_BTN_WIDTH,action:{type:"minecraft:run_command",command:""}};}document.getElementById('dialogType').value=state.type;document.getElementById('columns').value=state.columns;document.getElementById('escClose').value=state.can_close_with_escape;document.getElementById('extTitleInput').value=state.external_title;tcEditorCreated={};document.getElementById('titleEditor').innerHTML='';document.getElementById('bodyList').innerHTML='';document.getElementById('actionList').innerHTML='';ensureTCEditor('titleEditor','title');rebuildBodyList();rebuildActionList();initExitAction();generate();}catch(e){alert(t('applyFail')+e.message);}finally{isSyncingJson=false;}}
+function parseTCFromJson(tc){if(!tc)return createTC("","white");var r=createTC(tc.text,tc.color);r.bold=!!tc.bold;r.italic=!!tc.italic;r.underlined=!!tc.underlined;r.strikethrough=!!tc.strikethrough;r.obfuscated=!!tc.obfuscated;if(tc.extra&&tc.extra.length)r.extra=tc.extra.map(parseTCFromJson);if(tc.click_event)r.click_event=Object.assign({},tc.click_event);if(tc.hover_event)r.hover_event=Object.assign({},tc.hover_event);return r;}
+
+function showImportModal(){document.getElementById('importInput').value='';document.getElementById('importStatus').style.display='none';refreshI18n();openModal('importModal');}
+function confirmImport(){var str=document.getElementById('importInput').value;var parsed=null;try{parsed=JSON.parse(str);}catch(e){showErrorModal('JSON parse error: '+e.message,null,false);var s=document.getElementById('importStatus');s.style.display='flex';s.className='json-status invalid';s.innerHTML='❌ JSON parse error: '+e.message;return;}var err=validateJsonDeep(parsed);if(err){showErrorModal(err,str,true);var s=document.getElementById('importStatus');s.style.display='flex';s.className='json-status invalid';s.innerHTML='❌ '+err;return;}setJsonHighlighted(str,false);applyJsonToEditor();closeModal('importModal');}
+function doForceImport(str){try{var obj=JSON.parse(str);if(!obj||typeof obj!=='object')throw new Error('JSON root must be an object');if(typeof obj.type!=='string')throw new Error('Missing required field: type');if(!obj.title||typeof obj.title!=='object')throw new Error('Missing required field: title');setJsonHighlighted(str,false);applyJsonToEditor();closeModal('importModal');}catch(e){showErrorModal('Invalid basic JSON format: '+e.message,null,false);}}
+
+/** ==================== Preview（修复：按钮宽度正确应用） ==================== */
 var currentFontSize=8;
 function updatePreviewFontSize(v){currentFontSize=parseInt(v)||8;document.getElementById('fontSizeDisplay').textContent=currentFontSize+'px';applyFontSize();}
 function resetPreviewFontSize(){updatePreviewFontSize(8);document.getElementById('previewFontSize').value=8;}
 function applyFontSize(){var els=document.querySelectorAll('.mc-text');for(var i=0;i<els.length;i++)els[i].style.fontSize=currentFontSize+'px';}
-function renderPreview(json){var pt=document.getElementById('pvTitle');pt.innerHTML='';rTC(pt,json.title);var pc=document.getElementById('pvContent');pc.innerHTML='';for(var i=0;i<(json.body||[]).length;i++){var b=json.body[i];var d=document.createElement('div');d.className='mc-body-text mc-text';d.style.fontSize=currentFontSize+'px';if(b.width)d.style.width=b.width+'px';rTC(d,b.contents);pc.appendChild(d);}var pa=document.getElementById('pvActions');pa.innerHTML='';pa.style.gridTemplateColumns='repeat('+(json.columns||1)+',1fr)';for(var j=0;j<(json.actions||[]).length;j++){var a=json.actions[j];var btn=document.createElement('div');btn.className='mc-button mc-text';btn.style.fontSize=currentFontSize+'px';rTC(btn,a.label);pa.appendChild(btn);}var pe=document.getElementById('pvExitAction');pe.innerHTML='';if(json.exit_action){var eb=document.createElement('div');eb.className='mc-button mc-text';eb.style.fontSize=currentFontSize+'px';rTC(eb,json.exit_action.label);pe.appendChild(eb);}}
-function rTC(c,tc){if(!tc)return;var s=document.createElement('span');s.textContent=tc.text||'';s.style.color=tc.color||'white';if(tc.bold)s.style.fontWeight='bold';if(tc.italic)s.style.fontStyle='italic';var d=[];if(tc.underlined)d.push('underline');if(tc.strikethrough)d.push('line-through');if(d.length)s.style.textDecoration=d.join(' ');c.appendChild(s);if(tc.extra)for(var i=0;i<tc.extra.length;i++)rTC(c,tc.extra[i]);}
-function copyJson(){navigator.clipboard.writeText(getJsonText());}
+function renderPreview(json){
+    var pt=document.getElementById('pvTitle');pt.innerHTML='';rTC(pt,json.title);
+    var pc=document.getElementById('pvContent');pc.innerHTML='';
+    
+    // ✅ 计算缩放比例（基准宽度300px）
+    var previewWrapper = document.querySelector('.mc-preview-wrapper');
+    var baseWidth = 300; 
+    var currentWidth = previewWrapper.clientWidth;
+    var scale = currentWidth / baseWidth;
+    scale = Math.min(Math.max(scale, 0.6), 1.6); // 限制缩放范围
+    
+    // ✅ 正文宽度：强制转换为数字
+    for(var i=0;i<(json.body||[]).length;i++){
+        var b=json.body[i];
+        var d=document.createElement('div');
+        d.className='mc-body-text mc-text';
+        d.style.fontSize=currentFontSize+'px';
+        if(b.width !== undefined && b.width !== null) {
+            var w = parseInt(b.width) || 0;
+            d.style.setProperty('width', (w * scale) + 'px', 'important');
+        }
+        rTC(d,b.contents);
+        pc.appendChild(d);
+    }
+    
+    var pa=document.getElementById('pvActions');pa.innerHTML='';
+    pa.style.gridTemplateColumns='repeat('+(json.columns||1)+',1fr)';
+    
+    // ✅ 面板按钮宽度：强制转换为数字
+    for(var j=0;j<(json.actions||[]).length;j++){
+        var a=json.actions[j];
+        var btn=document.createElement('div');
+        btn.className='mc-button mc-text';
+        btn.style.fontSize=currentFontSize+'px';
+        var btnWidth = (a.width !== undefined && a.width !== null) ? parseInt(a.width) || DEFAULT_BTN_WIDTH : DEFAULT_BTN_WIDTH;
+        btn.style.setProperty('width', (btnWidth * scale) + 'px', 'important');
+        rTC(btn,a.label);
+        pa.appendChild(btn);
+    }
+    
+    var pe=document.getElementById('pvExitAction');pe.innerHTML='';
+    if(json.exit_action){
+        var ea=json.exit_action;
+        var eb=document.createElement('div');
+        eb.className='mc-button mc-text';
+        eb.style.fontSize=currentFontSize+'px';
+        var ebWidth = (ea.width !== undefined && ea.width !== null) ? parseInt(ea.width) || DEFAULT_BTN_WIDTH : DEFAULT_BTN_WIDTH;
+        eb.style.setProperty('width', (ebWidth * scale) + 'px', 'important');
+        rTC(eb,ea.label);
+        pe.appendChild(eb);
+    }
+}
+function resolveMCColor(colorName){if(!colorName)return '#FFFFFF';var mapped=MC_COLOR_MAP[colorName];if(mapped)return mapped;return colorName;}
+function rTC(c,tc){if(!tc)return;var s=document.createElement('span');s.textContent=tc.text||'';s.style.color=resolveMCColor(tc.color);if(tc.bold)s.style.fontWeight='bold';if(tc.italic)s.style.fontStyle='italic';var d=[];if(tc.underlined)d.push('underline');if(tc.strikethrough)d.push('line-through');if(d.length)s.style.textDecoration=d.join(' ');c.appendChild(s);if(tc.extra)for(var i=0;i<tc.extra.length;i++)rTC(c,tc.extra[i]);}
+function copyJson(){var text=getJsonText();if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(function(){showCopyFeedback();}).catch(function(){fallbackCopy(text);});}else{fallbackCopy(text);}}
+function fallbackCopy(text){var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';ta.style.top='-9999px';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');showCopyFeedback();}catch(e){alert(t('copyFail'));}document.body.removeChild(ta);}
+function showCopyFeedback(){var btns=document.querySelectorAll('.nav-dropdown button,.card-body .ui-btn');for(var i=0;i<btns.length;i++){if(btns[i].textContent.indexOf(t('btnCopy').replace('📋 ',''))!==-1||btns[i].getAttribute('data-i18n')==='btnCopy'){var orig=btns[i].textContent;btns[i].textContent=t('copySuccess');setTimeout((function(b,o){return function(){b.textContent=o;};})(btns[i],orig),1500);}}}
 function downloadJson(){var b=new Blob([getJsonText()],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='dialog.json';a.click();}
 
 /** ==================== Exit Action ==================== */
-function initExitAction(){var c=document.getElementById('exitActionEditor');c.innerHTML='<div class="card open"><div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#c0392b;color:#fff;">EXIT</span><span style="flex:1;font-size:12px;color:#ccc;" id="exitPv"></span></div><div class="card-body"><label>启用</label><select id="exitEn" onchange="state.exit_action.enabled=this.value===\'true\';generate()"><option value="true">是</option><option value="false">否</option></select><label>按钮文本</label><div id="exitTc"></div><label>Tooltip</label><input id="exitTt" placeholder="鼠标悬停时显示的提示..." oninput="state.exit_action.tooltip=this.value;generate()"><div class="row"><div><label>宽度(px)</label><input type="number" id="exitW" placeholder="'+DEFAULT_BTN_WIDTH+'" oninput="state.exit_action.width=parseInt(this.value)||undefined;generate()"></div><div><label>动作类型</label><select id="exitTy" onchange="onExitType(this.value)">'+ACTION_TYPES.map(function(t){return '<option value="'+t.value+'">'+t.label+'</option>';}).join('')+'</select></div></div><div id="exitVa"></div></div></div>';ensureTCEditor('exitTc','exit_action.label');updateHeaderPreview('exitPv',state.exit_action.label.text);document.getElementById('exitTt').value=state.exit_action.tooltip||'';document.getElementById('exitW').value=state.exit_action.width||'';document.getElementById('exitTy').value=state.exit_action.action.type||ACTION_TYPES[0].value;renderExitVal();}
-function renderExitVal(){var t=state.exit_action.action.type||ACTION_TYPES[0].value;if(exitCache===t){var inp=document.getElementById('exitVi');var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';if(inp&&document.activeElement!==inp)inp.value=state.exit_action.action[k]||'';return;}exitCache=t;var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';var ph=t==='minecraft:run_command'?'/say hello':t==='minecraft:show_dialog'?'namespace:dialog_id':'https://example.com';document.getElementById('exitVa').innerHTML='<label>动作值</label><input id="exitVi" placeholder="'+ph+'" oninput="onExitVal(this.value)">'+getHint(t);document.getElementById('exitVi').value=state.exit_action.action[k]||'';}
-function onExitType(t){state.exit_action.action={type:t};exitCache='';renderExitVal();generate();}
-function onExitVal(v){var t=state.exit_action.action.type;state.exit_action.action={type:t};var k=t==='minecraft:run_command'?'command':t==='minecraft:show_dialog'?'dialog':'url';state.exit_action.action[k]=v;generate();}
+function initExitAction(){var c=document.getElementById('exitActionEditor');c.innerHTML='<div class="card open"><div class="card-header" onclick="toggleCard(this)"><span class="card-arrow">▶</span><span class="badge" style="background:#c0392b;color:#fff;">EXIT</span><span style="flex:1;font-size:12px;color:#ccc;" id="exitPv"></span></div><div class="card-body"><label>'+t('labelEnabled')+'</label><select id="exitEn" onchange="state.exit_action.enabled=this.value===\'true\';generate()"><option value="true">'+t('yes')+'</option><option value="false">'+t('no')+'</option></select><label>'+t('labelBtnText')+'</label><div id="exitTc"></div><label>'+t('labelTooltip')+'</label><input id="exitTt" placeholder="'+t('labelTooltip')+'..." oninput="state.exit_action.tooltip=this.value;generate()"><div class="row"><div><label>'+t('labelWidth')+'</label><input type="number" id="exitW" placeholder="'+DEFAULT_BTN_WIDTH+'" oninput="state.exit_action.width=parseInt(this.value)||undefined;generate()"></div><div><label>'+t('labelActionType')+'</label><select id="exitTy" onchange="onExitType(this.value)">'+ACTION_TYPES.map(function(at){return '<option value="'+at.value+'">'+at.label+'</option>';}).join('')+'</select></div></div><div id="exitVa"></div></div></div>';ensureTCEditor('exitTc','exit_action.label');updateHeaderPreview('exitPv',state.exit_action.label.text);document.getElementById('exitTt').value=state.exit_action.tooltip||'';document.getElementById('exitW').value=state.exit_action.width||'';document.getElementById('exitTy').value=state.exit_action.action.type||ACTION_TYPES[0].value;renderExitVal();}
+function renderExitVal(){var et=state.exit_action.action.type||ACTION_TYPES[0].value;var k=et==='minecraft:run_command'?'command':et==='minecraft:show_dialog'?'dialog':'url';var ph=et==='minecraft:run_command'?t('phCommand'):et==='minecraft:show_dialog'?t('phDialog'):t('phUrl');document.getElementById('exitVa').innerHTML='<label>'+t('labelActionValue')+'</label><input id="exitVi" placeholder="'+ph+'" oninput="onExitVal(this.value)">'+getHint(et);document.getElementById('exitVi').value=state.exit_action.action[k]||'';}
+function onExitType(et){state.exit_action.action={type:et};renderExitVal();generate();}
+function onExitVal(v){var et=state.exit_action.action.type;state.exit_action.action={type:et};var k=et==='minecraft:run_command'?'command':et==='minecraft:show_dialog'?'dialog':'url';state.exit_action.action[k]=v;generate();}
 
-/** ==================== 启动 ==================== */
+/** ==================== Init ==================== */
 setTimeout(function(){
+    showInitModal();
+    
+    // 步骤1：应用设置
+    updateInitProgress(1, '应用用户设置...');
+    applySettings();
+    
+    // 步骤2：JSON编辑器事件
+    updateInitProgress(2, '初始化JSON编辑器...');
     var editor=document.getElementById('jsonEditor');
     editor.addEventListener('input',onJsonInput);
+    editor.addEventListener('scroll',syncLineNumberScroll,{passive:true});
     editor.addEventListener('paste',function(e){e.preventDefault();var text=(e.clipboardData||window.clipboardData).getData('text/plain');document.execCommand('insertText',false,text);});
-    ensureTCEditor('titleEditor','title');renderBodies();renderActions();initExitAction();generate();applyFontSize();
+    
+    // 步骤3：国际化
+    updateInitProgress(3, '加载语言包...');
+    refreshI18n();
+    
+    // 步骤4：标题编辑器
+    updateInitProgress(4, '初始化标题编辑器...');
+    ensureTCEditor('titleEditor','title');
+    
+    // 步骤5：重建列表
+    updateInitProgress(5, '重建内容列表...');
+    rebuildBodyList();
+    rebuildActionList();
+    initExitAction();
+    
+    // 完成
+    updateInitProgress(totalInitSteps, '初始化完成！');
+    generate();
+    applyFontSize();
+    
+    // 延迟关闭弹窗
+    setTimeout(finishInit, 300);
 },0);
 </script>
 </body>
