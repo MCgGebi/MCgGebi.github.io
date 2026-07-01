@@ -26,7 +26,7 @@
 
         .btn-base {
             height: 26px; border-radius: 4px; cursor: pointer;
-            font-size: 12px; font-weight: 500; transition: all .2s;
+            font-size: 12px; font-weight: 500; transition: all .2;
             display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
             font-family: inherit;
         }
@@ -46,7 +46,7 @@
             position: fixed; width: 280px; height: 280px;
             background: radial-gradient(circle, rgba(59,133,38,0.15) 0%, transparent 70%);
             border-radius: 50%; pointer-events: none;
-            transform: translate(-50%,-50%); z-index: 0; opacity: .5;
+            transform: translate(-50%,-50); z-index: 0; opacity: .5;
         }
         @media (hover:none) and (pointer:coarse) { .cursor-glow { display: none; } }
 
@@ -101,7 +101,7 @@
             position: absolute; bottom: 30px; right: 0; width: 180px; padding: 10px;
             background: rgba(20,20,20,.95); border: 1px solid var(--border); border-radius: 6px;
             font-size: 11px; line-height: 1.6; color: var(--text-muted); text-align: left;
-            opacity: 0; visibility: hidden; transform: translateY(5px); transition: all .2s ease;
+            opacity: 0; visibility: hidden; transform: translateY(5px); transition: all .2 ease;
             pointer-events: none; font-family: inherit;
         }
         .btn-help:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
@@ -155,7 +155,7 @@
     <div class="overlay"></div>
     <div class="cursor-glow" id="glow"></div>
 
-    <div class="timeout-notice" id="timeoutNotice">图片加载中...</div>
+    <div class="timeout-notice" id="timeoutNotice">图片源重试中...</div>
 
     <div class="breadcrumb">
         <span id="bHome" onclick="goHome()">首页</span> / <span id="bBack" onclick="goBack()">返回</span>
@@ -263,56 +263,52 @@ function showTimeoutNotice() {
     timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 1500);
 }
 
-/* ===== 🆕 图片源：Picsum(摄影壁纸) + Bing 每日(兜底) ===== */
+/* ===== 🆕 图片源：loliapi + nekos.life + 本地 404.png ===== */
+const LOCAL_BG = './data/404.png'; // 仓库 data/404.png
+
 const IMG_SOURCES = [
     {
-        name: 'picsum',
-        label: 'picsum.photos',
-        priority: 0, // 最高优先级
-        url: () => {
-            const page = Math.floor(Math.random() * 30) + 1;
-            return `https://picsum.photos/v2/list?page=${page}&limit=1`;
-        },
-        parse: (d) => {
-            const id = d?.[0]?.id;
-            return id ? `https://picsum.photos/id/${id}/1920/1080` : null;
-        },
+        name: 'loliapi',
+        label: 'loliapi.acg',
+        url: () => `https://www.loliapi.com/acg/?type=json&t=${Date.now()}`,
+        parse: (d) => d.imgurl || d.url || null,
     },
     {
-        name: 'bing',
-        label: 'bing.daily',
-        priority: 1, // 次优先级
-        url: () => 'https://api.vvhan.com/api/bing?type=json',
+        name: 'nekoslife',
+        label: 'nekos.life',
+        url: () => 'https://nekos.life/api/v2/img/wallpaper',
         parse: (d) => d?.url || null,
+    },
+    {
+        name: 'local',
+        label: 'local:404.png',
+        url: () => null,
+        parse: () => LOCAL_BG,
     }
 ];
-
-/* ===== 🆕 并发加载 + 优先级覆盖 + 本地兜底 ===== */
-let currentPriority = Infinity; // 当前显示的图片的优先级，数字越小优先级越高
-let loadedCount = 0; // 已完成的源数量（成功或失败）
-let hasDisplayed = false; // 是否已经显示过图片（用于防止多次显示本地兜底）
 
 function updateSourceIndicator(label) {
     document.getElementById('sourceIndicator').textContent = `src: ${label}`;
 }
 
-function loadImageToBg(imgUrl, srcLabel, priority) {
+/* 🆕 每次刷新：loliapi / nekos.life 随机首选，本地固定第三 */
+function buildSourceOrder() {
+    const mains = [0, 1];
+    const first = mains[Math.floor(Math.random() * mains.length)];
+    return [first, ...mains.filter(i => i !== first), 2];
+}
+
+function loadImageToBg(imgUrl, srcLabel) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.referrerPolicy = 'no-referrer';
         img.onload = () => {
-            // 如果当前优先级高于已显示的优先级，则覆盖
-            if (priority <= currentPriority) {
-                const bg = document.getElementById('bgImage');
-                bg.style.backgroundImage = `url(${imgUrl})`;
-                currentBgUrl = imgUrl;
-                bg.classList.add('loaded');
-                currentPriority = priority;
-                updateSourceIndicator(srcLabel);
-                // 隐藏超时提示
-                document.getElementById('timeoutNotice').classList.remove('show');
-            }
+            const bg = document.getElementById('bgImage');
+            bg.style.backgroundImage = `url(${imgUrl})`;
+            currentBgUrl = imgUrl;
+            bg.classList.add('loaded');
+            updateSourceIndicator(srcLabel);
             resolve();
         };
         img.onerror = () => reject(new Error('img_load_fail'));
@@ -320,53 +316,46 @@ function loadImageToBg(imgUrl, srcLabel, priority) {
     });
 }
 
-function tryLoadSource(src) {
+function trySources(order, idx) {
+    if (idx >= order.length) return;
+    const src = IMG_SOURCES[order[idx]];
+    // 本地源：直接 load，不走 fetch
+    if (src.name === 'local') {
+        loadImageToBg(src.parse(), src.label).catch(() => {
+            document.getElementById('bgImage').style.backgroundImage = 'none';
+            updateSourceIndicator('---');
+        });
+        return;
+    }
+    // 远程源
     fetch(src.url())
         .then(r => r.json())
         .then(d => {
             const imgUrl = src.parse(d);
             if (!imgUrl) throw new Error('parse_null');
-            loadImageToBg(imgUrl, src.label, src.priority).catch(() => {
-                loadedCount++;
-                checkAllFailed();
+            loadImageToBg(imgUrl, src.label).catch(() => {
+                if (idx < order.length - 1) showTimeoutNotice();
+                trySources(order, idx + 1);
             });
         })
         .catch(() => {
-            loadedCount++;
-            checkAllFailed();
+            if (idx < order.length - 1) showTimeoutNotice();
+            trySources(order, idx + 1);
         });
-}
-
-function checkAllFailed() {
-    if (loadedCount >= IMG_SOURCES.length && !hasDisplayed) {
-        // 所有远程源都失败，显示本地兜底
-        showLocalFallback();
-    }
-}
-
-function showLocalFallback() {
-    hasDisplayed = true;
-    const bg = document.getElementById('bgImage');
-    bg.style.backgroundImage = `url('data/404.png')`;
-    currentBgUrl = 'data/404.png';
-    bg.classList.add('loaded');
-    updateSourceIndicator('local');
-    document.getElementById('timeoutNotice').classList.remove('show');
 }
 
 function loadBackground() {
     const bg = document.getElementById('bgImage');
     bg.classList.remove('loaded');
     updateSourceIndicator('...');
-    currentPriority = Infinity;
-    loadedCount = 0;
-    hasDisplayed = false;
-    showTimeoutNotice();
 
-    // 🆕 并发启动所有源
-    IMG_SOURCES.forEach(src => {
-        tryLoadSource(src);
-    });
+    // 🆕 先铺本地 404.png 打底
+    bg.style.backgroundImage = `url(${LOCAL_BG})`;
+    currentBgUrl = LOCAL_BG;
+    updateSourceIndicator('local:404.png');
+
+    const order = buildSourceOrder(); // [随机主源, 另一主源, 2(本地)]
+    trySources(order, 0);
 }
 
 function fetchWithTimeout(url, ms = 3000) {
@@ -408,7 +397,7 @@ async function loadHitokoto() {
 }
 
 function reloadAll() { loadBackground(); loadHitokoto(); }
-function openSource() { if(currentBgUrl) window.open(currentBgUrl, '_blank', 'noopener'); }
+function openSource() { if(currentBgUrl && currentBgUrl !== LOCAL_BG) window.open(currentBgUrl, '_blank', 'noopener'); }
 function goHome() { location.href='/'; }
 function goBack() { document.referrer ? history.back() : location.href='/'; }
 function toggleLang() { applyLang(currentLang==='zh'?'en':'zh'); }
