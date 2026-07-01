@@ -37,7 +37,7 @@
 
         .bg-image {
             position: fixed; inset: 0; background-size: cover; background-position: center;
-            z-index: -2; opacity: 0; transition: opacity 1.2s ease-in-out;
+            z-index: -2; opacity: 0; transition: opacity 1.2 ease-in-out;
         }
         .bg-image.loaded { opacity: 1; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: -1; }
@@ -67,14 +67,14 @@
         .error-code {
             font-size: clamp(72px,14vw,110px); font-weight: 900;
             color: var(--accent); text-shadow: 0 0 30px rgba(59,133,38,0.4);
-            animation: float 4s ease-in-out infinite;
+            animation: float 4 ease-in-out infinite;
         }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
 
         .quote-wrapper {
             margin: 25px 0 30px; min-height: 55px;
             opacity: 0; transform: translateY(10px);
-            transition: opacity .6s, transform .6s;
+            transition: opacity .6, transform .6;
         }
         .quote-wrapper.loaded { opacity: 1; transform: translateY(0); }
         .quote { font-size: 14px; line-height: 1.7; }
@@ -85,16 +85,18 @@
         footer {
             position: fixed; bottom: 15px; width: 100%;
             text-align: center; font-size: 11px; color: var(--text-muted);
+            z-index: 17;
         }
 
-        .help-container { position: fixed; bottom: 12px; right: 20px; z-index: 20; }
-        .help-trigger {
-            width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);
-            background: transparent; color: var(--text-muted); font-size: 12px; font-weight: bold;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all .2s; opacity: .6; font-family: inherit;
+        .btn-help {
+            position: fixed; bottom: 12px; right: 20px;
+            width: 22px; height: 22px; border-radius: 50%;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text-muted); font-size: 12px; font-weight: bold;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+            transition: all .2; opacity: .6; font-family: inherit; z-index: 20;
         }
-        .help-trigger:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.1); }
+        .btn-help:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.1); }
         .help-tooltip {
             position: absolute; bottom: 30px; right: 0; width: 180px; padding: 10px;
             background: rgba(20,20,20,.95); border: 1px solid var(--border); border-radius: 6px;
@@ -102,7 +104,7 @@
             opacity: 0; visibility: hidden; transform: translateY(5px); transition: all .2s ease;
             pointer-events: none; font-family: inherit;
         }
-        .help-container:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
+        .btn-help:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
         .help-tooltip strong { color: var(--text); font-weight: 500; }
 
         .bottom-buttons {
@@ -112,6 +114,7 @@
         }
         .left-buttons, .right-buttons {
             display: flex; gap: 8px; pointer-events: auto;
+            align-items: center;
         }
         .right-buttons { margin-right: 35px; }
 
@@ -121,9 +124,30 @@
             padding: 2px 6px; border-radius: 2px; height: 20px;
             display: inline-flex; align-items: center; justify-content: center;
             font-family: inherit; font-weight: 400;
-            transition: opacity .2s;
+            transition: opacity .2;
         }
         .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.1); }
+
+        .source-indicator {
+            position: fixed; left: 20px; bottom: 38px;
+            font-size: 9px; color: var(--text-muted); opacity: 0.2;
+            user-select: none; pointer-events: none;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            letter-spacing: 0.5px; z-index: 18; transition: opacity 0.3 ease;
+        }
+        body:hover .source-indicator { opacity: 0.35; }
+
+        .timeout-notice {
+            position: fixed; bottom: 32px; left: 50%;
+            transform: translateX(-50%); font-size: 9px;
+            color: var(--text-muted); opacity: 0; pointer-events: none;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            letter-spacing: 0.3px; z-index: 21;
+            transition: opacity 0.4 ease;
+            background: rgba(20,20,20,0.7); padding: 2px 6px;
+            border-radius: 2px; border: 1px solid rgba(68,68,68,0.3);
+        }
+        .timeout-notice.show { opacity: 0.45; }
     </style>
 </head>
 <body>
@@ -131,12 +155,13 @@
     <div class="overlay"></div>
     <div class="cursor-glow" id="glow"></div>
 
+    <div class="timeout-notice" id="timeoutNotice">图片加载中...</div>
+
     <div class="breadcrumb">
         <span id="bHome" onclick="goHome()">首页</span> / <span id="bBack" onclick="goBack()">返回</span>
     </div>
 
-    <div class="help-container">
-        <div class="help-trigger">?</div>
+    <div class="btn-help">?
         <div class="help-tooltip" id="helpTooltip"></div>
     </div>
 
@@ -154,13 +179,15 @@
 
     <div class="bottom-buttons">
         <div class="left-buttons">
-            <button class="mini-btn" id="btnSource" onclick="openSource()">原图</button>
+            <button class="mini-btn" id="btnSource" onclick="openSource()">源图</button>
             <button class="mini-btn" id="btnContentRefresh" onclick="reloadAll()">刷新</button>
         </div>
         <div class="right-buttons">
             <button class="mini-btn" id="btnLang" onclick="toggleLang()">EN</button>
         </div>
     </div>
+
+    <span class="source-indicator" id="sourceIndicator">src: ---</span>
 
     <footer id="footer"></footer>
 
@@ -173,7 +200,7 @@ const i18n = {
         api: 'https://v1.hitokoto.cn/?c=i&c=j',
         help: `<strong>迷路了吗？</strong><br>• 按 <strong>Esc</strong> 返回<br>• 点击 <strong>←</strong> 回到上页<br>• 点击 <strong>↻</strong> 重载页面<br>• 点击 <strong>EN/中</strong> 切换语言`,
         bHome: '首页', bBack: '返回',
-        btnSource: '原图', btnPageRefresh: '↻ 刷新',
+        btnSource: '源图', btnPageRefresh: '↻ 刷新',
         btnContentRefresh: '刷新',
         btnBackTitle: '返回 (Esc)',
         btnLang: 'EN'
@@ -228,58 +255,120 @@ function applyLang(l) {
     loadHitokoto();
 }
 
-/* ===== 🆕 主源 loliapi(json) / 备源 lolicon.setu ===== */
-function loadBackground() {
-    const bg = document.getElementById('bgImage');
-    bg.classList.remove('loaded');
+let timeoutNoticeTimer = null;
+function showTimeoutNotice() {
+    const notice = document.getElementById('timeoutNotice');
+    notice.classList.add('show');
+    if (timeoutNoticeTimer) clearTimeout(timeoutNoticeTimer);
+    timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 1500);
+}
 
-    // 主源：loliapi 返 { imgurl: "直链" }
-    const primaryApi = `https://www.loliapi.com/acg/?type=json&t=${Date.now()}`;
-    // 备源：lolicon.setu v2，r18=0 安全线，num=1 单张，可加 tag
-    // 例：?tag=原神&tag=ロリ&r18=0&num=1
-    const backupApi = 'https://api.lolicon.app/setu/v2?r18=0&num=1';
+/* ===== 🆕 图片源：Picsum(摄影壁纸) + Bing 每日(兜底) ===== */
+const IMG_SOURCES = [
+    {
+        name: 'picsum',
+        label: 'picsum.photos',
+        priority: 0, // 最高优先级
+        url: () => {
+            const page = Math.floor(Math.random() * 30) + 1;
+            return `https://picsum.photos/v2/list?page=${page}&limit=1`;
+        },
+        parse: (d) => {
+            const id = d?.[0]?.id;
+            return id ? `https://picsum.photos/id/${id}/1920/1080` : null;
+        },
+    },
+    {
+        name: 'bing',
+        label: 'bing.daily',
+        priority: 1, // 次优先级
+        url: () => 'https://api.vvhan.com/api/bing?type=json',
+        parse: (d) => d?.url || null,
+    }
+];
 
-    fetch(primaryApi)
-        .then(r => r.json())
-        .then(d => {
-            const imgUrl = d.imgurl || d.url;
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
+/* ===== 🆕 并发加载 + 优先级覆盖 + 本地兜底 ===== */
+let currentPriority = Infinity; // 当前显示的图片的优先级，数字越小优先级越高
+let loadedCount = 0; // 已完成的源数量（成功或失败）
+let hasDisplayed = false; // 是否已经显示过图片（用于防止多次显示本地兜底）
+
+function updateSourceIndicator(label) {
+    document.getElementById('sourceIndicator').textContent = `src: ${label}`;
+}
+
+function loadImageToBg(imgUrl, srcLabel, priority) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.referrerPolicy = 'no-referrer';
+        img.onload = () => {
+            // 如果当前优先级高于已显示的优先级，则覆盖
+            if (priority <= currentPriority) {
+                const bg = document.getElementById('bgImage');
                 bg.style.backgroundImage = `url(${imgUrl})`;
                 currentBgUrl = imgUrl;
                 bg.classList.add('loaded');
-            };
-            img.onerror = () => { bg.style.backgroundImage = 'none'; };
-            img.src = imgUrl;
+                currentPriority = priority;
+                updateSourceIndicator(srcLabel);
+                // 隐藏超时提示
+                document.getElementById('timeoutNotice').classList.remove('show');
+            }
+            resolve();
+        };
+        img.onerror = () => reject(new Error('img_load_fail'));
+        img.src = imgUrl;
+    });
+}
+
+function tryLoadSource(src) {
+    fetch(src.url())
+        .then(r => r.json())
+        .then(d => {
+            const imgUrl = src.parse(d);
+            if (!imgUrl) throw new Error('parse_null');
+            loadImageToBg(imgUrl, src.label, src.priority).catch(() => {
+                loadedCount++;
+                checkAllFailed();
+            });
         })
         .catch(() => {
-            // 🆕 主源挂 → 切 lolicon.setu
-            fetch(backupApi)
-                .then(r => r.json())
-                .then(d => {
-                    // lolicon 返回 { data: [{ urls: { original } }] }
-                    if (d.data && d.data.length > 0) {
-                        const imgUrl = d.data[0].urls.original;
-                        const img = new Image();
-                        img.crossOrigin = 'anonymous';
-                        img.onload = () => {
-                            bg.style.backgroundImage = `url(${imgUrl})`;
-                            currentBgUrl = imgUrl;
-                            bg.classList.add('loaded');
-                        };
-                        img.onerror = () => { bg.style.backgroundImage = 'none'; };
-                        img.src = imgUrl;
-                    } else {
-                        // lolicon 也空 → 安静退回纯色
-                        bg.style.backgroundImage = 'none';
-                    }
-                })
-                .catch(() => { bg.style.backgroundImage = 'none'; });
+            loadedCount++;
+            checkAllFailed();
         });
 }
 
-/* ===== 带超时 fetch ===== */
+function checkAllFailed() {
+    if (loadedCount >= IMG_SOURCES.length && !hasDisplayed) {
+        // 所有远程源都失败，显示本地兜底
+        showLocalFallback();
+    }
+}
+
+function showLocalFallback() {
+    hasDisplayed = true;
+    const bg = document.getElementById('bgImage');
+    bg.style.backgroundImage = `url('data/404.png')`;
+    currentBgUrl = 'data/404.png';
+    bg.classList.add('loaded');
+    updateSourceIndicator('local');
+    document.getElementById('timeoutNotice').classList.remove('show');
+}
+
+function loadBackground() {
+    const bg = document.getElementById('bgImage');
+    bg.classList.remove('loaded');
+    updateSourceIndicator('...');
+    currentPriority = Infinity;
+    loadedCount = 0;
+    hasDisplayed = false;
+    showTimeoutNotice();
+
+    // 🆕 并发启动所有源
+    IMG_SOURCES.forEach(src => {
+        tryLoadSource(src);
+    });
+}
+
 function fetchWithTimeout(url, ms = 3000) {
     return Promise.race([
         fetch(url),
@@ -287,7 +376,6 @@ function fetchWithTimeout(url, ms = 3000) {
     ]);
 }
 
-/* ===== 一言 / 英文名言 ===== */
 async function loadHitokoto() {
     const w = document.getElementById('quoteWrapper'),
           q = document.getElementById('hitokoto'),
@@ -319,7 +407,6 @@ async function loadHitokoto() {
     w.classList.add('loaded');
 }
 
-/* ===== 交互 ===== */
 function reloadAll() { loadBackground(); loadHitokoto(); }
 function openSource() { if(currentBgUrl) window.open(currentBgUrl, '_blank', 'noopener'); }
 function goHome() { location.href='/'; }
@@ -332,7 +419,6 @@ document.addEventListener('mousemove', e => {
     document.getElementById('glow').style.top = e.clientY+'px';
 });
 
-/* Init */
 applyLang(currentLang);
 loadBackground();
 setInterval(loadHitokoto, 8000);
