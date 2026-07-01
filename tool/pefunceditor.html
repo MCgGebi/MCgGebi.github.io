@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MCPE 函数包生成器</title>
+<style>
+/* ==================== 修复通知系统样式 ==================== */
+:root{
+    --bg:#1a1a1a;--panel:#2b2b2b;--border:#444;--text:#e0e0e0;--accent:#3b8526;--danger:#c0392b;--blue:#2980b9;--purple:#8e44ad;--warn:#f39c12;--nav-bg:#222;
+    --je-font:'Consolas','Monaco',monospace;--je-size:13px;--je-lh:1.5;--je-pad:10px;--je-ln-w:40px
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
+body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+
+#notify-container {
+    position: fixed;
+    top: max(20px, env(safe-area-inset-top));
+    right: max(20px, env(safe-area-inset-right));
+    left: max(20px, env(safe-area-inset-left));
+    max-width: min(420px, calc(100vw - 40px));
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 2147483647;
+    pointer-events: none;
+}
+
+.notify-item {
+    pointer-events: auto;
+    background: rgba(43, 43, 43, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 14px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: 
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.35s ease,
+        margin-top 0.3s ease;
+    touch-action: pan-y;
+    user-select: none;
+    border: 1px solid rgba(68, 68, 68, 0.5);
+}
+
+.notify-item.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notify-item.hide {
+    transform: translateX(120%);
+    opacity: 0;
+    margin-top: -80px;
+}
+
+@keyframes flash-update {
+    0% { box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1); background: rgba(43,43,43,0.95); }
+    25% { box-shadow: 0 20px 60px rgba(59,133,38,0.4), 0 0 0 2px rgba(59,133,38,0.3); background: rgba(30,60,20,0.98); }
+    50% { box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1); background: rgba(43,43,43,0.95); }
+    75% { box-shadow: 0 20px 60px rgba(59,133,38,0.4), 0 0 0 2px rgba(59,133,38,0.3); background: rgba(30,60,20,0.98); }
+    100% { box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1); background: rgba(43,43,43,0.95); }
+}
+
+.notify-item.flash-update {
+    animation: flash-update 0.8s ease;
+}
+
+.notify-actions {
+    pointer-events: auto;
+    position: relative;
+    z-index: 10;
+}
+
+.notify-action-btn {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 20;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.notify-body { padding: clamp(12px, 2vw, 16px); display: flex; align-items: flex-start; gap: clamp(10px, 1.5vw, 14px); cursor: pointer; }
+.notify-color-bar { width: clamp(3px, 0.5vw, 4px); height: 100%; border-radius: clamp(3px, 0.5vw, 4px); flex-shrink: 0; margin: clamp(3px, 0.5vw, 4px) 0; }
+.notify-icon { width: clamp(24px, 3vw, 28px); height: clamp(24px, 3vw, 28px); border-radius: clamp(6px, 1vw, 8px); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: clamp(12px, 1.5vw, 14px); overflow: hidden; }
+.notify-icon img { width: 100%; height: 100%; object-fit: cover; }
+.notify-content { flex: 1; min-width: 0; }
+.notify-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: clamp(3px, 0.5vw, 4px); gap: clamp(6px, 1vw, 8px); }
+.notify-title { font-weight: 600; font-size: clamp(12px, 1.3vw, 14px); color: #ffffff; line-height: 1.3; flex: 1; min-width: 0; }
+.notify-time { font-size: clamp(10px, 1.1vw, 11px); color: #888; white-space: nowrap; flex-shrink: 0; }
+.notify-subtitles { margin-top: clamp(3px, 0.5vw, 4px); }
+.notify-subtitle { font-size: clamp(11px, 1.2vw, 12px); color: #aaa; line-height: 1.4; margin-bottom: clamp(1px, 0.2vw, 2px); }
+.notify-extra { margin-top: clamp(8px, 1.2vw, 10px); padding-top: clamp(8px, 1.2vw, 10px); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: clamp(11px, 1.2vw, 12px); color: #888; }
+.notify-actions { margin-top: clamp(8px, 1.2vw, 10px); display: flex; gap: clamp(6px, 1vw, 8px); flex-wrap: wrap; }
+.notify-action-btn { padding: clamp(5px, 0.8vw, 6px) clamp(10px, 1.5vw, 12px); border-radius: clamp(5px, 0.8vw, 6px); font-size: clamp(11px, 1.2vw, 12px); font-weight: 500; cursor: pointer; transition: all 0.2s ease; border: none; outline: none; }
+.notify-action-btn.primary { background: var(--accent); color: white; }
+.notify-action-btn.secondary { background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.2); }
+.notify-action-btn.danger { background: var(--danger); color: white; }
+
+/* 🔧 修复：绿色无边框撤销按钮 */
+.notify-undo-btn {
+    background: #10b981 !important;
+    color: white !important;
+    border: none !important;
+    padding: clamp(5px, 0.8vw, 6px) clamp(10px, 1.5vw, 12px);
+    border-radius: clamp(5px, 0.8vw, 6px);
+    font-size: clamp(11px, 1.2vw, 12px);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    pointer-events: auto !important;
+}
+
+.notify-undo-btn:hover {
+    background: #0da271 !important;
+    transform: scale(1.02);
+}
+
+.swipe-hint { font-size: clamp(9px, 1.1vw, 10px); color: #666; margin-top: clamp(6px, 1vw, 8px); display: flex; align-items: center; gap: clamp(3px, 0.5vw, 4px); opacity: 0.7; }
+.swipe-hint::before { content: "👉"; font-size: clamp(9px, 1.1vw, 10px); }
+.notify-progress { height: clamp(2px, 0.4vw, 3px); background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.notify-progress-bar { height: 100%; width: 100%; transform-origin: left center; animation: progress-shrink linear forwards; }
+.notify-item[data-color] .notify-progress-bar { background: var(--notify-color); }
+@keyframes progress-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* ==================== 原有样式（保持不变） ==================== */
+.btn-base {
+    height: clamp(24px, 3.2vw, 26px);
+    border-radius: clamp(3px, 0.5vw, 4px);
+    cursor: pointer;
+    font-size: clamp(11px, 1.2vw, 12px);
+    font-weight: bold;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-add {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0 clamp(10px, 1.5vw, 12px);
+}
+
+.btn-add:hover {
+    opacity: .85;
+}
+
+.collapse-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: #888;
+    width: clamp(32px, 4vw, 36px);
+    padding: 0;
+}
+
+.collapse-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(59,133,38,.1);
+}
+
+.init-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:3000;align-items:center;justify-content:center;opacity:0;transition:opacity .25s ease}
+.init-modal-overlay.show{display:flex;opacity:1}
+.init-modal{background:linear-gradient(145deg,#2b2b2b,#252525);border:1px solid #555;border-radius:clamp(8px, 1.2vw, 10px);padding:clamp(20px, 3vw, 28px);max-width:clamp(400px, 50vw, 460px);width:92vw;box-shadow:0 15px 45px rgba(0,0,0,.7);transform:scale(.93);transition:transform .25s ease;text-align:center}
+.init-modal-overlay.show .init-modal{transform:scale(1)}
+.init-modal h3{color:#fff;margin-bottom:clamp(14px, 2vw, 18px);font-size:clamp(15px, 1.8vw, 17px);font-weight:600;letter-spacing:.3px}
+.init-status{font-size:clamp(11px, 1.2vw, 12px);color:#aaa;margin-bottom:clamp(6px, 1vw, 8px);text-align:left;display:flex;justify-content:space-between}
+.init-progress{height:clamp(5px, 0.8vw, 6px);background:#333;border-radius:clamp(2px, 0.4vw, 3px);margin:clamp(12px, 1.8vw, 15px) 0;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.init-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),#4CAF50);width:0%;transition:width .35s cubic-bezier(.4,0,.2,1);border-radius:clamp(2px, 0.4vw, 3px)}
+.init-modal p{color:#bbb;font-size:clamp(12px, 1.3vw, 13px);margin-bottom:clamp(18px, 2.5vw, 22px);line-height:1.5;min-height:clamp(18px, 2.5vw, 20px)}
+.init-force-close{background:var(--danger);color:#fff;border:none;padding:clamp(6px, 1vw, 8px) clamp(14px, 2vw, 18px);border-radius:clamp(3px, 0.5vw, 4px);cursor:pointer;font-size:clamp(11px, 1.2vw, 12px);font-weight:bold;transition:opacity .2s;margin:0 auto;letter-spacing:.3px}
+.init-force-close:hover{opacity:.85}
+
+/* 初始化警告横幅 - 常驻显示 */
+#initWarning {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--danger);
+    color: #fff;
+    text-align: center;
+    padding: clamp(10px, 1.5vw, 12px);
+    font-size: clamp(12px, 1.4vw, 14px);
+    font-weight: bold;
+    z-index: 99999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    border-bottom: 2px solid #fff;
+}
+
+#initErrorDetails {
+    display: none;
+    position: fixed;
+    top: clamp(40px, 5vw, 50px);
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ff6b6b;
+    text-align: left;
+    padding: clamp(12px, 1.8vw, 15px);
+    font-size: clamp(11px, 1.2vw, 12px);
+    font-family: monospace;
+    z-index: 99998;
+    max-height: clamp(150px, 20vw, 200px);
+    overflow-y: auto;
+    white-space: pre-wrap;
+    border-bottom: 1px solid #444;
+}
+
+.navbar{background:var(--nav-bg);border-bottom:1px solid var(--border);padding:0 clamp(12px, 2vw, 20px);display:flex;align-items:center;height:clamp(42px, 6vw, 48px);flex-shrink:0;position:sticky;top:0;z-index:100}
+.nav-brand{font-size:clamp(13px, 1.6vw, 15px);font-weight:bold;color:#fff;display:flex;align-items:center;gap:clamp(6px, 1vw, 8px)}
+.nav-spacer{flex:1}
+.nav-menu-toggle{background:none;border:1px solid var(--border);color:var(--text);width:clamp(28px, 4vw, 32px);height:clamp(28px, 4vw, 32px);border-radius:clamp(3px, 0.5vw, 4px);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(14px, 1.8vw, 16px);transition:all .2s}
+.nav-menu-toggle:hover{background:rgba(255,255,255,.08);border-color:var(--accent)}
+.nav-menu-toggle.active{border-color:var(--accent);color:var(--accent);background:rgba(59,133,38,.1)}
+.nav-dropdown{position:absolute;top:clamp(42px, 6vw, 48px);right:clamp(12px, 2vw, 20px);background:var(--panel);border:1px solid var(--border);border-radius:clamp(5px, 0.8vw, 6px);min-width:clamp(160px, 22vw, 180px);box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;max-height:0;opacity:0;transition:max-height .2s ease,opacity .15s ease;pointer-events:none;z-index:101}
+.nav-dropdown.open{max-height:400px;opacity:1;pointer-events:auto}
+.nav-dropdown button{display:block;width:100%;padding:clamp(8px, 1.2vw, 10px) clamp(12px, 1.8vw, 16px);background:none;border:none;color:var(--text);text-align:left;font-size:clamp(12px, 1.3vw, 13px);cursor:pointer;transition:background .15s}
+.nav-dropdown button:hover{background:rgba(255,255,255,.06)}
+.nav-dropdown button:not(:last-child){border-bottom:1px solid rgba(255,255,255,.06)}
+
+.main-content{display:flex;gap:clamp(12px, 2vw, 20px);padding:clamp(12px, 2vw, 20px);flex:1;min-height:0}
+@media(max-width:1000px){.main-content{flex-direction:column}}
+.editor,.preview-panel{flex:1;display:flex;flex-direction:column;gap:clamp(10px, 1.5vw, 12px);min-width:0}
+
+.section-title{font-size:clamp(12px, 1.4vw, 13px);font-weight:bold;color:#f1c40f;display:flex;align-items:center;gap:clamp(5px, 0.8vw, 6px);margin-top:clamp(6px, 1vw, 8px)}
+.section-title .st-label{flex:1}
+.section-buttons{display:flex;gap:clamp(5px, 0.8vw, 6px)}
+.badge{font-size:clamp(8px, 1vw, 9px);font-weight:bold;padding:clamp(1px, 0.2vw, 2px) clamp(4px, 0.6vw, 5px);border-radius:clamp(2px, 0.3vw, 3px);flex-shrink:0}
+.sub-title{font-size:clamp(11px, 1.2vw, 12px);color:#aaa;margin:clamp(6px, 1vw, 8px) 0 clamp(3px, 0.5vw, 4px) 0;padding-left:clamp(6px, 1vw, 8px);border-left:clamp(1px, 0.2vw, 2px) solid var(--accent)}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:clamp(5px, 0.8vw, 6px);position:relative;overflow:hidden;margin-bottom:clamp(6px, 1vw, 8px);transition:border-color .2s}
+.card.open{border-color:var(--accent)}
+.card-header{display:flex;align-items:center;gap:clamp(6px, 1vw, 8px);padding:clamp(8px, 1.2vw, 10px) clamp(10px, 1.5vw, 12px);cursor:pointer;user-select:none;background:rgba(255,255,255,.02)}
+.card-header:hover{background:rgba(255,255,255,.05)}
+.card-arrow{font-size:clamp(9px, 1.1vw, 10px);color:#666;transition:transform .2s;width:clamp(10px, 1.5vw, 12px);text-align:center}
+.card.open .card-arrow{transform:rotate(90deg);color:var(--accent)}
+.card-body{max-height:0;overflow:hidden;transition:max-height .3s ease-out,padding .3s ease-out;padding:0 clamp(10px, 1.5vw, 12px);display:flex;flex-direction:column;gap:clamp(5px, 0.8vw, 6px)}
+.card.open .card-body{max-height:2000px;padding:clamp(10px, 1.5vw, 12px);transition:max-height .4s ease-in,padding .3s ease-in}
+
+label{font-size:clamp(11px, 1.2vw, 12px);color:#aaa;margin-bottom:clamp(1px, 0.2vw, 2px);display:block}
+input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:clamp(5px, 0.8vw, 6px);border-radius:clamp(3px, 0.5vw, 4px);outline:none;font-size:clamp(12px, 1.3vw, 13px);font-family:var(--je-font)}
+input:focus,select:focus{border-color:var(--accent)}
+::placeholder{color:#666!important;opacity:1!important;font-style:italic}
+.btn-del{background:var(--danger);color:#fff;width:clamp(20px, 2.8vw, 22px);height:clamp(20px, 2.8vw, 22px);padding:0;font-size:clamp(11px, 1.2vw, 12px);line-height:clamp(20px, 2.8vw, 22px);text-align:center;border-radius:clamp(2px, 0.4vw, 3px);border:none;cursor:pointer;flex-shrink:0}
+
+.code-editor-wrapper{display:flex;border:1px solid var(--border);border-radius:clamp(5px, 0.8vw, 6px);overflow:hidden;background:#111;min-height:clamp(120px, 18vw, 150px)}
+.code-line-numbers{width:var(--je-ln-w);flex-shrink:0;background:#0d0d0d;color:#555;font-family:var(--je-font);font-size:var(--je-size);line-height:var(--je-lh);padding:var(--je-pad) 0;text-align:right;user-select:none;overflow-y:scroll;border-right:1px solid var(--border);scrollbar-width:none}
+.code-line-numbers::-webkit-scrollbar{display:none}
+.code-line-numbers .ln{display:block;padding:0 6px 0 2px;height:calc(var(--je-size)*var(--je-lh));line-height:var(--je-lh)}
+.code-editor{flex:1;background:#111;border:none;padding:var(--je-pad);font-family:var(--je-font);font-size:var(--je-size);line-height:var(--je-lh);white-space:pre-wrap;word-break:break-all;overflow-y:auto;color:#d4d4d4;outline:none;tab-size:2;caret-color:#fff;margin:0;resize:vertical}
+.code-editor:focus{box-shadow:inset 0 0 0 1px var(--accent)}
+
+.toggle-container{display:flex;align-items:center;justify-content:space-between;margin-top:clamp(6px, 1vw, 8px)}
+.toggle-label{font-size:clamp(11px, 1.2vw, 12px);color:#aaa}
+.toggle-switch{position:relative;width:clamp(36px, 5vw, 40px);height:clamp(20px, 2.8vw, 22px);flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#555;border-radius:22px;transition:.2s}
+.toggle-slider:before{content:"";position:absolute;height:clamp(14px, 2vw, 16px);width:clamp(14px, 2vw, 16px);left:clamp(2px, 0.4vw, 3px);bottom:clamp(2px, 0.4vw, 3px);background:#fff;border-radius:50%;transition:.2s}
+.toggle-switch input:checked+.toggle-slider{background:var(--accent)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(clamp(16px, 2.2vw, 18px))}
+
+.hint-icon{position:relative;display:inline-block;margin-left:clamp(3px, 0.5vw, 4px);cursor:help}
+.hint-icon::after{content:"此名称仅为编辑器内部标识，游戏内调用路径以下方为准";position:absolute;left:50%;transform:translateX(-50%);top:100%;margin-top:clamp(6px, 1vw, 8px);background:var(--panel);border:1px solid var(--border);color:var(--text);padding:clamp(5px, 0.8vw, 6px) clamp(8px, 1.2vw, 10px);border-radius:clamp(3px, 0.5vw, 4px);font-size:clamp(10px, 1.1vw, 11px);white-space:nowrap;z-index:100;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
+.hint-icon:hover::after{opacity:1;visibility:visible}
+
+.cmd-hint{margin-top:clamp(10px, 1.5vw, 12px);padding:clamp(6px, 1vw, 8px) clamp(10px, 1.5vw, 12px);background:rgba(59,133,38,.1);border-left:clamp(2px, 0.4vw, 3px) solid var(--accent);border-radius:clamp(3px, 0.5vw, 4px);display:flex;justify-content:space-between;align-items:center;font-family:var(--je-font);font-size:clamp(11px, 1.2vw, 12px);color:var(--accent)}
+.cmd-hint button{background:var(--accent);color:#fff;border:none;padding:clamp(3px, 0.5vw, 4px) clamp(6px, 1vw, 8px);border-radius:clamp(2px, 0.4vw, 3px);cursor:pointer;font-size:clamp(10px, 1.1vw, 11px);transition:opacity .2s}
+.cmd-hint button:hover{opacity:.85}
+
+.preview-tree{font-family:var(--je-font);font-size:clamp(11px, 1.2vw, 12px);line-height:1.6}
+.preview-tree .folder{color:var(--blue);font-weight:bold}
+.preview-tree .file{color:#ccc;padding-left:clamp(10px, 1.5vw, 12px)}
+.json-output{background:#111;padding:clamp(8px, 1.2vw, 10px);border-radius:clamp(3px, 0.5vw, 4px);font-family:var(--je-font);font-size:clamp(11px, 1.2vw, 12px);white-space:pre-wrap;max-height:clamp(250px, 35vw, 300px);overflow-y:auto}
+.json-key{color:#9cdcfe}.json-string{color:#ce9178}.json-number{color:#b5cea8}
+
+/* ==================== 模态框动画增强 ==================== */
+.modal-overlay{
+    display:flex;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    visibility:hidden;
+    transition:opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter:blur(0px);
+    -webkit-backdrop-filter:blur(0px);
+}
+.modal-overlay.show{
+    opacity:1;
+    visibility:visible;
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+}
+.modal-box{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:clamp(6px, 1vw, 8px);
+    padding:clamp(16px, 2.5vw, 20px);
+    max-width:clamp(400px, 50vw, 500px);
+    width:90vw;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5),
+               0 0 0 1px rgba(255,255,255,0.1);
+    transform:scale(0.9) translateY(20px);
+    opacity:0;
+    transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+               opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change:transform, opacity;
+}
+.modal-overlay.show .modal-box{
+    transform:scale(1) translateY(0);
+    opacity:1;
+}
+.modal-actions{
+    display:flex;
+    gap:clamp(6px, 1vw, 8px);
+    justify-content:flex-end;
+    margin-top:clamp(12px, 1.8vw, 14px)
+}
+.setting-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:clamp(8px, 1.2vw, 10px) 0;
+    border-bottom:1px solid rgba(255,255,255,.06)
+}
+.setting-item:last-child{border-bottom:none}
+.setting-item .setting-label{font-size:clamp(12px, 1.3vw, 13px);color:var(--text)}
+.setting-item .setting-desc{font-size:clamp(10px, 1.1vw, 11px);color:#888;margin-top:clamp(1px, 0.2vw, 2px)}
+
+.version-option{display:flex;justify-content:space-between;align-items:center;padding:clamp(6px, 1vw, 8px);border-bottom:1px solid #333;cursor:pointer;transition:background .15s}
+.version-option:hover{background:#333}
+.version-option.selected{background:rgba(59,133,38,.2);border-left:clamp(2px, 0.4vw, 3px) solid var(--accent);color:#fff}
+.version-option .checkmark{display:none;margin-left:clamp(6px, 1vw, 8px);color:var(--accent);font-weight:bold}
+.version-option.selected .checkmark{display:inline}
+.version-tag{font-size:clamp(9px, 1vw, 10px);padding:clamp(1px, 0.2vw, 2px) clamp(4px, 0.6vw, 6px);border-radius:clamp(2px, 0.3vw, 3px);background:#444;color:#aaa}
+.version-tag.recommended{background:var(--accent);color:#fff}
+
+.uuid-container{display:flex;gap:clamp(5px, 0.8vw, 6px)}
+.uuid-container input{flex:1}
+
+.tick-checkbox-list{margin-top:clamp(6px, 1vw, 8px);max-height:clamp(100px, 15vw, 120px);overflow-y:auto;border:1px solid #333; padding:clamp(6px, 1vw, 8px);border-radius:clamp(3px, 0.5vw, 4px)}
+.tick-checkbox-item{display:flex;align-items:center;gap:clamp(6px, 1vw, 8px);margin-bottom:clamp(3px, 0.5vw, 4px);padding:clamp(3px, 0.5vw, 4px);border-radius:clamp(2px, 0.4vw, 3px);transition:background .15s}
+.tick-checkbox-item:hover{background:rgba(255,255,255,.05)}
+.tick-checkbox-item input[type="checkbox"]{margin:0;width:clamp(14px, 2vw, 16px);height:clamp(14px, 2vw, 16px);flex-shrink:0}
+.tick-checkbox-item label{display:flex;align-items:center;gap:clamp(6px, 1vw, 8px);cursor:pointer;flex:1;font-size:clamp(11px, 1.2vw, 12px)}
+.tick-checkbox-item .path{color:var(--accent);font-family:var(--je-font);font-size:clamp(11px, 1.2vw, 12px)}
+
+.filename-display{font-size:clamp(10px, 1.1vw, 11px);color:#888;margin-top:clamp(3px, 0.5vw, 4px);font-family:var(--je-font)}
+
+#configFileInput{display:none}
+
+.config-import-modal {
+    max-width: clamp(500px, 70vw, 600px);
+    width: 95vw;
+}
+.config-import-textarea {
+    width: 100%;
+    height: clamp(150px, 25vw, 200px);
+    background: #111;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: clamp(8px, 1.2vw, 10px);
+    font-family: var(--je-font);
+    font-size: clamp(11px, 1.2vw, 12px);
+    resize: vertical;
+    border-radius: clamp(3px, 0.5vw, 4px);
+    margin-top: clamp(8px, 1.2vw, 10px);
+}
+.config-import-actions {
+    display: flex;
+    gap: clamp(6px, 1vw, 8px);
+    margin-top: clamp(10px, 1.5vw, 12px);
+}
+</style>
+</head>
+<body>
+    <!-- 通知容器 -->
+    <div id="notify-container"></div>
+
+    <!-- 初始化超时警告横幅 - 常驻显示 -->
+    <div id="initWarning">
+        ⚠️ 初始化超时，部分功能可能无法使用。请刷新页面重试。
+        <button onclick="location.reload()" style="margin-left: 15px; padding: 4px 12px; background: white; color: var(--danger); border: none; border-radius: 3px; cursor: pointer; font-weight: bold;">刷新页面</button>
+    </div>
+    
+    <!-- 初始化错误详情 -->
+    <div id="initErrorDetails"></div>
+
+    <!-- 初始化弹窗（增强版） -->
+    <div class="init-modal-overlay" id="initModal">
+        <div class="init-modal">
+            <h3>⚙️ 正在启动函数包编辑器</h3>
+            <div class="init-status">
+                <span id="initStepText">准备环境...</span>
+                <span id="initPercent">0%</span>
+            </div>
+            <div class="init-progress">
+                <div class="init-progress-bar" id="initProgressBar"></div>
+            </div>
+            <p id="initProgressText">正在加载核心模块，请稍候...</p>
+            <button class="init-force-close" onclick="forceCloseInit()">跳过等待</button>
+        </div>
+    </div>
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="configFileInput" accept=".json" onchange="importConfigFile(event)">
+
+    <!-- 配置导入模态框 -->
+    <div class="modal-overlay" id="configImportModal">
+        <div class="modal-box config-import-modal">
+            <h3>📥 导入配置</h3>
+            <p style="color:#aaa; font-size:12px; margin-bottom:10px;">请粘贴JSON配置文本或从文件导入</p>
+            <textarea id="configImportTextarea" class="config-import-textarea" placeholder='{"_comment": "此配置文件与MC函数包无关...", "version": "1.0", ...}'></textarea>
+            <div class="config-import-actions">
+                <button class="btn-base btn-add" onclick="importConfigFromText()">从文本导入</button>
+                <button class="btn-base" style="background:#555; color:white;" onclick="document.getElementById('configFileInput').click()">选择文件</button>
+                <button class="btn-base" style="background:transparent; border:1px solid var(--border); color:var(--text);" onclick="closeModal('configImportModal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <!-- 修改：去掉版本号 -->
+        <div class="nav-brand">⚙️ MCPE 函数包生成器</div>
+        <div class="nav-spacer"></div>
+        <button class="nav-menu-toggle" id="navToggle" onclick="toggleNavMenu()">☰</button>
+        <div class="nav-dropdown" id="navDropdown">
+            <button onclick="showSettingsModal();closeNavMenu()">⚙️ 设置</button>
+            <button onclick="showConfigExportModal();closeNavMenu()">📤 导出配置</button>
+            <button onclick="showConfigImportModal();closeNavMenu()">📥 导入配置</button>
+            <button onclick="exportZip();closeNavMenu()">📦 导出 ZIP</button>
+            <button onclick="resetAllWithConfirm();closeNavMenu()">🔄 重置</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <!-- 左侧编辑器 -->
+        <div class="editor">
+            <!-- 全局设置 -->
+            <div class="card open" id="globalSettings">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <span class="card-arrow">▶</span>
+                    <span class="badge" style="background:#f1c40f;color:#000">ROOT</span>
+                    <span style="flex:1;font-size:12px;color:#ccc">全局设置</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div><label>包名称</label><input id="packName" value="my_func_pack"></div>
+                        <div><label>作者</label><input id="author"></div>
+                    </div>
+                    <label>描述</label><input id="description" value="Generated by Function Pack Generator">
+                    
+                    <!-- 版本配置 -->
+                    <div class="card" style="margin-top:16px">
+                        <div class="card-header" onclick="toggleVersionSection()">
+                            <span class="card-arrow">▶</span>
+                            <span class="badge" style="background:#8e44ad;color:#fff">VERSION</span>
+                            <span style="flex:1;font-size:12px;color:#ccc">版本配置</span>
+                        </div>
+                        <div class="card-body" id="versionSection" style="display:none">
+                            <div id="versionSelector" style="border:1px solid var(--border);border-radius:4px;max-height:200px;overflow-y:auto"></div>
+                            <div class="row">
+                                <div><label>Format Version</label><input id="formatVersion" value="2" readonly style="background:#333;cursor:not-allowed"></div>
+                                <div><label>Min Engine Version</label><input id="minEngineVersion" value="1,19,70" readonly style="background:#333;cursor:not-allowed"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 函数列表（使用新按钮样式） -->
+            <div class="section-title">
+                <span class="st-label">📝 函数列表 (.mcfunction)</span>
+                <div class="section-buttons">
+                    <button class="btn-base collapse-toggle" onclick="collapseAllFunctions()">▲</button>
+                    <button class="btn-base collapse-toggle" onclick="expandAllFunctions()">▼</button>
+                    <button class="btn-base btn-add" onclick="addFunction()">+ 添加</button>
+                </div>
+            </div>
+            <div id="functionList"></div>
+
+            <!-- 自动执行配置 -->
+            <div class="section-title"><span class="st-label">⏱️ 自动执行配置 (tick.json)</span></div>
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <span class="card-arrow">▶</span>
+                    <span class="badge" style="background:#8e44ad;color:#fff">TICK CONFIG</span>
+                    <span style="flex:1;font-size:12px;color:#ccc">启用每刻自动执行</span>
+                </div>
+                <div class="card-body">
+                    <div class="toggle-container">
+                        <span class="toggle-label">启用 tick.json (每刻执行)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="enableTick">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="tick-checkbox-list" id="tickCheckboxes">
+                        <div style="font-size:11px;color:#888">添加函数后在此处勾选</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧预览 -->
+        <div class="preview-panel" id="previewPanel">
+            <div class="section-title"><span class="st-label">📦 预览与导出</span></div>
+            
+            <!-- 包结构（显示文件夹） -->
+            <div class="card open">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <span class="card-arrow">▶</span>
+                    <span class="badge" style="background:#2980b9;color:#fff">STRUCTURE</span>
+                    <span style="flex:1;font-size:12px;color:#ccc">包结构</span>
+                </div>
+                <div class="card-body"><div class="preview-tree" id="previewTree">初始化中...</div></div>
+            </div>
+            
+            <!-- 包信息 -->
+            <div class="card open">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <span class="card-arrow">▶</span>
+                    <span class="badge" style="background:#8e44ad;color:#fff">INFO</span>
+                    <span style="flex:1;font-size:12px;color:#ccc">包信息 (manifest)</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div><label>包名称</label><input id="previewPackName"></div>
+                        <div><label>作者</label><input id="previewAuthor"></div>
+                    </div>
+                    <label>描述</label><input id="previewDescription">
+                    <div class="row">
+                        <div><label>Format Version</label><input id="previewFormatVersion"></div>
+                        <div><label>Min Engine Version</label><input id="previewMinEngineVersion"></div>
+                    </div>
+                    <div class="uuid-container">
+                        <div style="flex:1">
+                            <label>Header UUID</label>
+                            <div style="display:flex;gap:6px">
+                                <input id="previewHeaderUuid" readonly style="background:#333;cursor:not-allowed;flex:1">
+                                <button class="btn-base btn-add" onclick="regenerateHeaderUuid()">随机</button>
+                            </div>
+                        </div>
+                        <div style="flex:1">
+                            <label>Module UUID</label>
+                            <div style="display:flex;gap:6px">
+                                <input id="previewModuleUuid" readonly style="background:#333;cursor:not-allowed;flex:1">
+                                <button class="btn-base btn-add" onclick="regenerateModuleUuid()">随机</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="json-output" id="previewManifest" style="margin-top:10px">初始化中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-box">
+            <h3>⚙️ 编辑器设置</h3>
+            <div class="setting-item">
+                <div><div class="setting-label">显示行号</div><div class="setting-desc">函数编辑区左侧显示行号</div></div>
+                <label class="toggle-switch"><input type="checkbox" id="settingLineNumbers" checked onchange="onSettingChange('lineNumbers',this.checked)"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="setting-item">
+                <div><div class="setting-label">显示预览面板</div><div class="setting-desc">右侧显示包结构与信息</div></div>
+                <label class="toggle-switch"><input type="checkbox" id="settingPreview" checked onchange="onSettingChange('showPreview',this.checked)"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="modal-actions"><button class="btn-base btn-add" onclick="closeModal('settingsModal')">完成</button></div>
+        </div>
+    </div>
+
+    <!-- 配置导出模态框 -->
+    <div class="modal-overlay" id="configExportModal">
+        <div class="modal-box">
+            <h3>📤 导出配置</h3>
+            <p style="color:#aaa; font-size:12px; margin-bottom:10px;">配置已生成，您可以下载文件或复制文本</p>
+            <div class="config-import-actions">
+                <button class="btn-base btn-add" onclick="downloadConfigFile()">下载文件</button>
+                <button class="btn-base" style="background:#555; color:white;" onclick="copyConfigToClipboard()">复制文本</button>
+                <button class="btn-base" style="background:transparent; border:1px solid var(--border); color:var(--text);" onclick="closeModal('configExportModal')">关闭</button>
+            </div>
+            <div style="margin-top:15px;">
+                <label>配置预览</label>
+                <textarea id="configExportTextarea" class="config-import-textarea" readonly style="height:150px;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用国内CDN，更稳定 -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        /* ==================== 修复通知系统 ==================== */
+        const CONFIG = {
+            defaultDuration: 5000,
+            maxVisible: 6
+        };
+
+        const activeNotifications = new Map();
+
+        class NotificationManager {
+            constructor() {
+                this.container = document.getElementById('notify-container');
+            }
+
+            create(options) {
+                const { 
+                    key, 
+                    icon = '💡', 
+                    title = '通知', 
+                    subtitles = [], 
+                    extra = '', 
+                    actions = [],
+                    color = '#3b8526', 
+                    duration = CONFIG.defaultDuration 
+                } = options;
+                
+                // 如果存在撤销通知，先关闭它
+                if (key && key.startsWith('delete-')) {
+                    this.closeUndoNotifications();
+                }
+                
+                if (key && activeNotifications.has(key)) {
+                    const existing = activeNotifications.get(key);
+                    if (existing.element.classList.contains('hide')) {
+                        activeNotifications.delete(key);
+                        return this.createNew({ key, icon, title, subtitles, extra, actions, color, duration });
+                    }
+                    return this.updateExisting(existing, { icon, title, subtitles, extra, actions, color }, duration);
+                }
+                
+                return this.createNew({ key, icon, title, subtitles, extra, actions, color, duration });
+            }
+
+            // 关闭所有撤销通知
+            closeUndoNotifications() {
+                const undoKeys = [];
+                for (const [key, notification] of activeNotifications.entries()) {
+                    if (key && key.startsWith('delete-')) {
+                        undoKeys.push(key);
+                        this.close(notification);
+                    }
+                }
+                undoKeys.forEach(key => activeNotifications.delete(key));
+            }
+
+            createNew({ key, icon, title, subtitles, extra, actions, color, duration }) {
+                const timeStr = this.formatTime(new Date());
+                const item = document.createElement('div');
+                item.className = 'notify-item';
+                item.dataset.key = key || '';
+                item.dataset.color = color;
+                item.style.setProperty('--notify-color', color);
+
+                const iconHtml = this.renderIcon(icon);
+                const subtitlesHtml = subtitles.map(sub => `<div class="notify-subtitle">${sub}</div>`).join('');
+                
+                // 为撤销按钮添加特殊类名
+                const actionsHtml = actions.length ? `
+                    <div class="notify-actions">
+                        ${actions.map((action, index) => {
+                            // 如果是撤销按钮，使用特殊的类名
+                            const className = action.type === 'undo' ? 'notify-undo-btn' : `notify-action-btn ${action.type || 'secondary'}`;
+                            return `
+                            <button class="${className}" data-action-index="${index}" data-key="${key}">
+                                ${action.label}
+                            </button>
+                            `;
+                        }).join('')}
+                    </div>
+                ` : '';
+                
+                const swipeHint = `<div class="swipe-hint">向右滑动关闭</div>`;
+
+                item.innerHTML = `
+                    <div class="notify-color-bar" style="background: ${color}"></div>
+                    <div class="notify-body">
+                        <div class="notify-icon" style="background: ${this.getIconBackground(color)}">${iconHtml}</div>
+                        <div class="notify-content">
+                            <div class="notify-header">
+                                <span class="notify-title">${title}</span>
+                                <span class="notify-time">${timeStr}</span>
+                            </div>
+                            ${subtitles.length ? `<div class="notify-subtitles">${subtitlesHtml}</div>` : ''}
+                            ${extra ? `<div class="notify-extra">${extra}</div>` : ''}
+                            ${actionsHtml}
+                            ${swipeHint}
+                        </div>
+                    </div>
+                    <div class="notify-progress">
+                        <div class="notify-progress-bar" style="animation-duration: ${duration}ms"></div>
+                    </div>
+                `;
+
+                this.limitVisible();
+                this.container.appendChild(item);
+
+                const notificationObj = {
+                    element: item,
+                    timer: null,
+                    startTime: Date.now(),
+                    remaining: duration,
+                    progressBar: item.querySelector('.notify-progress-bar'),
+                    actions: actions,
+                    key: key
+                };
+
+                if (key) activeNotifications.set(key, notificationObj);
+
+                requestAnimationFrame(() => item.classList.add('show'));
+                this.bindEvents(notificationObj, duration);
+                this.bindActionButtons(notificationObj);
+
+                return notificationObj;
+            }
+
+            updateExisting(existing, content, newDuration) {
+                const { element, progressBar, actions } = existing;
+                
+                element.style.transform = '';
+                element.style.opacity = '';
+                
+                element.classList.remove('flash-update');
+                void element.offsetWidth;
+                element.classList.add('flash-update');
+                
+                element.addEventListener('animationend', () => {
+                    element.classList.remove('flash-update');
+                }, { once: true });
+                
+                element.dataset.color = content.color;
+                element.style.setProperty('--notify-color', content.color);
+                element.querySelector('.notify-color-bar').style.background = content.color;
+                
+                const iconEl = element.querySelector('.notify-icon');
+                iconEl.style.background = this.getIconBackground(content.color);
+                iconEl.innerHTML = this.renderIcon(content.icon);
+                
+                element.querySelector('.notify-title').textContent = content.title;
+                
+                let subtitlesContainer = element.querySelector('.notify-subtitles');
+                if (content.subtitles && content.subtitles.length) {
+                    const subtitlesHtml = content.subtitles.map(sub => `<div class="notify-subtitle">${sub}</div>`).join('');
+                    if (subtitlesContainer) {
+                        subtitlesContainer.innerHTML = subtitlesHtml;
+                    } else {
+                        const header = element.querySelector('.notify-header');
+                        subtitlesContainer = document.createElement('div');
+                        subtitlesContainer.className = 'notify-subtitles';
+                        subtitlesContainer.innerHTML = subtitlesHtml;
+                        header.insertAdjacentElement('afterend', subtitlesContainer);
+                    }
+                } else if (subtitlesContainer) {
+                    subtitlesContainer.remove();
+                }
+                
+                let extraContainer = element.querySelector('.notify-extra');
+                if (content.extra) {
+                    if (extraContainer) {
+                        extraContainer.innerHTML = content.extra;
+                    } else {
+                        const contentArea = element.querySelector('.notify-content');
+                        extraContainer = document.createElement('div');
+                        extraContainer.className = 'notify-extra';
+                        extraContainer.innerHTML = content.extra;
+                        contentArea.appendChild(extraContainer);
+                    }
+                } else if (extraContainer) {
+                    extraContainer.remove();
+                }
+                
+                let actionsContainer = element.querySelector('.notify-actions');
+                if (content.actions && content.actions.length) {
+                    const actionsHtml = `
+                        <div class="notify-actions">
+                            ${content.actions.map((action, index) => {
+                                const className = action.type === 'undo' ? 'notify-undo-btn' : `notify-action-btn ${action.type || 'secondary'}`;
+                                return `
+                                <button class="${className}" data-action-index="${index}" data-key="${existing.key}">
+                                    ${action.label}
+                                </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                    if (actionsContainer) {
+                        actionsContainer.innerHTML = actionsHtml;
+                    } else {
+                        const contentArea = element.querySelector('.notify-content');
+                        actionsContainer = document.createElement('div');
+                        actionsContainer.className = 'notify-actions';
+                        actionsContainer.innerHTML = actionsHtml;
+                        contentArea.appendChild(actionsContainer);
+                    }
+                    existing.actions = content.actions;
+                    this.bindActionButtons(existing);
+                } else if (actionsContainer) {
+                    actionsContainer.remove();
+                    existing.actions = [];
+                }
+                
+                element.querySelector('.notify-time').textContent = this.formatTime(new Date());
+
+                clearTimeout(existing.timer);
+                existing.startTime = Date.now();
+                existing.remaining = newDuration;
+
+                progressBar.style.animation = 'none';
+                progressBar.offsetHeight;
+                progressBar.style.animation = `progress-shrink ${newDuration}ms linear forwards`;
+                progressBar.style.animationPlayState = 'running';
+
+                existing.timer = setTimeout(() => this.close(existing), newDuration);
+
+                element.style.transform = 'scale(1.02)';
+                requestAnimationFrame(() => {
+                    element.style.transition = 'transform 0.2s ease';
+                    element.style.transform = '';
+                });
+
+                return existing;
+            }
+
+            bindActionButtons(notificationObj) {
+                const { element, actions } = notificationObj;
+                const buttons = element.querySelectorAll('.notify-action-btn, .notify-undo-btn');
+
+                buttons.forEach(btn => {
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const actionIndex = parseInt(btn.dataset.actionIndex);
+                        const action = actions[actionIndex];
+                        if (!action || typeof action.onClick !== 'function') return;
+
+                        try {
+                            const result = action.onClick(notificationObj);
+
+                            if (result && typeof result.then === 'function') {
+                                result.then(shouldClose => {
+                                    if (shouldClose === true) this.close(notificationObj);
+                                }).catch(err => {
+                                    console.error('Action error:', err);
+                                });
+                            } else {
+                                if (result === true) this.close(notificationObj);
+                            }
+                        } catch (err) {
+                            console.error('Action error:', err);
+                        }
+                    };
+
+                    btn.ontouchstart = e => e.stopPropagation();
+                    btn.ontouchmove = e => e.stopPropagation();
+                    btn.ontouchend = e => e.stopPropagation();
+                });
+            }
+
+            getIconBackground(color) {
+                if (color.includes('gradient')) return color;
+                return `linear-gradient(135deg, ${color}, ${this.adjustColor(color, -20)})`;
+            }
+
+            adjustColor(color, amount) {
+                if (color.startsWith('#')) {
+                    const hex = color.replace('#', '');
+                    const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+                    const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+                    const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+                    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                }
+                return color;
+            }
+
+            renderIcon(icon) {
+                if (typeof icon === 'string' && (icon.startsWith('http') || icon.startsWith('/') || icon.startsWith('data:'))) {
+                    return `<img src="${icon}" alt="icon">`;
+                }
+                return icon;
+            }
+
+            bindEvents(notificationObj, duration) {
+                const { element, progressBar } = notificationObj;
+                let paused = false;
+
+                element.querySelector('.notify-body').onclick = () => {
+                    this.close(notificationObj);
+                };
+
+                element.onmouseenter = () => {
+                    paused = true;
+                    clearTimeout(notificationObj.timer);
+                    progressBar.style.animationPlayState = 'paused';
+                };
+
+                element.onmouseleave = () => {
+                    paused = false;
+                    const elapsed = Date.now() - notificationObj.startTime;
+                    notificationObj.remaining = Math.max(0, duration - elapsed);
+                    progressBar.style.animationPlayState = 'running';
+                    if (notificationObj.remaining > 0) {
+                        notificationObj.timer = setTimeout(() => this.close(notificationObj), notificationObj.remaining);
+                    }
+                };
+
+                let startX = 0, currentX = 0, isSwiping = false;
+
+                element.ontouchstart = (e) => {
+                    if (e.target.closest('.notify-action-btn') || e.target.closest('.notify-undo-btn')) return;
+                    startX = e.touches[0].clientX;
+                    isSwiping = true;
+                };
+
+                element.ontouchmove = (e) => {
+                    if (!isSwiping) return;
+                    currentX = e.touches[0].clientX;
+                    const diff = currentX - startX;
+                    if (diff > 0) {
+                        element.style.transform = `translateX(${diff}px)`;
+                        element.style.opacity = 1 - diff / 200;
+                    }
+                    e.preventDefault();
+                };
+
+                element.ontouchend = () => {
+                    if (!isSwiping) return;
+                    isSwiping = false;
+                    element.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    const diff = currentX - startX;
+                    if (diff > 60) {
+                        this.close(notificationObj);
+                    } else {
+                        element.style.transform = '';
+                        element.style.opacity = '';
+                    }
+                };
+
+                notificationObj.timer = setTimeout(() => this.close(notificationObj), duration);
+            }
+
+            close(notificationObj) {
+                const { element } = notificationObj;
+                if (element.classList.contains('hide')) return;
+
+                clearTimeout(notificationObj.timer);
+                if (notificationObj.key) activeNotifications.delete(notificationObj.key);
+
+                element.classList.remove('show');
+                element.classList.add('hide');
+                
+                const onTransitionEnd = () => {
+                    element.remove();
+                    element.removeEventListener('transitionend', onTransitionEnd);
+                };
+                element.addEventListener('transitionend', onTransitionEnd, { once: true });
+            }
+
+            limitVisible() {
+                const items = this.container.querySelectorAll('.notify-item.show');
+                if (items.length >= CONFIG.maxVisible) {
+                    const oldest = items[0];
+                    oldest.classList.remove('show');
+                    oldest.classList.add('hide');
+                    const key = oldest.dataset.key;
+                    if (key) activeNotifications.delete(key);
+                    oldest.addEventListener('transitionend', () => oldest.remove(), { once: true });
+                }
+            }
+
+            formatTime(date) {
+                const now = new Date();
+                const diff = now - date;
+                if (diff < 60000) return '刚刚';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${hours}:${minutes}`;
+            }
+        }
+
+        const manager = new NotificationManager();
+
+        const notify = {
+            custom: (options) => manager.create(options),
+            success: (msg, key) => manager.create({ key, icon: '✓', title: '成功', subtitles: [msg], color: '#10b981' }),
+            info: (msg, key) => manager.create({ key, icon: '💡', title: '提示', subtitles: [msg], color: '#3b82f6' }),
+            warning: (msg, key) => manager.create({ key, icon: '⚠', title: '警告', subtitles: [msg], color: '#f59e0b' }),
+            error: (msg, key) => manager.create({ key, icon: '✕', title: '错误', subtitles: [msg], color: '#ef4444' }),
+            update: (key, updates) => {
+                const existing = activeNotifications.get(key);
+                if (existing) manager.updateExisting(existing, updates, CONFIG.defaultDuration);
+            }
+        };
+
+        /* ==================== 真实初始化进度系统 ==================== */
+        let initTimeout = null;
+        let initWarningTimer = null;
+        let initFailed = false;
+        let initErrors = [];
+        
+        // 定义初始化步骤及其权重（总和必须为100）
+        const INIT_STEPS = {
+            CHECK_JSZIP: { weight: 30, name: "检查JSZip库", detail: "加载压缩库" },
+            LOAD_UI: { weight: 15, name: "加载UI组件", detail: "构建界面框架" },
+            RENDER_VERSION: { weight: 10, name: "渲染版本选择器", detail: "解析版本配置" },
+            INIT_FUNCTIONS: { weight: 20, name: "初始化函数列表", detail: "准备编辑器实例" },
+            BIND_EVENTS: { weight: 10, name: "绑定全局事件", detail: "连接输入输出" },
+            RENDER_PREVIEW: { weight: 15, name: "渲染预览面板", detail: "生成包结构" }
+        };
+        
+        let currentProgress = 0;
+        let completedSteps = 0;
+        const totalSteps = Object.keys(INIT_STEPS).length;
+
+        function showInitModal() {
+            const modal = document.getElementById('initModal');
+            modal.classList.add('show');
+            updateRealProgress(0, "准备环境...", "正在启动编辑器...");
+        }
+        
+        function updateRealProgress(percent, stepName, detail) {
+            currentProgress = percent;
+            const progressBar = document.getElementById('initProgressBar');
+            const progressText = document.getElementById('initProgressText');
+            const stepText = document.getElementById('initStepText');
+            const percentText = document.getElementById('initPercent');
+            
+            progressBar.style.width = percent + '%';
+            progressText.textContent = detail;
+            stepText.textContent = stepName;
+            percentText.textContent = Math.round(percent) + '%';
+            
+            // 更新控制台日志
+            console.log(`[初始化] ${percent.toFixed(1)}% - ${stepName}: ${detail}`);
+        }
+        
+        function completeStep(stepKey) {
+            completedSteps++;
+            const step = INIT_STEPS[stepKey];
+            const newProgress = currentProgress + step.weight;
+            
+            updateRealProgress(
+                newProgress, 
+                `${step.name} ✓`, 
+                `${step.detail} - 完成`
+            );
+            
+            return newProgress;
+        }
+        
+        function finishInit() {
+            clearTimeout(initTimeout);
+            clearTimeout(initWarningTimer);
+            updateRealProgress(100, "启动完成!", "编辑器已就绪");
+            
+            setTimeout(() => {
+                const modal = document.getElementById('initModal');
+                modal.classList.remove('show');
+                
+                if (!initFailed) {
+                    document.getElementById('initWarning').style.display = 'none';
+                    document.getElementById('initErrorDetails').style.display = 'none';
+                }
+            }, 500);
+        }
+        
+        function forceCloseInit(error) {
+            clearTimeout(initTimeout);
+            clearTimeout(initWarningTimer);
+            
+            let errorMsg = '初始化失败';
+            if (error) {
+                errorMsg += `: ${error.message || error}`;
+                initErrors.push(`致命错误: ${error.message || error}`);
+            }
+            
+            // 检查JSZip是否加载成功
+            if (typeof JSZip === 'undefined') {
+                errorMsg = 'JSZip 库加载失败，请检查网络连接或更换 CDN';
+                initErrors.push('JSZip 库未加载');
+            }
+            
+            // 显示错误信息
+            document.getElementById('initWarning').innerHTML = 
+                `⚠️ ${errorMsg}。请刷新页面重试。` +
+                `<button onclick="location.reload()" style="margin-left: 15px; padding: 4px 12px; background: white; color: var(--danger); border: none; border-radius: 3px; cursor: pointer; font-weight: bold;">刷新页面</button>`;
+            document.getElementById('initWarning').style.display = 'block';
+            
+            // 显示详细错误信息
+            if (initErrors.length > 0) {
+                document.getElementById('initErrorDetails').textContent = 
+                    `初始化错误详情:\n${initErrors.join('\n')}\n\n` +
+                    `请检查:\n1. 网络连接是否正常\n2. 是否可以访问 https://cdn.bootcdn.net\n3. 浏览器是否支持现代JavaScript特性`;
+                document.getElementById('initErrorDetails').style.display = 'block';
+            }
+            
+            initFailed = true;
+            
+            const modal = document.getElementById('initModal');
+            modal.classList.remove('show');
+            console.error('初始化超时或失败:', errorMsg);
+        }
+
+        /* ==================== HTML转义 ==================== */
+        function escapeHtml(unsafe){
+            if(!unsafe) return '';
+            const div = document.createElement('div');
+            div.textContent = unsafe;
+            return div.innerHTML;
+        }
+
+        /* ==================== 版本数据 ==================== */
+        const VERSION_DATA = [
+            {label: "兼容模式", v: [1,16,210], desc: "fill方块状态初现"},
+            {label: "稳定版", v: [1,19,50], desc: "Execute新版脱实验"},
+            {label: "推荐", v: [1,19,70], desc: "弃用data值，强制方块状态", tag: "recommended", def: true},
+            {label: "最新稳", v: [1,20,10], desc: "方块状态 = 替代 :"},
+            {label: "预览", v: [1,21,50], desc: "Schedule等新指令"}
+        ];
+
+        /* ==================== 状态 ==================== */
+        let state = {
+            packName: "my_func_pack",
+            author: "Author",
+            description: "Generated by Function Pack Generator",
+            minEngineVersion: [1,19,70],
+            formatVersion: 2,
+            enableTick: false,
+            functions: [
+                {id: Date.now(), name: "初始化函数", path: "init", folder: "", content: "# 初始化函数\neffect @a strength 1 0 true\ntitle @a title {\"text\":\"Welcome!\"}", bindToTick: false},
+                {id: Date.now()+1, name: "刷怪场设置", path: "spawn/setup", folder: "spawn", content: "# 刷怪场设置\nfill ~-5 ~-1 ~-5 ~5 ~-1 ~5 grass\nkill @e[type=item]", bindToTick: false}
+            ],
+            headerUuid: "",
+            moduleUuid: "",
+            tickFunctions: []
+        };
+
+        let userSettings = {lineNumbers: true, highlight: false, showPreview: true};
+
+        /* ==================== UI通用 ==================== */
+        function toggleCard(header){header.closest('.card').classList.toggle('open');}
+        function toggleNavMenu(){const d=document.getElementById('navDropdown'),t=document.getElementById('navToggle');d.classList.toggle('open');t.classList.toggle('active');}
+        function closeNavMenu(){document.getElementById('navDropdown').classList.remove('open');document.getElementById('navToggle').classList.remove('active');}
+        function toggleVersionSection(){const s=document.getElementById('versionSection');s.style.display=s.style.display==='none'?'block':'none';}
+        document.addEventListener('click', e => {const d=document.getElementById('navDropdown'),t=document.getElementById('navToggle');if(d.classList.contains('open')&&!d.contains(e.target)&&!t.contains(e.target))closeNavMenu();});
+
+        function showSettingsModal(){document.getElementById('settingsModal').classList.add('show');}
+        function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+        /* ==================== 设置应用 ==================== */
+        function applySettings(){
+            const previewPanel = document.getElementById('previewPanel');
+            if(previewPanel) previewPanel.style.display = userSettings.showPreview ? 'flex' : 'none';
+        }
+        function onSettingChange(key, value){
+            userSettings[key] = value;
+            if(key === 'showPreview'){
+                document.getElementById('previewPanel').style.display = value ? 'flex' : 'none';
+                return;
+            }
+            renderFunctionList();
+        }
+
+        /* ==================== UUID随机生成 ==================== */
+        function generateUuid(){
+            return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c/4).toString(16));
+        }
+        function regenerateHeaderUuid(){
+            state.headerUuid = generateUuid();
+            document.getElementById('previewHeaderUuid').value = state.headerUuid;
+            renderPreview();
+        }
+        function regenerateModuleUuid(){
+            state.moduleUuid = generateUuid();
+            document.getElementById('previewModuleUuid').value = state.moduleUuid;
+            renderPreview();
+        }
+
+        /* ==================== 版本选择器 ==================== */
+        function renderVersionSelector(){
+            const container = document.getElementById('versionSelector');
+            container.innerHTML = VERSION_DATA.map(v => `
+                <div class="version-option ${v.def ? 'selected' : ''}" onclick="selectVersion(this, [${v.v}])">
+                    <div>
+                        <strong>${escapeHtml(v.label)}</strong> 
+                        ${v.tag ? '<span class="version-tag recommended">' + escapeHtml(v.v.join('.')) + '</span>' : '<span class="version-tag">' + escapeHtml(v.v.join('.')) + '</span>'}
+                        <div style="font-size:11px;color:#888">${escapeHtml(v.desc)}</div>
+                    </div>
+                    <span class="checkmark">✓</span>
+                </div>
+            `).join('');
+            const def = VERSION_DATA.find(v => v.def);
+            if(def) state.minEngineVersion = def.v;
+        }
+        function selectVersion(btn, v){
+            document.querySelectorAll('#versionSelector .version-option').forEach(e => e.classList.remove('selected'));
+            btn.classList.add('selected');
+            state.minEngineVersion = v;
+            document.getElementById('minEngineVersion').value = v.join(',');
+            renderPreview();
+        }
+
+        /* ==================== 函数管理（含嵌套文件夹路径分类） ==================== */
+        function addFunction(){
+            const funcId = Date.now();
+            state.functions.push({
+                id: funcId,
+                name: `新函数 ${state.functions.length + 1}`,
+                path: `func_${state.functions.length + 1}`,
+                folder: "",
+                content: '# 新函数\n',
+                bindToTick: false
+            });
+            updateEditorConfig();
+            renderFunctionList();
+            // 不发送通知
+        }
+
+        // 存储最近删除的函数，用于撤销
+        let recentlyDeletedFunction = null;
+        let deleteNotificationKey = null;
+
+        function removeFunction(id){
+            const func = state.functions.find(x => x.id === id);
+            if(!func) return;
+            
+            const funcName = func.name;
+            const funcIndex = state.functions.findIndex(x => x.id === id);
+
+            // 保存被删除的函数，用于撤销
+            recentlyDeletedFunction = {
+                ...func,
+                originalIndex: funcIndex
+            };
+            
+            // 从tickFunctions中移除
+            state.tickFunctions = state.tickFunctions.filter(p => p !== func.path);
+            
+            // 从functions数组中移除
+            state.functions = state.functions.filter(x => x.id !== id);
+            
+            updateEditorConfig();
+            renderFunctionList();
+            renderPreview();
+            
+            // 显示带撤销按钮的通知
+            deleteNotificationKey = `delete-${id}`;
+            notify.custom({
+                key: deleteNotificationKey,
+                icon: '🗑️',
+                title: '函数已删除',
+                subtitles: [`已删除函数: ${funcName}`],
+                actions: [{
+                    label: '撤销删除',
+                    type: 'undo',
+                    onClick: () => {
+                        undoDeleteFunction();
+                        return true; // 点击后关闭通知
+                    }
+                }],
+                color: '#ef4444',
+                duration: 8000
+            });
+        }
+
+        function undoDeleteFunction() {
+            if (!recentlyDeletedFunction) return;
+            
+            const { originalIndex, ...funcData } = recentlyDeletedFunction;
+            
+            if (originalIndex >= 0 && originalIndex <= state.functions.length) {
+                state.functions.splice(originalIndex, 0, funcData);
+            } else {
+                state.functions.push(funcData);
+            }
+            
+            if (funcData.bindToTick && !state.tickFunctions.includes(funcData.path)) {
+                state.tickFunctions.push(funcData.path);
+            }
+            
+            recentlyDeletedFunction = null;
+            
+            updateEditorConfig();
+            renderFunctionList();
+            renderPreview();
+            
+            if (deleteNotificationKey && activeNotifications.has(deleteNotificationKey)) {
+                const notificationObj = activeNotifications.get(deleteNotificationKey);
+                manager.close(notificationObj);
+                deleteNotificationKey = null;
+            }
+            
+            // 不发送通知
+        }
+
+        function updateFunctionName(id, value){
+            const func = state.functions.find(x => x.id === id);
+            if(!func) return;
+            func.name = value;
+            document.getElementById(`funcTitle-${id}`).textContent = value || '未命名';
+            updateEditorConfig();
+            renderPreview();
+        }
+        function updateFunctionPath(id, value){
+            const func = state.functions.find(x => x.id === id);
+            if(!func) return;
+            const oldPath = func.path;
+            func.path = value.replace('.mcfunction', '').trim();
+            
+            const parts = func.path.split('/');
+            func.folder = parts.length > 1 ? parts.slice(0, -1).join('/') : "";
+            
+            const index = state.tickFunctions.indexOf(oldPath);
+            if(index >= 0) state.tickFunctions[index] = func.path;
+            updateEditorConfig();
+            renderTickCheckboxes();
+            renderPreview();
+        }
+        function updateFunctionBind(id, checked){
+            const func = state.functions.find(x => x.id === id);
+            if(!func) return;
+            func.bindToTick = checked;
+            if(checked){
+                if(!state.tickFunctions.includes(func.path)) state.tickFunctions.push(func.path);
+            } else {
+                state.tickFunctions = state.tickFunctions.filter(p => p !== func.path);
+            }
+            updateEditorConfig();
+            renderTickCheckboxes();
+            renderPreview();
+        }
+        function updateFunctionContent(id, value){
+            const func = state.functions.find(x => x.id === id);
+            if(func) func.content = value;
+            updateEditorConfig();
+        }
+
+        /* ==================== 定位功能（支持嵌套文件夹+跳转高亮） ==================== */
+        function locateFunction(id){
+            const func = state.functions.find(x => x.id === id);
+            if(!func) return;
+            
+            const parts = func.path.split('/');
+            func.folder = parts.length > 1 ? parts.slice(0, -1).join('/') : "";
+            updateEditorConfig();
+            renderFunctionList();
+            
+            const card = document.querySelector(`#functionList .card #funcTitle-${id}`).closest('.card');
+            if(card){
+                card.classList.add('open');
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.add('highlight');
+                setTimeout(() => {
+                    card.classList.remove('highlight');
+                }, 1500);
+            }
+            
+            const folderPath = func.folder || '根目录';
+            const nestedInfo = func.folder.includes('/') ? `（嵌套路径）` : '';
+            notify.custom({
+                key: `locate-${id}`,
+                icon: '📍',
+                title: '函数已定位',
+                subtitles: [
+                    `函数名称：${func.name}`,
+                    `目标文件夹：${folderPath}${nestedInfo}`,
+                    `调用路径：/function ${func.path}`
+                ],
+                color: '#3b8526',
+                duration: 4000
+            });
+        }
+
+        /* ==================== 折叠/展开所有函数卡片 ==================== */
+        function collapseAllFunctions(){ 
+            document.querySelectorAll('#functionList .card').forEach(card => card.classList.remove('open'));
+            // 不发送通知
+        }
+        function expandAllFunctions(){     
+            document.querySelectorAll('#functionList .card').forEach(card => card.classList.add('open'));
+            // 不发送通知
+        }
+
+        /* ==================== 编辑器配置 ==================== */
+        function getEditorConfig(){
+            return {
+                _comment: "此配置文件与MC函数包无关，仅用于编辑器状态恢复。请勿将此文件放入游戏目录。",
+                version: "1.0",
+                timestamp: new Date().toISOString(),
+                editorState: {
+                    packName: state.packName,
+                    author: state.author,
+                    description: state.description,
+                    minEngineVersion: state.minEngineVersion,
+                    formatVersion: state.formatVersion,
+                    enableTick: state.enableTick,
+                    headerUuid: state.headerUuid,
+                    moduleUuid: state.moduleUuid,
+                    functions: state.functions.map(f => ({
+                        id: f.id,
+                        name: f.name,
+                        path: f.path,
+                        folder: f.folder,
+                        content: f.content,
+                        bindToTick: f.bindToTick
+                    })),
+                    tickFunctions: state.tickFunctions || []
+                },
+                userSettings: userSettings
+            };
+        }
+
+        function applyEditorConfig(config){
+            if(!config || !config.editorState) return false;
+            
+            const es = config.editorState;
+            state.packName = es.packName || state.packName;
+            state.author = es.author || state.author;
+            state.description = es.description || state.description;
+            state.minEngineVersion = es.minEngineVersion || state.minEngineVersion;
+            state.formatVersion = es.formatVersion || state.formatVersion;
+            state.enableTick = es.enableTick || state.enableTick;
+            state.headerUuid = es.headerUuid || state.headerUuid;
+            state.moduleUuid = es.moduleUuid || state.moduleUuid;
+            state.functions = es.functions || state.functions;
+            state.tickFunctions = Array.isArray(es.tickFunctions) ? es.tickFunctions : [];
+            
+            if(config.userSettings){
+                userSettings = {...userSettings, ...config.userSettings};
+            }
+            
+            return true;
+        }
+
+        function updateEditorConfig(){
+            const config = getEditorConfig();
+            localStorage.setItem('mcpe_function_editor_config', JSON.stringify(config));
+        }
+
+        /* ==================== 配置导入/导出增强 ==================== */
+        function showConfigImportModal(){
+            document.getElementById('configImportModal').classList.add('show');
+            document.getElementById('configImportTextarea').value = '';
+        }
+
+        function showConfigExportModal(){
+            const config = getEditorConfig();
+            const jsonStr = JSON.stringify(config, null, 2);
+            document.getElementById('configExportTextarea').value = jsonStr;
+            document.getElementById('configExportModal').classList.add('show');
+        }
+
+        function importConfigFromText(){
+            const textarea = document.getElementById('configImportTextarea');
+            const jsonStr = textarea.value.trim();
+            
+            if(!jsonStr){
+                notify.warning('请输入JSON配置文本', 'import-empty');
+                return;
+            }
+            
+            try {
+                const config = JSON.parse(jsonStr);
+                if(applyEditorConfig(config)){
+                    applySettings();
+                    renderVersionSelector();
+                    renderFunctionList();
+                    bindGlobals();
+                    renderPreview();
+                    closeModal('configImportModal');
+                    notify.success('配置导入成功！', 'import-success');
+                } else {
+                    notify.error('配置文件格式不正确！', 'import-error');
+                }
+            } catch(err) {
+                notify.error('无法解析JSON：' + err.message, 'import-error');
+            }
+        }
+
+        function importConfigFile(event){
+            const file = event.target.files[0];
+            if(!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e){
+                try {
+                    const config = JSON.parse(e.target.result);
+                    if(applyEditorConfig(config)){
+                        applySettings();
+                        renderVersionSelector();
+                        renderFunctionList();
+                        bindGlobals();
+                        renderPreview();
+                        notify.success('配置文件导入成功！', 'import-file-success');
+                    } else {
+                        notify.error('配置文件格式不正确！', 'import-file-error');
+                    }
+                } catch(err) {
+                    notify.error('无法解析配置文件：' + err.message, 'import-file-error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function downloadConfigFile(){
+            const config = getEditorConfig();
+            const jsonStr = JSON.stringify(config, null, 2);
+            const blob = new Blob([jsonStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${state.packName}_editor_config.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            notify.success('配置文件已下载', 'download-config');
+        }
+
+        function copyConfigToClipboard(){
+            const textarea = document.getElementById('configExportTextarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            
+            try {
+                const successful = document.execCommand('copy');
+                if(successful){
+                    notify.success('配置文本已复制到剪贴板', 'copy-config');
+                } else {
+                    notify.warning('复制失败，请手动选择并复制', 'copy-failed');
+                }
+            } catch(err) {
+                notify.error('复制失败：' + err.message, 'copy-error');
+            }
+        }
+
+        /* ==================== 重置功能修复（全量重建） ==================== */
+        function resetAllWithConfirm(){
+            // 显示确认对话框
+            const confirmed = confirm('确定要重置所有内容吗？\n\n这将清除所有未保存的更改，包括：\n• 所有函数\n• 包信息\n• 版本配置\n• 编辑器设置\n\n此操作不可撤销！');
+            
+            if (!confirmed) {
+                // 不发送通知
+                return;
+            }
+            
+            try {
+                // 清除本地存储
+                localStorage.removeItem('mcpe_function_editor_config');
+                
+                // 全量重建状态
+                state = {
+                    packName: "my_func_pack",
+                    author: "Author",
+                    description: "Generated by Function Pack Generator",
+                    minEngineVersion: [1,19,70],
+                    formatVersion: 2,
+                    enableTick: false,
+                    functions: [
+                        {id: Date.now(), name: "初始化函数", path: "init", folder: "", content: "# 初始化函数\neffect @a strength 1 0 true\ntitle @a title {\"text\":\"Welcome!\"}", bindToTick: false},
+                        {id: Date.now()+1, name: "刷怪场设置", path: "spawn/setup", folder: "spawn", content: "# 刷怪场设置\nfill ~-5 ~-1 ~-5 ~5 ~-1 ~5 grass\nkill @e[type=item]", bindToTick: false}
+                    ],
+                    tickFunctions: [],
+                    headerUuid: generateUuid(),
+                    moduleUuid: generateUuid()
+                };
+                
+                // 重置用户设置
+                userSettings = {lineNumbers: true, highlight: false, showPreview: true};
+                
+                // 清除撤销缓存
+                recentlyDeletedFunction = null;
+                deleteNotificationKey = null;
+                
+                // 重新初始化UI
+                applySettings();
+                renderVersionSelector();
+                renderFunctionList();
+                bindGlobals();
+                renderPreview();
+                
+                // 显示重置成功通知
+                notify.success('已重置所有内容', 'reset-success');
+                
+                console.log('重置完成');
+            } catch (error) {
+                console.error('重置失败:', error);
+                notify.error('重置失败: ' + error.message, 'reset-error');
+            }
+        }
+
+        /* ==================== 代码编辑器 ==================== */
+        function updateLineNumbers(id){
+            const editor = document.getElementById(`code-${id}`);
+            const lineNumbers = document.getElementById(`lines-${id}`);
+            if(!editor || !lineNumbers) return;
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => `<span class="ln">${i+1}</span>`).join('');
+            editor.onscroll = () => { lineNumbers.scrollTop = editor.scrollTop; };
+        }
+
+        /* ==================== 渲染函数列表（按文件夹分组，支持嵌套，根目录始终在第一个） ==================== */
+        function renderFunctionList(){
+            if (!Array.isArray(state.tickFunctions)) {
+                console.warn('state.tickFunctions 不是数组，已重置为空数组');
+                state.tickFunctions = [];
+            }
+            
+            const container = document.getElementById('functionList');
+            const groups = {};
+            
+            // 按文件夹分组（支持嵌套路径）
+            state.functions.forEach(f => {
+                const folder = f.folder || "根目录";
+                if (!groups[folder]) groups[folder] = [];
+                groups[folder].push(f);
+            });
+
+            let html = '';
+            
+            // 获取所有文件夹名称并排序，确保"根目录"始终在第一个
+            const folders = Object.keys(groups);
+            const sortedFolders = folders.sort((a, b) => {
+                // "根目录"始终排在最前面
+                if (a === "根目录") return -1;
+                if (b === "根目录") return 1;
+                // 其他文件夹按字母顺序排序
+                return a.localeCompare(b);
+            });
+            
+            sortedFolders.forEach(folder => {
+                html += `<div class="sub-title">${escapeHtml(folder)}</div>`;
+                groups[folder].forEach(f => {
+                    const fileName = f.path.split('/').pop();
+                    html += `
+                    <div class="card">
+                        <div class="card-header" onclick="toggleCard(this)">
+                            <span class="card-arrow">▶</span>
+                            <span class="badge" style="background:#2980b9;color:#fff">FUNC</span>
+                            <span style="flex:1;font-size:12px;color:#ccc" id="funcTitle-${f.id}">${escapeHtml(f.name || '未命名')}</span>
+                            <button class="btn-del" onclick="event.stopPropagation();removeFunction(${f.id})">✕</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div>
+                                    <label>编辑器名称
+                                        <span class="hint-icon">?</span>
+                                    </label>
+                                    <input id="fnName-${f.id}" value="${escapeHtml(f.name)}" placeholder="仅编辑器显示" oninput="updateFunctionName(${f.id}, this.value)">
+                                </div>
+                                <div>
+                                    <label>函数路径（游戏内调用）</label>
+                                    <div style="display:flex;gap:6px">
+                                        <input id="fnPath-${f.id}" value="${escapeHtml(f.path)}" placeholder="如: spawn/setup" oninput="updateFunctionPath(${f.id}, this.value)">
+                                        <button class="btn-base btn-add" onclick="locateFunction(${f.id})">定位</button>
+                                    </div>
+                                    <div class="filename-display">文件名: ${escapeHtml(fileName)}.mcfunction</div>
+                                </div>
+                            </div>
+                            <div class="toggle-container">
+                                <span class="toggle-label">绑定到 tick.json</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" ${f.bindToTick ? 'checked' : ''} onchange="updateFunctionBind(${f.id}, this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="code-editor-wrapper">
+                                <div class="code-line-numbers" id="lines-${f.id}" style="display:${userSettings.lineNumbers ? 'block' : 'none'}"></div>
+                                <textarea class="code-editor" id="code-${f.id}" oninput="updateLineNumbers(${f.id});updateFunctionContent(${f.id}, this.value)">${escapeHtml(f.content)}</textarea>
+                            </div>
+                            <div class="cmd-hint">
+                                <span>/function ${escapeHtml(f.path)}</span>
+                                <button onclick="navigator.clipboard.writeText('/function ${escapeHtml(f.path)}');this.textContent='已复制!'">复制</button>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+            });
+            container.innerHTML = html;
+            
+            state.functions.forEach(f => {
+                updateLineNumbers(f.id);
+            });
+            renderTickCheckboxes();
+        }
+
+        /* ==================== Tick 双向同步 ==================== */
+        function renderTickCheckboxes(){
+            if (!Array.isArray(state.tickFunctions)) {
+                console.warn('state.tickFunctions 不是数组，已重置为空数组');
+                state.tickFunctions = [];
+            }
+            
+            const container = document.getElementById('tickCheckboxes');
+            if(!state.functions.length){
+                container.innerHTML = '<div style="font-size:11px;color:#888">添加函数后在此处勾选</div>';
+                return;
+            }
+            container.innerHTML = state.functions.map(f => {
+                const fileName = f.path.split('/').pop();
+                return `
+                <div class="tick-checkbox-item">
+                    <input type="checkbox" id="tick-${f.id}" value="${escapeHtml(f.path)}" ${state.tickFunctions.includes(f.path) ? 'checked' : ''} onchange="onTickMasterChange(this)">
+                    <label for="tick-${f.id}">
+                        <span class="path">${escapeHtml(f.path)}</span>
+                        <span style="color:#888;font-size:11px">(${escapeHtml(fileName)}.mcfunction)</span>
+                    </label>
+                </div>
+                `;
+            }).join('');
+        }
+        function onTickMasterChange(checkbox){
+            const path = checkbox.value;
+            if(checkbox.checked){
+                if(!state.tickFunctions.includes(path)) state.tickFunctions.push(path);
+            } else {
+                state.tickFunctions = state.tickFunctions.filter(x => x !== path);
+            }
+            state.functions.forEach(f => {
+                if(f.path === path) f.bindToTick = checkbox.checked;
+            });
+            updateEditorConfig();
+            renderFunctionList();
+            renderPreview();
+        }
+
+        /* ==================== 预览 & 导出 ==================== */
+        function genManifest(){
+            return {
+                format_version: state.formatVersion,
+                header: {
+                    name: state.packName,
+                    description: state.description,
+                    uuid: state.headerUuid || generateUuid(),
+                    version: [1, 0, 0],
+                    min_engine_version: state.minEngineVersion
+                },
+                modules: [{
+                    type: "data",
+                    uuid: state.moduleUuid || generateUuid(),
+                    version: [1, 0, 0]
+                }],
+                metadata: {
+                    authors: [state.author],
+                    product_type: "addon"
+                }
+            };
+        }
+        
+        function genEditorConfigFile(){
+            const config = getEditorConfig();
+            return JSON.stringify(config, null, 2);
+        }
+
+        function hlJson(obj){
+            const json = JSON.stringify(obj, null, 2);
+            const escaped = escapeHtml(json);
+            return escaped.replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+                let cls = 'json-number';
+                if(/^"/.test(match)){
+                    cls = /:$/.test(match) ? 'json-key' : 'json-string';
+                } else if(/true|false/.test(match)){
+                    cls = 'json-boolean';
+                } else if(/null/.test(match)){
+                    cls = 'json-null';
+                }
+                return `<span class="${cls}">${match}</span>`;
+            });
+        }
+        
+        /* 🔧 修复：同时更新左侧全局设置和右侧预览面板 */
+        function renderPreview(){
+            // 更新左侧全局设置输入框
+            document.getElementById('packName').value = state.packName;
+            document.getElementById('author').value = state.author;
+            document.getElementById('description').value = state.description;
+            document.getElementById('formatVersion').value = state.formatVersion;
+            document.getElementById('minEngineVersion').value = state.minEngineVersion.join(',');
+            
+            // 更新右侧预览面板
+            document.getElementById('previewPackName').value = state.packName;
+            document.getElementById('previewAuthor').value = state.author;
+            document.getElementById('previewDescription').value = state.description;
+            document.getElementById('previewFormatVersion').value = state.formatVersion;
+            document.getElementById('previewMinEngineVersion').value = state.minEngineVersion.join(',');
+            document.getElementById('enableTick').checked = state.enableTick;
+            
+            const manifest = genManifest();
+            state.headerUuid = manifest.header.uuid;
+            state.moduleUuid = manifest.modules[0].uuid;
+            document.getElementById('previewHeaderUuid').value = state.headerUuid;
+            document.getElementById('previewModuleUuid').value = state.moduleUuid;
+            document.getElementById('previewManifest').innerHTML = hlJson(manifest);
+            
+            let tree = `📦 ${escapeHtml(state.packName)}/<br>`;
+            tree += `├─ 📄 manifest.json<br>`;
+            tree += `├─ 📁 functions/<br>`;
+            
+            const groups = {};
+            state.functions.forEach(f => {
+                const folder = f.folder || "根目录";
+                if (!groups[folder]) groups[folder] = [];
+                groups[folder].push(f);
+            });
+
+            // 获取所有文件夹名称并排序，确保"根目录"始终在第一个
+            const folders = Object.keys(groups);
+            const sortedFolders = folders.sort((a, b) => {
+                // "根目录"始终排在最前面
+                if (a === "根目录") return -1;
+                if (b === "根目录") return 1;
+                // 其他文件夹按字母顺序排序
+                return a.localeCompare(b);
+            });
+            
+            sortedFolders.forEach(folder => {
+                if (folder === "根目录") {
+                    groups[folder].forEach((f, idx) => {
+                        const isLast = idx === groups[folder].length - 1 && Object.keys(groups).length === 1;
+                        const prefix = isLast ? '└─' : '├─';
+                        tree += `│&nbsp;&nbsp;${prefix} 📄 ${escapeHtml(f.path.split('/').pop())}.mcfunction<br>`;
+                    });
+                } else {
+                    const folderParts = folder.split('/');
+                    let indent = '│&nbsp;&nbsp;';
+                    folderParts.forEach((part, index) => {
+                        const isLastPart = index === folderParts.length - 1;
+                        const prefix = isLastPart ? '├─' : '├─';
+                        tree += `${indent}${prefix} 📁 ${escapeHtml(part)}/<br>`;
+                        indent += '│&nbsp;&nbsp;';
+                    });
+                    
+                    groups[folder].forEach((f, idx) => {
+                        const isLast = idx === groups[folder].length - 1;
+                        const prefix = isLast ? '└─' : '├─';
+                        tree += `${indent}${prefix} 📄 ${escapeHtml(f.path.split('/').pop())}.mcfunction<br>`;
+                    });
+                }
+            });
+            
+            if(state.enableTick && state.tickFunctions.length){
+                tree += `│&nbsp;&nbsp;&nbsp;&nbsp;└─ 📄 tick.json`;
+            }
+            
+            tree += `├─ 📁 .editor_config/<br>`;
+            tree += `│&nbsp;&nbsp;└─ 📄 config.json <span style="color:#888">(编辑器配置，与游戏无关)</span>`;
+            
+            document.getElementById('previewTree').innerHTML = tree;
+        }
+        
+        async function exportZip(){
+            if (typeof JSZip === 'undefined') {
+                notify.error('JSZip 库未加载，无法导出 ZIP。请刷新页面重试。', 'export-error');
+                return;
+            }
+            
+            const zip = new JSZip();
+            zip.file('manifest.json', JSON.stringify(genManifest(), null, 2));
+            const functionsFolder = zip.folder('functions');
+            
+            state.functions.forEach(f => {
+                const parts = f.path.split('/');
+                const fileName = parts.pop() + '.mcfunction';
+                let currentFolder = functionsFolder;
+                parts.forEach(p => currentFolder = currentFolder.folder(p));
+                currentFolder.file(fileName, f.content);
+            });
+            
+            if(state.enableTick && state.tickFunctions.length){
+                functionsFolder.file('tick.json', JSON.stringify({values: state.tickFunctions}, null, 2));
+            }
+            
+            const editorConfigFolder = zip.folder('.editor_config');
+            editorConfigFolder.file('config.json', genEditorConfigFile());
+            
+            const blob = await zip.generateAsync({type: 'blob'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${state.packName}_BP.zip`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            notify.success('函数包ZIP已导出', 'export-zip');
+        }
+
+        /* ==================== 全局输入框绑定 ==================== */
+        function bindGlobals(){
+            const ids = ['packName', 'author', 'description', 'formatVersion', 'minEngineVersion', 
+                        'previewPackName', 'previewAuthor', 'previewDescription', 'previewFormatVersion', 'previewMinEngineVersion'];
+            
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if(!el) return;
+                
+                el.oninput = () => {
+                    if(id.startsWith('preview')){
+                        const map = {
+                            'previewPackName': 'packName',
+                            'previewAuthor': 'author',
+                            'previewDescription': 'description',
+                            'previewFormatVersion': 'formatVersion',
+                            'previewMinEngineVersion': 'minEngineVersion'
+                        };
+                        const key = map[id];
+                        if(key === 'minEngineVersion'){
+                            state[key] = el.value.split(',').map(Number);
+                        } else if(key === 'formatVersion'){
+                            state[key] = parseInt(el.value) || 2;
+                        } else {
+                            state[key] = el.value;
+                        }
+                    } else {
+                        if(id === 'minEngineVersion'){
+                            state[id] = el.value.split(',').map(Number);
+                        } else if(id === 'formatVersion'){
+                            state[id] = parseInt(el.value) || 2;
+                        } else {
+                            state[id] = el.value;
+                        }
+                    }
+                    updateEditorConfig();
+                    renderPreview();
+                };
+            });
+            
+            document.getElementById('enableTick').onchange = e => {
+                state.enableTick = e.target.checked;
+                updateEditorConfig();
+                renderPreview();
+            };
+        }
+
+        /* ==================== 真实初始化流程 ==================== */
+        window.onload = async () => {
+            try {
+                showInitModal();
+                
+                // 步骤1: 检查JSZip是否加载（权重30%）
+                updateRealProgress(0, "检查JSZip库", "正在加载压缩库...");
+                await waitForJSZip();
+                completeStep('CHECK_JSZIP');
+                
+                // 步骤2: 加载UI组件（权重15%）
+                updateRealProgress(currentProgress, "加载UI组件", "构建界面框架...");
+                await new Promise(resolve => setTimeout(resolve, 100));
+                completeStep('LOAD_UI');
+                
+                // 步骤3: 渲染版本选择器（权重10%）
+                updateRealProgress(currentProgress, "渲染版本选择器", "解析版本配置...");
+                renderVersionSelector();
+                completeStep('RENDER_VERSION');
+                
+                // 步骤4: 初始化函数列表（权重20%）
+                updateRealProgress(currentProgress, "初始化函数列表", "准备编辑器实例...");
+                renderFunctionList();
+                completeStep('INIT_FUNCTIONS');
+                
+                // 步骤5: 绑定全局事件（权重10%）
+                updateRealProgress(currentProgress, "绑定全局事件", "连接输入输出...");
+                bindGlobals();
+                completeStep('BIND_EVENTS');
+                
+                // 步骤6: 渲染预览面板（权重15%）
+                updateRealProgress(currentProgress, "渲染预览面板", "生成包结构...");
+                applySettings();
+                renderPreview();  // 这里会同时更新左侧和右侧
+                completeStep('RENDER_PREVIEW');
+                
+                // 完成初始化
+                finishInit();
+                console.log('初始化完成');
+                
+            } catch (error) {
+                initErrors.push(`初始化错误: ${error.message}`);
+                forceCloseInit(error);
+            }
+        };
+        
+        // 等待JSZip加载的辅助函数
+        function waitForJSZip() {
+            return new Promise((resolve, reject) => {
+                let attempts = 0;
+                const maxAttempts = 50;
+                
+                const checkJSZip = () => {
+                    attempts++;
+                    if (typeof JSZip !== 'undefined') {
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        reject(new Error('JSZip 库加载超时'));
+                    } else {
+                        setTimeout(checkJSZip, 100);
+                    }
+                };
+                
+                checkJSZip();
+            });
+        }
+    </script>
+</body>
+</html>
