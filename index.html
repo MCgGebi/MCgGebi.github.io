@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航主页</title>
+    <style>
+        :root {
+            --bg: #1a1a1a;
+            --panel: #2b2b2b;
+            --border: #444;
+            --text: #e0e0e0;
+            --accent: #3b8526;
+            --danger: #c0392b;
+            --blue: #2980b9;
+            --purple: #8e44ad;
+            --warn: #f39c12;
+            --nav-bg: #222;
+            --card-header-bg: rgba(255,255,255,.02);
+            --card-open-border: var(--accent);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* ===== 导航栏 ===== */
+        .navbar {
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            height: 52px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 12px;
+        }
+
+        .nav-brand {
+            font-size: 17px;
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .nav-brand .version {
+            font-size: 10px;
+            background: var(--accent);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: normal;
+        }
+
+        .nav-spacer {
+            flex: 1;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0 10px;
+            height: 34px;
+            max-width: 280px;
+            width: 100%;
+            transition: border-color .2;
+        }
+        .search-box:focus-within {
+            border-color: var(--accent);
+        }
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-size: 13px;
+            width: 100%;
+            padding: 0 6px;
+        }
+        .search-box input::placeholder {
+            color: #666;
+            font-style: italic;
+        }
+        .search-icon {
+            color: #888;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ===== PC端按钮组 ===== */
+        .nav-buttons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .nav-buttons button {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all .2;
+            white-space: nowrap;
+        }
+        .nav-buttons button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(59,133,38,.1);
+        }
+
+        /* ===== 移动端汉堡菜单（默认隐藏，移动端显示） ===== */
+        .nav-menu-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 34px;
+            height: 34px;
+            border-radius: 4px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all .2;
+        }
+        .nav-menu-toggle:hover {
+            background: rgba(255,255,255,.08);
+            border-color: var(--accent);
+        }
+
+        .nav-dropdown {
+            position: absolute;
+            top: 54px;
+            right: 20px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            min-width: 170px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.5);
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height .2 ease, opacity .15 ease;
+            pointer-events: none;
+            z-index: 102;
+        }
+        .nav-dropdown.open {
+            max-height: 350px;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .nav-dropdown button {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            color: var(--text);
+            text-align: left;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background .15;
+        }
+        .nav-dropdown button:hover {
+            background: rgba(255,255,255,.06);
+        }
+        .nav-dropdown button:not(:last-child) {
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+
+        /* ===== 响应式切换 ===== */
+        @media (max-width: 860px) {
+            .nav-buttons {
+                display: none;
+            }
+            .nav-menu-toggle {
+                display: flex;
+            }
+            .search-box {
+                max-width: 180px;
+            }
+        }
+
+        @media (min-width: 861px) {
+            .nav-menu-toggle {
+                display: none !important;
+            }
+            .nav-dropdown {
+                display: none !important;
+            }
+        }
+
+        /* ===== 主内容（与之前相同） ===== */
+        .main-content {
+            padding: 20px;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .category-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: border-color .2;
+        }
+        .category-card.open {
+            border-color: var(--card-open-border);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            user-select: none;
+            background: var(--card-header-bg);
+            transition: background .15;
+        }
+        .category-header:hover {
+            background: rgba(255,255,255,.04);
+        }
+
+        .category-arrow {
+            font-size: 12px;
+            color: #666;
+            transition: transform .25;
+            width: 14px;
+            text-align: center;
+        }
+        .category-card.open .category-arrow {
+            transform: rotate(90deg);
+            color: var(--accent);
+        }
+
+        .category-icon {
+            font-size: 18px;
+            width: 28px;
+            text-align: center;
+        }
+
+        .category-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #eee;
+            flex: 1;
+        }
+
+        .category-count {
+            font-size: 12px;
+            color: #888;
+            background: rgba(255,255,255,.06);
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+
+        .category-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .35 ease-out, padding .35 ease-out;
+            padding: 0 16px;
+        }
+        .category-card.open .category-body {
+            max-height: 3000px;
+            padding: 12px 16px 16px;
+            transition: max-height .45 ease-in, padding .35 ease-in;
+        }
+
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .link-card {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 6px;
+            padding: 14px;
+            text-decoration: none;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all .2;
+            cursor: pointer;
+        }
+        .link-card:hover {
+            background: rgba(255,255,255,.08);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        }
+
+        .link-card .link-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .link-card .link-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .link-card .link-desc {
+            font-size: 12px;
+            color: #999;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .link-card .link-url {
+            font-size: 11px;
+            color: var(--accent);
+            word-break: break-all;
+            opacity: .7;
+        }
+
+        .link-card.placeholder {
+            border: 2px dashed #555;
+            background: rgba(255,255,255,0.02);
+            cursor: default;
+            pointer-events: none;
+        }
+        .link-card.placeholder:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #555;
+        }
+        .link-card.placeholder .link-title {
+            color: #888;
+        }
+        .link-card.placeholder .link-desc {
+            color: #666;
+        }
+        .add-hint {
+            font-size: 12px;
+            color: var(--accent);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+            font-size: 15px;
+        }
+        .no-results .big-icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+        }
+
+        .footer-stats {
+            margin-top: 30px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 13px;
+            color: #777;
+        }
+        .footer-stats span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @media (max-width: 680px) {
+            .navbar {
+                padding: 0 12px;
+                gap: 8px;
+            }
+            .nav-brand {
+                font-size: 14px;
+            }
+            .search-box {
+                max-width: 130px;
+            }
+            .main-content {
+                padding: 12px;
+            }
+            .link-grid {
+                grid-template-columns: 1fr;
+            }
+            .category-header {
+                padding: 10px 12px;
+            }
+            .category-body {
+                padding: 0 12px;
+            }
+            .category-card.open .category-body {
+                padding: 8px 12px 12px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-brand">🧭 导航主页 <span class="version">v1.0</span></div>
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="搜索链接..." autocomplete="off">
+    </div>
+    <div class="nav-spacer"></div>
+
+    <!-- PC端按钮组 -->
+    <div class="nav-buttons">
+        <button onclick="aboutModal()">ℹ️ 关于</button>
+        <button onclick="exportBookmarks()">📋 导出</button>
+        <button onclick="resetPage()">🔄 重置</button>
+    </div>
+
+    <!-- 移动端汉堡菜单 -->
+    <button class="nav-menu-toggle" id="navToggle" onclick="toggleNavMenu()">☰</button>
+    <div class="nav-dropdown" id="navDropdown">
+        <button onclick="aboutModal(); closeNavMenu()">ℹ️ 关于</button>
+        <button onclick="exportBookmarks(); closeNavMenu()">📋 导出</button>
+        <button onclick="resetPage(); closeNavMenu()">🔄 重置</button>
+    </div>
+</nav>
+
+<div class="main-content" id="mainContent">
+    <div id="categoriesContainer"></div>
+    <div class="no-results hidden" id="noResults">
+        <div class="big-icon">🔎</div>
+        <p>没有找到匹配的链接</p>
+    </div>
+</div>
+
+<div class="footer-stats" id="footerStats">
+    <span>📦 共 <strong id="totalLinks">0</strong> 个链接</span>
+    <span>📂 <strong id="totalCategories">0</strong> 个分类</span>
+</div>
+
+<script>
+    // ============================================================
+    // 默认占位数据
+    // ============================================================
+    const PLACEHOLDER_CATEGORIES = [
+        {
+            name: '示例分类（待添加）',
+            icon: '📁',
+            items: [
+                { title: '待添加链接 ①', desc: '按照下方指南创建真实卡片', url: '#', icon: '➕' },
+                { title: '待添加链接 ②', desc: '在 data/cards/ 下创建 JSON 文件', url: '#', icon: '📄' },
+                { title: '待添加链接 ③', desc: '并在 manifest.json 中注册文件名', url: '#', icon: '📋' }
+            ]
+        },
+        {
+            name: '另一个示例分类',
+            icon: '🗂️',
+            items: [
+                { title: '待添加链接 ④', desc: '刷新页面即可看到真实卡片', url: '#', icon: '🔄' }
+            ]
+        }
+    ];
+
+    const DATA_BASE = './data/';
+    const MANIFEST_URL = DATA_BASE + 'manifest.json';
+    const CARDS_DIR = DATA_BASE + 'cards/';
+    let CATEGORIES = [];
+
+    function renderCategories(data, filterText = '') {
+        const container = document.getElementById('categoriesContainer');
+        const noResults = document.getElementById('noResults');
+        if (!container) return;
+        container.innerHTML = '';
+        let totalLinks = 0, visibleCategories = 0;
+        const lowerFilter = filterText.trim().toLowerCase();
+
+        data.forEach((cat, idx) => {
+            let filteredItems = cat.items;
+            if (lowerFilter) {
+                filteredItems = cat.items.filter(item =>
+                    item.title.toLowerCase().includes(lowerFilter) ||
+                    item.desc.toLowerCase().includes(lowerFilter) ||
+                    item.url.toLowerCase().includes(lowerFilter)
+                );
+            }
+            if (filteredItems.length === 0) return;
+            visibleCategories++;
+            totalLinks += filteredItems.length;
+
+            const card = document.createElement('div');
+            card.className = 'category-card open';
+            card.dataset.categoryIndex = idx;
+
+            let linksHtml = '';
+            filteredItems.forEach(item => {
+                const isPlaceholder = item.url === '#';
+                linksHtml += `
+                    <a href="${item.url}" target="${isPlaceholder ? '_self' : '_blank'}" rel="noopener noreferrer" 
+                       class="link-card ${isPlaceholder ? 'placeholder' : ''}">
+                        <div class="link-icon">${item.icon || '🔗'}</div>
+                        <div class="link-title">${item.title}</div>
+                        <div class="link-desc">${item.desc}</div>
+                        ${isPlaceholder ? '<div class="add-hint">💡 按照指南添加真实卡片</div>' : `<div class="link-url">${item.url}</div>`}
+                    </a>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="category-header" onclick="toggleCategory(this)">
+                    <span class="category-arrow">▶</span>
+                    <span class="category-icon">${cat.icon}</span>
+                    <span class="category-name">${cat.name}</span>
+                    <span class="category-count">${filteredItems.length}</span>
+                </div>
+                <div class="category-body">
+                    <div class="link-grid">${linksHtml}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        document.getElementById('totalLinks').textContent = totalLinks;
+        document.getElementById('totalCategories').textContent = visibleCategories;
+        noResults.classList.toggle('hidden', !(visibleCategories === 0 && lowerFilter));
+    }
+
+    async function loadRealData() {
+        try {
+            const resp = await fetch(MANIFEST_URL);
+            if (!resp.ok) throw new Error('manifest.json 未找到');
+            const fileNames = await resp.json();
+            const promises = fileNames.map(name =>
+                fetch(CARDS_DIR + name + '.json').then(r => {
+                    if (!r.ok) throw new Error(name + '.json 加载失败');
+                    return r.json();
+                })
+            );
+            CATEGORIES = await Promise.all(promises);
+            renderCategories(CATEGORIES, document.getElementById('searchInput').value);
+            updateStats(CATEGORIES);
+        } catch (err) {
+            console.warn('外部数据加载失败，保留占位卡片:', err.message);
+        }
+    }
+
+    function updateStats(data) {
+        let total = 0;
+        data.forEach(cat => total += cat.items.length);
+        document.getElementById('totalLinks').textContent = total;
+        document.getElementById('totalCategories').textContent = data.length;
+    }
+
+    // 搜索
+    let searchTimer;
+    document.getElementById('searchInput').addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            const data = CATEGORIES.length ? CATEGORIES : PLACEHOLDER_CATEGORIES;
+            renderCategories(data, this.value);
+        }, 150);
+    });
+    document.getElementById('searchInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchTimer);
+            const data = CATEGORIES.length ? CATEGORIES : PLACEHOLDER_CATEGORIES;
+            renderCategories(data, this.value);
+        }
+    });
+
+    // 交互
+    function toggleCategory(headerEl) {
+        headerEl.closest('.category-card').classList.toggle('open');
+    }
+
+    function toggleNavMenu() {
+        document.getElementById('navDropdown').classList.toggle('open');
+        document.getElementById('navToggle').classList.toggle('active');
+    }
+
+    function closeNavMenu() {
+        document.getElementById('navDropdown').classList.remove('open');
+        document.getElementById('navToggle').classList.remove('active');
+    }
+
+    document.addEventListener('click', function(e) {
+        const dd = document.getElementById('navDropdown');
+        const tg = document.getElementById('navToggle');
+        if (dd.classList.contains('open') && !dd.contains(e.target) && !tg.contains(e.target)) {
+            closeNavMenu();
+        }
+    });
+
+    function aboutModal() {
+        alert('🧭 导航主页 v1.0\n\nPC端直接显示功能按钮，移动端使用下拉菜单。');
+        closeNavMenu();
+    }
+
+    function exportBookmarks() {
+        alert('📋 导出功能（待实现）');
+        closeNavMenu();
+    }
+
+    function resetPage() {
+        if (confirm('确定要重置所有内容吗？')) {
+            location.reload();
+        }
+        closeNavMenu();
+    }
+
+    // 启动
+    document.addEventListener('DOMContentLoaded', function() {
+        renderCategories(PLACEHOLDER_CATEGORIES, '');
+        updateStats(PLACEHOLDER_CATEGORIES);
+        loadRealData();
+    });
+</script>
+</body>
+</html>
