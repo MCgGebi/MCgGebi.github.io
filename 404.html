@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Not found</title>
+    <title>404 - 页面未找到</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,7 @@
 
         .btn-base {
             height: 26px; border-radius: 4px; cursor: pointer;
-            font-size: 12px; font-weight: 500; transition: all .2;
+            font-size: 12px; font-weight: 500; transition: all .2s;
             display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
             font-family: inherit;
         }
@@ -37,7 +37,7 @@
 
         .bg-image {
             position: fixed; inset: 0; background-size: cover; background-position: center;
-            z-index: -2; opacity: 0; transition: opacity 1.2 ease-in-out;
+            z-index: -2; opacity: 0; transition: opacity 1.2s ease-in-out;
         }
         .bg-image.loaded { opacity: 1; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: -1; }
@@ -67,14 +67,14 @@
         .error-code {
             font-size: clamp(72px,14vw,110px); font-weight: 900;
             color: var(--accent); text-shadow: 0 0 30px rgba(59,133,38,0.4);
-            animation: float 4 ease-in-out infinite;
+            animation: float 4s ease-in-out infinite;
         }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
 
         .quote-wrapper {
             margin: 25px 0 30px; min-height: 55px;
             opacity: 0; transform: translateY(10px);
-            transition: opacity .6, transform .6;
+            transition: opacity .6s, transform .6s;
         }
         .quote-wrapper.loaded { opacity: 1; transform: translateY(0); }
         .quote { font-size: 14px; line-height: 1.7; }
@@ -92,14 +92,14 @@
             width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);
             background: transparent; color: var(--text-muted); font-size: 12px; font-weight: bold;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all .2; opacity: .6; font-family: inherit;
+            transition: all .2s; opacity: .6; font-family: inherit;
         }
         .help-trigger:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.1); }
         .help-tooltip {
             position: absolute; bottom: 30px; right: 0; width: 180px; padding: 10px;
             background: rgba(20,20,20,.95); border: 1px solid var(--border); border-radius: 6px;
             font-size: 11px; line-height: 1.6; color: var(--text-muted); text-align: left;
-            opacity: 0; visibility: hidden; transform: translateY(5px); transition: all .2 ease;
+            opacity: 0; visibility: hidden; transform: translateY(5px); transition: all .2s ease;
             pointer-events: none; font-family: inherit;
         }
         .help-container:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
@@ -121,7 +121,7 @@
             padding: 2px 6px; border-radius: 2px; height: 20px;
             display: inline-flex; align-items: center; justify-content: center;
             font-family: inherit; font-weight: 400;
-            transition: opacity .2;
+            transition: opacity .2s;
         }
         .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.1); }
     </style>
