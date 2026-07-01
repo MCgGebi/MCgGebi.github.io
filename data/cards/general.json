@@ -1,0 +1,12 @@
+{
+  "name": "通用工具",
+  "icon": "🛠️",
+  "items": [
+    {
+      "title": "MC 资源跨站搜索",
+      "desc": "站内预览 + 一键跳转，支持 Modrinth/Wiki/MCPEDL 等",
+      "url": "./tool/search",
+      "icon": "🔍"
+    }
+  ]
+}
