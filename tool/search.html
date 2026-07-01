@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC 资源跨站搜索</title>
+    <style>
+        :root {
+            --bg: #1a1a1a; --panel: #2b2b2b; --border: #444;
+            --text: #e0e0e0; --accent: #3b8526; --nav-bg: #222;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; line-height: 1.5; }
+
+        .navbar { background: var(--nav-bg); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; height: 46px; position: sticky; top: 0; z-index: 100; gap: 10px; }
+        .nav-brand { font-size: 14px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 6px; }
+        .nav-brand .tag { font-size: 10px; background: var(--accent); color: #fff; padding: 1px 5px; border-radius: 3px; }
+        .nav-spacer { flex: 1; }
+        .back-link { color: #888; font-size: 12px; text-decoration: none; }
+        .back-link:hover { color: var(--accent); }
+
+        .main { max-width: 1080px; margin: 0 auto; padding: 12px; width: 100%; flex: 1; }
+
+        .search-area { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+        .search-row { display: flex; gap: 6px; align-items: center; }
+        .search-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 4px; font-size: 13px; outline: none; }
+        .search-row input:focus { border-color: var(--accent); }
+        .search-row button { background: var(--accent); color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; transition: opacity .2; white-space: nowrap; }
+        .search-row button:hover { opacity: .85; }
+        .platform-tabs { display: flex; gap: 4px; margin-top: 8px; }
+        .platform-tab { padding: 3px 10px; border-radius: 3px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); color: #999; transition: all .2; }
+        .platform-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .platform-tab[data-platform="je"] { border-color: #3498db; }
+        .platform-tab[data-platform="je"].active { background: #3498db; border-color: #3498db; }
+        .platform-tab[data-platform="pe"] { border-color: #e67e22; }
+        .platform-tab[data-platform="pe"].active { background: #e67e22; border-color: #e67e22; }
+
+        .site-area { margin-bottom: 10px; }
+        .site-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+        .site-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: all .2; user-select: none; background: rgba(255,255,255,.02); }
+        .site-chip:hover { border-color: #666; }
+        .site-chip.checked { border-color: var(--accent); background: rgba(59,133,38,.1); }
+        .site-chip .icon-wrapper { width: 16px; height: 16px; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; background: #333; flex-shrink: 0; position: relative; }
+        .site-chip .icon-wrapper img { width: 16px; height: 16px; object-fit: contain; display: block; }
+        .site-chip .icon-wrapper .fallback { font-size: 12px; color: #888; }
+        .site-chip .chip-tag { font-size: 9px; padding: 1px 4px; border-radius: 2px; color: #fff; }
+        .site-chip .chip-tag.je { background: #3498db; }
+        .site-chip .chip-tag.pe { background: #e67e22; }
+        .site-chip .chip-tag.both { background: #8e44ad; }
+
+        .result-block { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
+        .result-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; user-select: none; background: rgba(255,255,255,.02); }
+        .result-header:hover { background: rgba(255,255,255,.05); }
+        .result-header .arrow { font-size: 10px; color: #666; transition: transform .2; width: 12px; }
+        .result-header.open .arrow { transform: rotate(90deg); color: var(--accent); }
+        .result-header .rh-name { flex: 1; font-size: 13px; color: #ddd; }
+        .result-header .rh-meta { font-size: 11px; color: #888; }
+        .result-header .rh-link { font-size: 11px; color: var(--accent); text-decoration: none; padding: 2px 6px; border: 1px solid var(--accent); border-radius: 3px; }
+        .result-header .rh-link:hover { background: rgba(59,133,38,.1); }
+
+        .result-body { max-height: 0; overflow: hidden; transition: max-height .3 ease-out; }
+        .result-body.open { max-height: 4200px; }
+        .result-body-inner { padding: 10px 12px; }
+
+        .inner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px; }
+        .inner-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 5px; padding: 10px; display: flex; gap: 10px; text-decoration: none; color: var(--text); transition: all .2; }
+        .inner-card:hover { background: rgba(255,255,255,.07); border-color: var(--accent); }
+        .inner-card .ic-icon { width: 44px; height: 44px; border-radius: 4px; background: #333; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .inner-card .ic-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .inner-card .ic-icon .fallback { font-size: 22px; color: #888; }
+        .inner-card .ic-info { flex: 1; min-width: 0; }
+        .inner-card .ic-title { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .inner-card .ic-author { font-size: 11px; color: #888; margin-top: 1px; }
+        .inner-card .ic-desc { font-size: 11px; color: #999; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .pager { display: flex; gap: 4px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+        .pager button { background: none; border: 1px solid var(--border); color: #ccc; padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all .2; }
+        .pager button:hover { border-color: var(--accent); color: var(--accent); }
+        .pager button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .pager button:disabled { opacity: .35; cursor: default; }
+        .pager .ellipsis { color: #666; font-size: 12px; padding: 0 2px; user-select: none; }
+
+        .fallback-msg { padding: 16px; text-align: center; color: #888; font-size: 13px; }
+        .fallback-msg a { color: var(--accent); }
+
+        .feedback { margin-top: 6px; font-size: 12px; color: #888; min-height: 18px; }
+        .quick-bar { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+        .quick-bar button { background: none; border: 1px solid var(--border); color: #ccc; padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all .2; }
+        .quick-bar button:hover { border-color: var(--accent); color: var(--accent); }
+
+        .history-area { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+        .history-area h3 { font-size: 12px; color: #aaa; margin-bottom: 6px; }
+        .history-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+        .history-tag { padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); font-size: 11px; color: #bbb; cursor: pointer; transition: all .2; }
+        .history-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+        .footer { text-align: center; padding: 12px; color: #555; font-size: 11px; }
+
+        @media (max-width: 560px) {
+            .navbar { padding: 0 8px; }
+            .main { padding: 8px; }
+            .search-row { flex-direction: column; }
+            .search-row button { width: 100%; }
+            .inner-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-brand">🔍 MC 跨站搜 <span class="tag">默认折叠</span></div>
+    <div class="nav-spacer"></div>
+    <a class="back-link" href="../index.html">← 主页</a>
+</nav>
+
+<div class="main">
+    <div class="search-area">
+        <div class="search-row">
+            <input type="text" id="kw" placeholder="输入模组/生物/指令名称…" autofocus>
+            <button onclick="doSearch()">搜索</button>
+        </div>
+        <div class="platform-tabs">
+            <div class="platform-tab active" data-platform="all" onclick="filterPlatform('all', this)">全部</div>
+            <div class="platform-tab" data-platform="je" onclick="filterPlatform('je', this)">JE</div>
+            <div class="platform-tab" data-platform="pe" onclick="filterPlatform('pe', this)">PE</div>
+        </div>
+    </div>
+
+    <div class="site-area" id="siteList"></div>
+
+    <div class="quick-bar">
+        <button onclick="checkAll(true)">全选</button>
+        <button onclick="checkAll(false)">全清</button>
+        <button onclick="checkByPlatform('je')">只选 JE</button>
+        <button onclick="checkByPlatform('pe')">只选 PE</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div id="resultsContainer"></div>
+
+    <div class="history-area" id="historyArea">
+        <h3>🕘 搜索历史</h3>
+        <div class="history-tags" id="historyTags"></div>
+    </div>
+</div>
+
+<div class="footer">Modrinth API · 中文 Wiki iframe · CF 主页跳转 · 其余跳转</div>
+
+<script>
+    // ============================================================
+    // 站点配置
+    // ============================================================
+    const SITES = [
+        // API 预览
+        { key: 'modrinth', name: 'Modrinth', icon: 'https://modrinth.com/favicon.ico', platform: 'both',
+          apiType: 'modrinth',
+          searchUrl: 'https://modrinth.com/mods?q={kw}',
+          apiBase: 'https://api.modrinth.com/v2' },
+        // iframe 预览
+        { key: 'mc-wiki-zh', name: 'MC Wiki 中文', icon: 'https://wiki.biligame.com/favicon.ico', platform: 'both',
+          apiType: 'iframe',
+          searchUrl: 'https://wiki.biligame.com/mc/index.php?search={kw}',
+          iframeSrc: 'https://wiki.biligame.com/mc/index.php?search={kw}' },
+        // 纯跳转
+        { key: 'mc-official', name: 'Minecraft 官网', icon: 'https://www.minecraft.net/favicon.ico', platform: 'both',
+          apiType: null, searchUrl: 'https://www.minecraft.net/zh-hans/search?q={kw}' },
+        { key: 'mc-wiki-en', name: 'MC Wiki EN', icon: 'https://minecraft.wiki/favicon.ico', platform: 'both',
+          apiType: null, searchUrl: 'https://minecraft.wiki/w/Special:Search?search={kw}' },
+        { key: 'curseforge', name: 'CurseForge', icon: 'https://www.curseforge.com/favicon.ico', platform: 'je',
+          apiType: null, searchUrl: 'https://www.curseforge.com/minecraft' },
+        { key: 'mcmod', name: 'MC百科 mcmod.cn', icon: 'https://www.mcmod.cn/favicon.ico', platform: 'je',
+          apiType: null, searchUrl: 'https://search.mcmod.cn/s?key={kw}&mold=0' },
+        { key: 'mcpedl', name: 'MCPEDL', icon: 'https://mcpedl.com/favicon.ico', platform: 'pe',
+          apiType: null, searchUrl: 'https://mcpedl.com/?s={kw}' },
+    ];
+
+    const checked = new Set(SITES.map( => .key));
+    let currentPlatform = 'all';
+
+    // ============================================================
+    // 图标占位符
+    // ============================================================
+    function createIcon(src) {
+        const wrapper = document.createElement('span');
+        wrapper.className = 'icon-wrapper';
+        const img = document.createElement('img');
+        img.src = src;
+        img.loading = 'lazy';
+        img.addEventListener('load', function() {
+            wrapper.style.background = 'transparent';
+        });
+        img.addEventListener('error', function() {
+            img.style.display = 'none';
+            const fb = document.createElement('span');
+            fb.className = 'fallback';
+            fb.textContent = '🔗';
+            wrapper.appendChild(fb);
+        });
+        wrapper.appendChild(img);
+        return wrapper;
+    }
+
+    // ============================================================
+    // 渲染站点标签
+    // ============================================================
+    function renderSites() {
+        const c = document.getElementById('siteList'); c.innerHTML = '';
+        const groups = { je:[], pe:[], both:[] };
+        SITES.forEach( => {
+            if (currentPlatform!=='all' && .platform!=='both' && .platform!==currentPlatform) return;
+            groups[.platform].push();
+        });
+        ['je','pe','both'].forEach(gk => {
+            const list = groups[gk]; if(!list.length) return;
+            const g = document.createElement('div'); g.className = 'site-grid';
+            list.forEach( => {
+                const chip = document.createElement('div');
+                chip.className = 'site-chip' + (checked.has(.key)?' checked':'');
+                chip.onclick = () => { toggleCheck(.key); renderSites(); };
+                chip.appendChild(createIcon(.icon));
+                const ns = document.createElement('span'); ns.textContent = .name; chip.appendChild(ns);
+                const tag = document.createElement('span'); tag.className = 'chip-tag '+.platform; tag.textContent = .platform==='both'?'通':.platform.toUpperCase(); chip.appendChild(tag);
+                g.appendChild(chip);
+            });
+            c.appendChild(g);
+        });
+    }
+    function toggleCheck(k) { if(checked.has(k)) checked.delete(k); else checked.add(k); }
+
+    function filterPlatform(p,el) { currentPlatform=p; document.querySelectorAll('.platform-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderSites(); }
+    function checkAll(v) { SITES.forEach(=>{ if(currentPlatform!=='all'&&.platform!=='both'&&.platform!==currentPlatform)return; if(v)checked.add(.key);else checked.delete(.key); }); renderSites(); }
+    function checkByPlatform(p) { currentPlatform=p; document.querySelectorAll('.platform-tab').forEach(t=>t.classList.toggle('active',t.dataset.platform===p)); SITES.forEach(=>{ if(.platform==='both'||.platform===p)checked.add(.key);else checked.delete(.key); }); renderSites(); }
+
+    // ============================================================
+    // Modrinth API
+    // ============================================================
+    const PAGE_SIZE = 10;
+
+    async function fetchModrinth(kw, offset=0) {
+        const url = `${SITES.find(=>.key==='modrinth').apiBase}/search?index=relevance&query=${encodeURIComponent(kw)}&offset=${offset}&limit=${PAGE_SIZE}`;
+        const r = await fetch(url);
+        if(!r.ok) throw new Error('Modrinth API 错误 '+r.status);
+        const j = await r.json();
+        return {
+            total: j.total_hits,
+            items: j.hits.map(h => ({
+                title: h.title,
+                author: h.author,
+                desc: h.description || '',
+                url: `https://modrinth.com/${h.project_type}/${h.slug}`,
+                icon: h.icon_url || '',
+                downloads: h.downloads,
+                follows: h.follows,
+            })),
+        };
+    }
+
+    // ============================================================
+    // 渲染内卡片
+    // ============================================================
+    function renderInnerCards(items) {
+        if(!items.length) return '<div style="color:#888;font-size:13px;text-align:center;padding:12px;">无结果</div>';
+        let html = '<div class="inner-grid">';
+        items.forEach(it => {
+            let iconHtml;
+            if(it.icon) {
+                iconHtml = `<span class="ic-icon" style="background:#333;"><img src="${it.icon}" alt="" loading="lazy" onload="this.parentElement.style.background='transparent'" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'fallback\\'>🔗</span>'"></span>`;
+            } else {
+                iconHtml = `<span class="ic-icon"><span class="fallback">🔗</span></span>`;
+            }
+            html += `
+                <a href="${it.url}" target="_blank" rel="noopener noreferrer" class="inner-card">
+                    ${iconHtml}
+                    <div class="ic-info">
+                        <div class="ic-title">${escHtml(it.title)}</div>
+                        <div class="ic-author">${escHtml(it.author||'')}${it.downloads!=null?' · 📥'+formatNum(it.downloads):''}</div>
+                        <div class="ic-desc">${escHtml(it.desc)}</div>
+                    </div>
+                </a>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function escHtml() { const d=document.createElement('div'); d.textContent=; return d.innerHTML; }
+    function formatNum(n) { if(n>=1e4) return (n/1e4).toFixed(1)+'万'; return n+''; }
+
+    // ============================================================
+    // 分页（带省略号）
+    // ============================================================
+    function renderPager(total, offset, kw, siteKey) {
+        const totalPages = Math.ceil(total / PAGE_SIZE);
+        const cur = Math.floor(offset / PAGE_SIZE) + 1;
+        if(totalPages <= 1) return '';
+
+        let html = '<div class="pager">';
+        html += `<button ${cur<=1?'disabled':''} onclick="loadPage('${siteKey}','${escKw(kw)}',${offset-PAGE_SIZE})">◀</button>`;
+
+        const range = 2;
+        let pages = [];
+        pages.push(1);
+        for(let i = Math.max(2, cur - range); i <= Math.min(totalPages - 1, cur + range); i++) {
+            pages.push(i);
+        }
+        if(totalPages > 1) pages.push(totalPages);
+        pages = [...new Set(pages)].sort((a,b)=>a-b);
+
+        let last = 0;
+        for(let p of pages) {
+            if(p - last > 1) html += `<span class="ellipsis">…</span>`;
+            html += `<button class="${p===cur?'active':''}" onclick="loadPage('${siteKey}','${escKw(kw)}',${(p-1)*PAGE_SIZE})">${p}</button>`;
+            last = p;
+        }
+
+        html += `<button ${cur>=totalPages?'disabled':''} onclick="loadPage('${siteKey}','${escKw(kw)}',${offset+PAGE_SIZE})">▶</button>`;
+        html += `<span style="color:#666;font-size:11px;margin-left:6px">${cur}/${totalPages} 页 · 共 ${total} 条</span>`;
+        html += '</div>';
+        return html;
+    }
+
+    function escKw() { return .replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+    const cache = {};
+    async function loadPage(siteKey, kw, offset) {
+        const block = document.querySelector(`[data-site="${siteKey}"][data-kw="${kw}"]`);
+        const inner = block.querySelector('.result-body-inner');
+        inner.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">加载中…</div>';
+
+        const ck = `${siteKey}|${kw}|${offset}`;
+        if(cache[ck]) {
+            const d = cache[ck];
+            inner.innerHTML = renderInnerCards(d.items) + renderPager(d.total, offset, kw, siteKey);
+            return;
+        }
+
+        try {
+            let data;
+            if(siteKey==='modrinth') data = await fetchModrinth(kw, offset);
+            cache[ck] = data;
+            inner.innerHTML = renderInnerCards(data.items) + renderPager(data.total, offset, kw, siteKey);
+        } catch(e) {
+            inner.innerHTML = `<div class="fallback-msg">❌ 加载失败：${e.message}<br><a href="${SITES.find(=>.key===siteKey).searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank">去网站 ↗</a></div>`;
+        }
+    }
+
+    // ============================================================
+    // 主搜索
+    // ============================================================
+    function doSearch() {
+        const kw = document.getElementById('kw').value.trim();
+        const fb = document.getElementById('feedback');
+        if(!kw) { fb.textContent='⚠️ 请输入关键词'; document.getElementById('kw').focus(); return; }
+        const sel = SITES.filter(=>checked.has(.key));
+        if(!sel.length) { fb.textContent='⚠️ 请至少勾选一个站点'; return; }
+        fb.textContent = `🔍 搜索 "${kw}" · ${sel.length} 个站点`;
+        saveHistory(kw);
+        renderResults(sel, kw);
+        setTimeout(()=>fb.textContent='', 2000);
+    }
+    document.getElementById('kw').addEventListener('keydown', e=>{if(e.key==='Enter')doSearch();});
+
+    function renderResults(sites, kw) {
+        const c = document.getElementById('resultsContainer'); c.innerHTML = '';
+        sites.forEach( => {
+            const block = document.createElement('div');
+            block.className = 'result-block';
+            block.dataset.site = .key;
+            block.dataset.kw = kw;
+
+            const h = document.createElement('div');
+            h.className = 'result-header';
+            let metaText;
+            if(.apiType === 'modrinth') metaText = 'API 预览';
+            else if(.apiType === 'iframe') metaText = '站内预览';
+            else metaText = '跳转主页';
+            h.innerHTML = `
+                <span class="arrow">▶</span>
+                <span class="rh-name">${.name}</span>
+                <span class="rh-meta">${metaText}</span>
+                <a href="${.searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank" class="rh-link">新标签页 ↗</a>
+            `;
+
+            const body = document.createElement('div');
+            body.className = 'result-body';
+            const inner = document.createElement('div');
+            inner.className = 'result-body-inner';
+
+            if(.apiType === 'modrinth') {
+                inner.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">点击标题展开预览</div>';
+            } else if(.apiType === 'iframe') {
+                const iframeSrc = .iframeSrc.replace(/\{kw\}/g, encodeURIComponent(kw));
+                inner.innerHTML = `<iframe src="${iframeSrc}" style="width:100%;height:390px;border:none;border-radius:4px;background:#fff;" sandbox="allow-scripts allow-same-origin allow-popups" loading="lazy"></iframe>`;
+            } else {
+                const label = .key === 'curseforge' ? 'CurseForge Minecraft 分区' : .name;
+                inner.innerHTML = `<div class="fallback-msg">${label} 暂无站内预览<br><a href="${.searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank">在新标签页打开 ↗</a></div>`;
+            }
+
+            body.appendChild(inner);
+            block.appendChild(h); block.appendChild(body);
+
+            h.addEventListener('click', function(e) {
+                if(e.target.tagName==='A') return;
+                this.classList.toggle('open');
+                body.classList.toggle('open');
+                if(.apiType === 'modrinth' && this.classList.contains('open') && !block.dataset.loaded) {
+                    block.dataset.loaded = '1';
+                    loadPage(.key, kw, 0);
+                }
+            });
+
+            c.appendChild(block);
+        });
+    }
+
+    // ============================================================
+    // 历史
+    // ============================================================
+    function loadHistory(){ try{return JSON.parse(localStorage.getItem('mc_search_history')||'[]');}catch{return[];} }
+    function saveHistory(kw){ let h=loadHistory().filter(x=>x!==kw); h.unshift(kw); h=h.slice(0,8); localStorage.setItem('mc_search_history',JSON.stringify(h)); renderHistory(); }
+    function renderHistory(){ const c=document.getElementById('historyTags'),h=loadHistory(); if(!h.length){c.innerHTML='<span style="color:#666;font-size:11px;">暂无</span>';return;} c.innerHTML=h.map(kw=>`<span class="history-tag" onclick="document.getElementById('kw').value='${kw.replace(/'/g,"\\'")}';document.getElementById('kw').focus()">${kw}</span>`).join(''); }
+
+    // ============================================================
+    renderSites(); renderHistory();
+</script>
+</body>
+</html>
