@@ -5,7 +5,7 @@
     {
       "title": "Function Pack Editor",
       "desc": "",
-      "url": "./tools/bedrock/funceditor",
+      "url": "./tool/bedrock/funceditor",
       "icon": "./assets/icon/command_block_side.png"
     }
   ]
