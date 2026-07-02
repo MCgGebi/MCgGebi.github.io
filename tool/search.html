@@ -26,10 +26,10 @@
         .search-row { display: flex; gap: 6px; align-items: center; }
         .search-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 4px; font-size: 13px; outline: none; }
         .search-row input:focus { border-color: var(--accent); }
-        .search-row button { background: var(--accent); color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; transition: opacity .2; white-space: nowrap; }
+        .search-row button { background: var(--accent); color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; transition: opacity .2s; white-space: nowrap; }
         .search-row button:hover { opacity: .85; }
         .platform-tabs { display: flex; gap: 4px; margin-top: 8px; }
-        .platform-tab { padding: 3px 10px; border-radius: 3px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); color: #999; transition: all .2; }
+        .platform-tab { padding: 3px 10px; border-radius: 3px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); color: #999; transition: all .2s; }
         .platform-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         .platform-tab[data-platform="je"] { border-color: #3498db; }
         .platform-tab[data-platform="je"].active { background: #3498db; border-color: #3498db; }
@@ -38,7 +38,7 @@
 
         .site-area { margin-bottom: 10px; }
         .site-grid { display: flex; flex-wrap: wrap; gap: 5px; }
-        .site-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: all .2; user-select: none; background: rgba(255,255,255,.02); }
+        .site-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: all .2s; user-select: none; background: rgba(255,255,255,.02); }
         .site-chip:hover { border-color: #666; }
         .site-chip.checked { border-color: var(--accent); background: rgba(59,133,38,.1); }
         .site-chip .icon-wrapper { width: 16px; height: 16px; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; background: #333; flex-shrink: 0; position: relative; }
@@ -52,19 +52,19 @@
         .result-block { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
         .result-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; user-select: none; background: rgba(255,255,255,.02); }
         .result-header:hover { background: rgba(255,255,255,.05); }
-        .result-header .arrow { font-size: 10px; color: #666; transition: transform .2; width: 12px; }
+        .result-header .arrow { font-size: 10px; color: #666; transition: transform .2s; width: 12px; }
         .result-header.open .arrow { transform: rotate(90deg); color: var(--accent); }
         .result-header .rh-name { flex: 1; font-size: 13px; color: #ddd; }
         .result-header .rh-meta { font-size: 11px; color: #888; }
         .result-header .rh-link { font-size: 11px; color: var(--accent); text-decoration: none; padding: 2px 6px; border: 1px solid var(--accent); border-radius: 3px; }
         .result-header .rh-link:hover { background: rgba(59,133,38,.1); }
 
-        .result-body { max-height: 0; overflow: hidden; transition: max-height .3 ease-out; }
+        .result-body { max-height: 0; overflow: hidden; transition: max-height .3s ease-out; }
         .result-body.open { max-height: 4200px; }
         .result-body-inner { padding: 10px 12px; }
 
         .inner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px; }
-        .inner-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 5px; padding: 10px; display: flex; gap: 10px; text-decoration: none; color: var(--text); transition: all .2; }
+        .inner-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 5px; padding: 10px; display: flex; gap: 10px; text-decoration: none; color: var(--text); transition: all .2s; }
         .inner-card:hover { background: rgba(255,255,255,.07); border-color: var(--accent); }
         .inner-card .ic-icon { width: 44px; height: 44px; border-radius: 4px; background: #333; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
         .inner-card .ic-icon img { width: 100%; height: 100%; object-fit: cover; }
@@ -75,7 +75,7 @@
         .inner-card .ic-desc { font-size: 11px; color: #999; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         .pager { display: flex; gap: 4px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
-        .pager button { background: none; border: 1px solid var(--border); color: #ccc; padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all .2; }
+        .pager button { background: none; border: 1px solid var(--border); color: #ccc; padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all .2s; }
         .pager button:hover { border-color: var(--accent); color: var(--accent); }
         .pager button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         .pager button:disabled { opacity: .35; cursor: default; }
@@ -86,13 +86,13 @@
 
         .feedback { margin-top: 6px; font-size: 12px; color: #888; min-height: 18px; }
         .quick-bar { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-        .quick-bar button { background: none; border: 1px solid var(--border); color: #ccc; padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all .2; }
+        .quick-bar button { background: none; border: 1px solid var(--border); color: #ccc; padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all .2s; }
         .quick-bar button:hover { border-color: var(--accent); color: var(--accent); }
 
         .history-area { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
         .history-area h3 { font-size: 12px; color: #aaa; margin-bottom: 6px; }
         .history-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-        .history-tag { padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); font-size: 11px; color: #bbb; cursor: pointer; transition: all .2; }
+        .history-tag { padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); font-size: 11px; color: #bbb; cursor: pointer; transition: all .2s; }
         .history-tag:hover { border-color: var(--accent); color: var(--accent); }
 
         .footer { text-align: center; padding: 12px; color: #555; font-size: 11px; }
@@ -176,7 +176,7 @@
           apiType: null, searchUrl: 'https://mcpedl.com/?s={kw}' },
     ];
 
-    const checked = new Set(SITES.map( => .key));
+    const checked = new Set(SITES.map(s => s.key));
     let currentPlatform = 'all';
 
     // ============================================================
@@ -208,20 +208,20 @@
     function renderSites() {
         const c = document.getElementById('siteList'); c.innerHTML = '';
         const groups = { je:[], pe:[], both:[] };
-        SITES.forEach( => {
-            if (currentPlatform!=='all' && .platform!=='both' && .platform!==currentPlatform) return;
-            groups[.platform].push();
+        SITES.forEach(s => {
+            if (currentPlatform!=='all' && s.platform!=='both' && s.platform!==currentPlatform) return;
+            groups[s.platform].push(s);
         });
         ['je','pe','both'].forEach(gk => {
             const list = groups[gk]; if(!list.length) return;
             const g = document.createElement('div'); g.className = 'site-grid';
-            list.forEach( => {
+            list.forEach(s => {
                 const chip = document.createElement('div');
-                chip.className = 'site-chip' + (checked.has(.key)?' checked':'');
-                chip.onclick = () => { toggleCheck(.key); renderSites(); };
-                chip.appendChild(createIcon(.icon));
-                const ns = document.createElement('span'); ns.textContent = .name; chip.appendChild(ns);
-                const tag = document.createElement('span'); tag.className = 'chip-tag '+.platform; tag.textContent = .platform==='both'?'通':.platform.toUpperCase(); chip.appendChild(tag);
+                chip.className = 'site-chip' + (checked.has(s.key)?' checked':'');
+                chip.onclick = () => { toggleCheck(s.key); renderSites(); };
+                chip.appendChild(createIcon(s.icon));
+                const ns = document.createElement('span'); ns.textContent = s.name; chip.appendChild(ns);
+                const tag = document.createElement('span'); tag.className = 'chip-tag '+s.platform; tag.textContent = s.platform==='both'?'通':s.platform.toUpperCase(); chip.appendChild(tag);
                 g.appendChild(chip);
             });
             c.appendChild(g);
@@ -230,8 +230,8 @@
     function toggleCheck(k) { if(checked.has(k)) checked.delete(k); else checked.add(k); }
 
     function filterPlatform(p,el) { currentPlatform=p; document.querySelectorAll('.platform-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderSites(); }
-    function checkAll(v) { SITES.forEach(=>{ if(currentPlatform!=='all'&&.platform!=='both'&&.platform!==currentPlatform)return; if(v)checked.add(.key);else checked.delete(.key); }); renderSites(); }
-    function checkByPlatform(p) { currentPlatform=p; document.querySelectorAll('.platform-tab').forEach(t=>t.classList.toggle('active',t.dataset.platform===p)); SITES.forEach(=>{ if(.platform==='both'||.platform===p)checked.add(.key);else checked.delete(.key); }); renderSites(); }
+    function checkAll(v) { SITES.forEach(s=>{ if(currentPlatform!=='all'&&s.platform!=='both'&&s.platform!==currentPlatform)return; if(v)checked.add(s.key);else checked.delete(s.key); }); renderSites(); }
+    function checkByPlatform(p) { currentPlatform=p; document.querySelectorAll('.platform-tab').forEach(t=>t.classList.toggle('active',t.dataset.platform===p)); SITES.forEach(s=>{ if(s.platform==='both'||s.platform===p)checked.add(s.key);else checked.delete(s.key); }); renderSites(); }
 
     // ============================================================
     // Modrinth API
@@ -239,7 +239,7 @@
     const PAGE_SIZE = 10;
 
     async function fetchModrinth(kw, offset=0) {
-        const url = `${SITES.find(=>.key==='modrinth').apiBase}/search?index=relevance&query=${encodeURIComponent(kw)}&offset=${offset}&limit=${PAGE_SIZE}`;
+        const url = `${SITES.find(s=>s.key==='modrinth').apiBase}/search?index=relevance&query=${encodeURIComponent(kw)}&offset=${offset}&limit=${PAGE_SIZE}`;
         const r = await fetch(url);
         if(!r.ok) throw new Error('Modrinth API 错误 '+r.status);
         const j = await r.json();
@@ -284,7 +284,7 @@
         return html;
     }
 
-    function escHtml() { const d=document.createElement('div'); d.textContent=; return d.innerHTML; }
+    function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
     function formatNum(n) { if(n>=1e4) return (n/1e4).toFixed(1)+'万'; return n+''; }
 
     // ============================================================
@@ -320,7 +320,7 @@
         return html;
     }
 
-    function escKw() { return .replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+    function escKw(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
     const cache = {};
     async function loadPage(siteKey, kw, offset) {
@@ -341,7 +341,7 @@
             cache[ck] = data;
             inner.innerHTML = renderInnerCards(data.items) + renderPager(data.total, offset, kw, siteKey);
         } catch(e) {
-            inner.innerHTML = `<div class="fallback-msg">❌ 加载失败：${e.message}<br><a href="${SITES.find(=>.key===siteKey).searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank">去网站 ↗</a></div>`;
+            inner.innerHTML = `<div class="fallback-msg">❌ 加载失败：${e.message}<br><a href="${SITES.find(s=>s.key===siteKey).searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank">去网站 ↗</a></div>`;
         }
     }
 
@@ -352,7 +352,7 @@
         const kw = document.getElementById('kw').value.trim();
         const fb = document.getElementById('feedback');
         if(!kw) { fb.textContent='⚠️ 请输入关键词'; document.getElementById('kw').focus(); return; }
-        const sel = SITES.filter(=>checked.has(.key));
+        const sel = SITES.filter(s=>checked.has(s.key));
         if(!sel.length) { fb.textContent='⚠️ 请至少勾选一个站点'; return; }
         fb.textContent = `🔍 搜索 "${kw}" · ${sel.length} 个站点`;
         saveHistory(kw);
@@ -363,23 +363,23 @@
 
     function renderResults(sites, kw) {
         const c = document.getElementById('resultsContainer'); c.innerHTML = '';
-        sites.forEach( => {
+        sites.forEach(s => {
             const block = document.createElement('div');
             block.className = 'result-block';
-            block.dataset.site = .key;
+            block.dataset.site = s.key;
             block.dataset.kw = kw;
 
             const h = document.createElement('div');
             h.className = 'result-header';
             let metaText;
-            if(.apiType === 'modrinth') metaText = 'API 预览';
-            else if(.apiType === 'iframe') metaText = '站内预览';
+            if(s.apiType === 'modrinth') metaText = 'API 预览';
+            else if(s.apiType === 'iframe') metaText = '站内预览';
             else metaText = '跳转主页';
             h.innerHTML = `
                 <span class="arrow">▶</span>
-                <span class="rh-name">${.name}</span>
+                <span class="rh-name">${s.name}</span>
                 <span class="rh-meta">${metaText}</span>
-                <a href="${.searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank" class="rh-link">新标签页 ↗</a>
+                <a href="${s.searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank" class="rh-link">新标签页 ↗</a>
             `;
 
             const body = document.createElement('div');
@@ -387,14 +387,14 @@
             const inner = document.createElement('div');
             inner.className = 'result-body-inner';
 
-            if(.apiType === 'modrinth') {
+            if(s.apiType === 'modrinth') {
                 inner.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">点击标题展开预览</div>';
-            } else if(.apiType === 'iframe') {
-                const iframeSrc = .iframeSrc.replace(/\{kw\}/g, encodeURIComponent(kw));
+            } else if(s.apiType === 'iframe') {
+                const iframeSrc = s.iframeSrc.replace(/\{kw\}/g, encodeURIComponent(kw));
                 inner.innerHTML = `<iframe src="${iframeSrc}" style="width:100%;height:390px;border:none;border-radius:4px;background:#fff;" sandbox="allow-scripts allow-same-origin allow-popups" loading="lazy"></iframe>`;
             } else {
-                const label = .key === 'curseforge' ? 'CurseForge Minecraft 分区' : .name;
-                inner.innerHTML = `<div class="fallback-msg">${label} 暂无站内预览<br><a href="${.searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank">在新标签页打开 ↗</a></div>`;
+                const label = s.key === 'curseforge' ? 'CurseForge Minecraft 分区' : s.name;
+                inner.innerHTML = `<div class="fallback-msg">${label} 暂无站内预览<br><a href="${s.searchUrl.replace(/\{kw\}/g,encodeURIComponent(kw))}" target="_blank">在新标签页打开 ↗</a></div>`;
             }
 
             body.appendChild(inner);
@@ -404,9 +404,9 @@
                 if(e.target.tagName==='A') return;
                 this.classList.toggle('open');
                 body.classList.toggle('open');
-                if(.apiType === 'modrinth' && this.classList.contains('open') && !block.dataset.loaded) {
+                if(s.apiType === 'modrinth' && this.classList.contains('open') && !block.dataset.loaded) {
                     block.dataset.loaded = '1';
-                    loadPage(.key, kw, 0);
+                    loadPage(s.key, kw, 0);
                 }
             });
 
