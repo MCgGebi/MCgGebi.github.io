@@ -88,15 +88,14 @@
             z-index: 17;
         }
 
-        .btn-help {
-            position: fixed; bottom: 12px; right: 20px;
-            width: 22px; height: 22px; border-radius: 50%;
-            border: 1px solid var(--border); background: transparent;
-            color: var(--text-muted); font-size: 12px; font-weight: bold;
-            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-            transition: all .2; opacity: .6; font-family: inherit; z-index: 20;
+        .help-container { position: fixed; bottom: 12px; right: 20px; z-index: 20; }
+        .help-trigger {
+            width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted); font-size: 12px; font-weight: bold;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all .2; opacity: .6; font-family: inherit;
         }
-        .btn-help:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.1); }
+        .help-trigger:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.1); }
         .help-tooltip {
             position: absolute; bottom: 30px; right: 0; width: 180px; padding: 10px;
             background: rgba(20,20,20,.95); border: 1px solid var(--border); border-radius: 6px;
@@ -104,7 +103,7 @@
             opacity: 0; visibility: hidden; transform: translateY(5px); transition: all .2 ease;
             pointer-events: none; font-family: inherit;
         }
-        .btn-help:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
+        .help-container:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
         .help-tooltip strong { color: var(--text); font-weight: 500; }
 
         .bottom-buttons {
@@ -129,25 +128,44 @@
         .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.1); }
 
         .source-indicator {
-            position: fixed; left: 20px; bottom: 38px;
-            font-size: 9px; color: var(--text-muted); opacity: 0.2;
-            user-select: none; pointer-events: none;
+            position: fixed;
+            left: 20px;
+            bottom: 38px;
+            font-size: 9px;
+            color: var(--text-muted);
+            opacity: 0.2;
+            user-select: none;
+            pointer-events: none;
             font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.5px; z-index: 18; transition: opacity 0.3 ease;
+            letter-spacing: 0.5px;
+            z-index: 18;
+            transition: opacity 0.3 ease;
         }
-        body:hover .source-indicator { opacity: 0.35; }
+        body:hover .source-indicator {
+            opacity: 0.35;
+        }
 
         .timeout-notice {
-            position: fixed; bottom: 32px; left: 50%;
-            transform: translateX(-50%); font-size: 9px;
-            color: var(--text-muted); opacity: 0; pointer-events: none;
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: var(--text-muted);
+            opacity: 0;
+            pointer-events: none;
             font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.3px; z-index: 21;
+            letter-spacing: 0.3px;
+            z-index: 21;
             transition: opacity 0.4 ease;
-            background: rgba(20,20,20,0.7); padding: 2px 6px;
-            border-radius: 2px; border: 1px solid rgba(68,68,68,0.3);
+            background: rgba(20, 20, 20, 0.7);
+            padding: 2px 6px;
+            border-radius: 2px;
+            border: 1px solid rgba(68, 68, 68, 0.3);
         }
-        .timeout-notice.show { opacity: 0.45; }
+        .timeout-notice.show {
+            opacity: 0.45;
+        }
     </style>
 </head>
 <body>
@@ -155,20 +173,15 @@
     <div class="overlay"></div>
     <div class="cursor-glow" id="glow"></div>
 
-    <div class="timeout-notice" id="timeoutNotice">图片源重试中...</div>
+    <div class="timeout-notice" id="timeoutNotice">图片加载超时，正在重试...</div>
 
     <div class="breadcrumb">
         <span id="bHome" onclick="goHome()">首页</span> / <span id="bBack" onclick="goBack()">返回</span>
     </div>
 
-    <div class="btn-help">?
-        <div class="help-tooltip" id="helpTooltip">
-            <strong>迷路了吗？</strong><br>
-            按 Esc 返回<br>
-            点击 ← 回到上页<br>
-            点击 ↻ 重载页面<br>
-            点击 EN/中 切换语言
-        </div>
+    <div class="help-container">
+        <div class="help-trigger">?</div>
+        <div class="help-tooltip" id="helpTooltip"></div>
     </div>
 
     <div class="container">
@@ -185,7 +198,7 @@
 
     <div class="bottom-buttons">
         <div class="left-buttons">
-            <button class="mini-btn" id="btnSource" onclick="openSource()">源图</button>
+            <button class="mini-btn" id="btnSource" onclick="openSource()">原图</button>
             <button class="mini-btn" id="btnContentRefresh" onclick="reloadAll()">刷新</button>
         </div>
         <div class="right-buttons">
@@ -197,7 +210,6 @@
 
     <footer id="footer"></footer>
 
-{% raw %}
 <script>
 /* ===== i18n ===== */
 const i18n = {
@@ -207,7 +219,7 @@ const i18n = {
         api: 'https://v1.hitokoto.cn/?c=i&c=j',
         help: `<strong>迷路了吗？</strong><br>• 按 <strong>Esc</strong> 返回<br>• 点击 <strong>←</strong> 回到上页<br>• 点击 <strong>↻</strong> 重载页面<br>• 点击 <strong>EN/中</strong> 切换语言`,
         bHome: '首页', bBack: '返回',
-        btnSource: '源图', btnPageRefresh: '↻ 刷新',
+        btnSource: '原图', btnPageRefresh: '↻ 刷新',
         btnContentRefresh: '刷新',
         btnBackTitle: '返回 (Esc)',
         btnLang: 'EN'
@@ -262,17 +274,17 @@ function applyLang(l) {
     loadHitokoto();
 }
 
+/* ===== 超时提示 ===== */
 let timeoutNoticeTimer = null;
-function showTimeoutNotice() {
+function showTimeoutNotice(msg) {
     const notice = document.getElementById('timeoutNotice');
+    notice.textContent = msg || '图片加载超时，正在重试...';
     notice.classList.add('show');
     if (timeoutNoticeTimer) clearTimeout(timeoutNoticeTimer);
     timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 1500);
 }
 
-/* ===== 图片源 ===== */
-const LOCAL_BG = './assets/404.png';
-
+/* ===== 图片源配置 ===== */
 const IMG_SOURCES = [
     {
         name: 'loliapi',
@@ -281,10 +293,20 @@ const IMG_SOURCES = [
         parse: (d) => d.imgurl || d.url || null,
     },
     {
-        name: 'nekoslife',
+        name: 'lolicon',
+        label: 'lolicon.setu',
+        url: () => 'https://api.lolicon.app/setu/v2?r18=0&num=1',
+        parse: (d) => {
+            // 你提供的返回结构: { error, data: [{ urls: { original } }] }
+            const first = d?.data?.[0];
+            return first?.urls?.original || null;
+        },
+    },
+    {
+        name: 'nekos',
         label: 'nekos.life',
         url: () => 'https://nekos.life/api/v2/img/wallpaper',
-        parse: (d) => d?.url || null,
+        parse: (d) => d.url || null,
     }
 ];
 
@@ -292,73 +314,65 @@ function updateSourceIndicator(label) {
     document.getElementById('sourceIndicator').textContent = `src: ${label}`;
 }
 
-/* ===== 🚀 核心异步逻辑 ===== */
-
-/**
- * 异步预加载单张图片（不阻塞主线程）
- */
-function preloadImage(url, label) {
-    const img = new Image();
-    img.referrerPolicy = 'no-referrer';
-    img.onload = () => {
-        const bg = document.getElementById('bgImage');
-        bg.style.backgroundImage = `url(${url})`;
-        currentBgUrl = url;
-        updateSourceIndicator(label);
-    };
-    img.onerror = () => {
-        // 单张图失败不影响整体
-    };
-    img.src = url;
+/* ===== 🆕 每次刷新都会重新随机排序 ===== */
+function buildSourceOrder() {
+    const mains = [0, 1]; // 两个主源
+    const first = mains[Math.floor(Math.random() * mains.length)]; // 随机选一个当首选
+    return [first, ...mains.filter(i => i !== first), 2].map(i => IMG_SOURCES[i]);
 }
 
-/**
- * 异步尝试远程源（竞争模式）
- */
+function loadImageToBg(imgUrl, srcLabel) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        // 针对 pixiv.re 原图反代，降低 403 概率
+        img.referrerPolicy = 'no-referrer';
+        img.onload = () => {
+            const bg = document.getElementById('bgImage');
+            bg.style.backgroundImage = `url(${imgUrl})`;
+            currentBgUrl = imgUrl;
+            bg.classList.add('loaded');
+            updateSourceIndicator(srcLabel);
+            resolve();
+        };
+        img.onerror = () => {
+            reject(new Error('img_load_fail'));
+        };
+        img.src = imgUrl;
+    });
+}
+
 function trySources(order, idx) {
     if (idx >= order.length) {
-        // 两个远程都失败，fallback 已经在 loadBackground 里准备好了
+        document.getElementById('bgImage').style.backgroundImage = 'none';
+        updateSourceIndicator('---');
         return;
     }
-    const src = IMG_SOURCES[order[idx]];
+    const src = order[idx];
     fetch(src.url())
         .then(r => r.json())
         .then(d => {
             const imgUrl = src.parse(d);
             if (!imgUrl) throw new Error('parse_null');
-            preloadImage(imgUrl, src.label);
+            loadImageToBg(imgUrl, src.label).catch(() => {
+                // 图片加载失败（通常是 403），提示后切下一源
+                if (idx < 2) showTimeoutNotice('图片源重试中...');
+                trySources(order, idx + 1);
+            });
         })
         .catch(() => {
-            if (idx < order.length - 1) showTimeoutNotice();
+            // API 请求失败（超时/网络错误），提示后切下一源
+            if (idx < 2) showTimeoutNotice('图片源重试中...');
             trySources(order, idx + 1);
         });
 }
 
-/**
- * 🚀 主入口：动画永远不等待图片
- */
 function loadBackground() {
     const bg = document.getElementById('bgImage');
     bg.classList.remove('loaded');
     updateSourceIndicator('...');
-
-    // ✅ 1. 动画立刻开始（不等待任何图片）
-    requestAnimationFrame(() => {
-        bg.classList.add('loaded');
-    });
-
-    // ✅ 2. 本地图：异步预加载（不阻塞）
-    preloadImage(LOCAL_BG, 'local:404.png');
-
-    // ✅ 3. 远程图：异步竞争
-    const order = buildSourceOrder();
+    const order = buildSourceOrder(); // 🆕 每次调用都会重新随机
     trySources(order, 0);
-}
-
-function buildSourceOrder() {
-    const mains = [0, 1];
-    const first = mains[Math.floor(Math.random() * mains.length)];
-    return [first, ...mains.filter(i => i !== first)];
 }
 
 function fetchWithTimeout(url, ms = 3000) {
@@ -400,7 +414,7 @@ async function loadHitokoto() {
 }
 
 function reloadAll() { loadBackground(); loadHitokoto(); }
-function openSource() { if(currentBgUrl && currentBgUrl !== LOCAL_BG) window.open(currentBgUrl, '_blank', 'noopener'); }
+function openSource() { if(currentBgUrl) window.open(currentBgUrl, '_blank', 'noopener'); }
 function goHome() { location.href='/'; }
 function goBack() { document.referrer ? history.back() : location.href='/'; }
 function toggleLang() { applyLang(currentLang==='zh'?'en':'zh'); }
@@ -415,6 +429,5 @@ applyLang(currentLang);
 loadBackground();
 setInterval(loadHitokoto, 8000);
 </script>
-{% endraw %}
 </body>
 </html>
