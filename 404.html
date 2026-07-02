@@ -46,7 +46,7 @@
             position: fixed; width: 280px; height: 280px;
             background: radial-gradient(circle, rgba(59,133,38,0.15) 0%, transparent 70%);
             border-radius: 50%; pointer-events: none;
-            transform: translate(-50%,-50); z-index: 0; opacity: .5;
+            transform: translate(-50%,-50%); z-index: 0; opacity: .5;
         }
         @media (hover:none) and (pointer:coarse) { .cursor-glow { display: none; } }
 
@@ -162,7 +162,13 @@
     </div>
 
     <div class="btn-help">?
-        <div class="help-tooltip" id="helpTooltip"></div>
+        <div class="help-tooltip" id="helpTooltip">
+            <strong>迷路了吗？</strong><br>
+            按 Esc 返回<br>
+            点击 ← 回到上页<br>
+            点击 ↻ 重载页面<br>
+            点击 EN/中 切换语言
+        </div>
     </div>
 
     <div class="container">
@@ -191,6 +197,7 @@
 
     <footer id="footer"></footer>
 
+{% raw %}
 <script>
 /* ===== i18n ===== */
 const i18n = {
@@ -263,8 +270,8 @@ function showTimeoutNotice() {
     timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 1500);
 }
 
-/* ===== 🆕 图片源：loliapi + nekos.life + 本地 404.png ===== */
-const LOCAL_BG = './data/404.png'; // 仓库 data/404.png
+/* ===== 图片源：loliapi + nekos.life + 本地 404.png ===== */
+const LOCAL_BG = './data/404.png';
 
 const IMG_SOURCES = [
     {
@@ -291,17 +298,17 @@ function updateSourceIndicator(label) {
     document.getElementById('sourceIndicator').textContent = `src: ${label}`;
 }
 
-/* 🆕 每次刷新：loliapi / nekos.life 随机首选，本地固定第三 */
+/* 每次刷新：loliapi / nekos.life 随机首选，本地固定第三 */
 function buildSourceOrder() {
     const mains = [0, 1];
     const first = mains[Math.floor(Math.random() * mains.length)];
     return [first, ...mains.filter(i => i !== first), 2];
 }
 
-function loadImageToBg(imgUrl, srcLabel) {
+function loadImageToBg(imgUrl, srcLabel, needCORS) {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        if (needCORS) img.crossOrigin = 'anonymous';
         img.referrerPolicy = 'no-referrer';
         img.onload = () => {
             const bg = document.getElementById('bgImage');
@@ -319,21 +326,19 @@ function loadImageToBg(imgUrl, srcLabel) {
 function trySources(order, idx) {
     if (idx >= order.length) return;
     const src = IMG_SOURCES[order[idx]];
-    // 本地源：直接 load，不走 fetch
     if (src.name === 'local') {
-        loadImageToBg(src.parse(), src.label).catch(() => {
+        loadImageToBg(src.parse(), src.label, false).catch(() => {
             document.getElementById('bgImage').style.backgroundImage = 'none';
             updateSourceIndicator('---');
         });
         return;
     }
-    // 远程源
     fetch(src.url())
         .then(r => r.json())
         .then(d => {
             const imgUrl = src.parse(d);
             if (!imgUrl) throw new Error('parse_null');
-            loadImageToBg(imgUrl, src.label).catch(() => {
+            loadImageToBg(imgUrl, src.label, false).catch(() => {
                 if (idx < order.length - 1) showTimeoutNotice();
                 trySources(order, idx + 1);
             });
@@ -349,12 +354,11 @@ function loadBackground() {
     bg.classList.remove('loaded');
     updateSourceIndicator('...');
 
-    // 🆕 先铺本地 404.png 打底
     bg.style.backgroundImage = `url(${LOCAL_BG})`;
     currentBgUrl = LOCAL_BG;
     updateSourceIndicator('local:404.png');
 
-    const order = buildSourceOrder(); // [随机主源, 另一主源, 2(本地)]
+    const order = buildSourceOrder();
     trySources(order, 0);
 }
 
@@ -412,5 +416,6 @@ applyLang(currentLang);
 loadBackground();
 setInterval(loadHitokoto, 8000);
 </script>
+{% endraw %}
 </body>
 </html>
