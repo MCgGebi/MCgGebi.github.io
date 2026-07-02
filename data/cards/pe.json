@@ -1,0 +1,12 @@
+{
+  "name": "Bedrock Edition",
+  "icon": "./assets/icon/peicon.png",
+  "items": [
+    {
+      "title": "Function Pack Editor",
+      "desc": "",
+      "url": "./tools/mc-search.html",
+      "icon": "./assets/icon/command_block_side.png"
+    }
+  ]
+}
