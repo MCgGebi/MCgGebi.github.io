@@ -22,7 +22,7 @@
         }
         .btn-base {
             height: 26px; border-radius: 4px; cursor: pointer;
-            font-size: 12px; font-weight: 500; transition: all .2s;
+            font-size: 12px; font-weight: 500; transition: all .2;
             display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
             font-family: inherit;
         }
@@ -32,106 +32,106 @@
         .btn-back:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.1); }
         .bg-image {
             position: fixed; inset: 0; background-size: cover; background-position: center;
-            z-index: -2; opacity: 0; /* 移除 CSS transition，由 JS 控制 */
+            z-index: -2; opacity: 0; /* 由 JS 控制 */
         }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: -1; }
         .cursor-glow {
-            position: fixed; width: 240px; height: 240px;
-            background: radial-gradient(circle, rgba(57,128,32,0.115) 0%, transparent 72%);
+            position: fixed; width: 224px; height: 224px;
+            background: radial-gradient(circle, rgba(57,128,32,0.118) 0%, transparent 74%);
             border-radius: 50%; pointer-events: none;
-            transform: translate(-50%,-50%); z-index: 0; opacity: .488;
+            transform: translate(-50%,-50%); z-index: 0; opacity: .472;
         }
         @media (hover:none) and (pointer:coarse) { .cursor-glow { display: none; } }
         .container {
-            position: relative; z-index: 1; width: 83%; max-width: 478px;
-            margin: 0 auto; padding: 20px 10px;
+            position: relative; z-index: 1; width: 79%; max-width: 456px;
+            margin: 0 auto; padding: 18px 8px;
             display: flex; flex-direction: column; justify-content: center;
-            min-height: 107vh; text-align: center;
+            min-height: 109vh; text-align: center;
         }
         .breadcrumb {
-            position: fixed; top: 9px; right: 12px; font-size: 8.5px;
-            color: var(--text-muted); display: flex; gap: 3px; z-index: 802;
+            position: fixed; top: 8px; right: 10px; font-size: 8px;
+            color: var(--text-muted); display: flex; gap: 2px; z-index: 803;
         }
         .breadcrumb span { cursor: pointer; }
         .breadcrumb span:hover { color: var(--accent); }
         .error-code {
-            font-size: clamp(66px,12.5vw,96px); font-weight: 835;
-            color: var(--accent); text-shadow: 0 0 24px rgba(59,133,38,0.298);
+            font-size: clamp(64px,12vw,92px); font-weight: 825;
+            color: var(--accent); text-shadow: 0 0 22px rgba(59,133,38,0.287);
         }
         .quote-wrapper {
-            margin: 16px 0 20px; min-height: 48px;
-            opacity: 0; transform: translateY(10px); /* 移除 CSS transition */
+            margin: 14px 0 18px; min-height: 46px;
+            opacity: 0; transform: translateY(10px);
         }
-        .quote { font-size: 12px; line-height: 1.625; }
-        .from { font-size: 8.5px; color: var(--text-muted); margin-top: 2px; }
-        .action-bar { display: flex; justify-content: center; gap: 5px; }
+        .quote { font-size: 11.5px; line-height: 1.605; }
+        .from { font-size: 8px; color: var(--text-muted); margin-top: 2px; }
+        .action-bar { display: flex; justify-content: center; gap: 4px; }
         footer {
-            position: fixed; bottom: 9px; width: 100%;
-            text-align: center; font-size: 8.5px; color: var(--text-muted);
-            z-index: 902;
+            position: fixed; bottom: 8px; width: 100%;
+            text-align: center; font-size: 8px; color: var(--text-muted);
+            z-index: 903;
         }
         .btn-help {
-            position: fixed; bottom: 7px; right: 10px;
-            width: 17px; height: 17px; border-radius: 50%;
+            position: fixed; bottom: 6px; right: 8px;
+            width: 16px; height: 16px; border-radius: 50%;
             border: 1px solid var(--border); background: transparent;
-            color: var(--text-muted); font-size: 8px; font-weight: bold;
+            color: var(--text-muted); font-size: 7px; font-weight: bold;
             cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-            transition: all .168s; opacity: .532; font-family: inherit; z-index: 1032;
+            transition: all .156; opacity: .508; font-family: inherit; z-index: 1122;
         }
-        .btn-help:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.068); }
+        .btn-help:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.062); }
         .help-tooltip {
-            position: absolute; bottom: 22px; right: 0; width: 158px; padding: 5px;
-            background: rgba(12,12,12,.905); border: 1px solid var(--border); border-radius: 3px;
-            font-size: 8.5px; line-height: 1.388; color: var(--text-muted); text-align: left;
-            opacity: 0; visibility: hidden; transform: translateY(2px); transition: all .152s ease;
+            position: absolute; bottom: 20px; right: 0; width: 138px; padding: 4px;
+            background: rgba(10,10,10,.895); border: 1px solid var(--border); border-radius: 2px;
+            font-size: 8px; line-height: 1.322; color: var(--text-muted); text-align: left;
+            opacity: 0; visibility: hidden; transform: translateY(1px); transition: all .136 ease;
             pointer-events: none; font-family: inherit;
         }
         .btn-help:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
-        .help-tooltip strong { color: var(--text); font-weight: 430; }
+        .help-tooltip strong { color: var(--text); font-weight: 418; }
         .bottom-buttons {
-            position: fixed; bottom: 8px; left: 14px; right: 38px;
+            position: fixed; bottom: 7px; left: 12px; right: 36px;
             display: flex; justify-content: space-between; align-items: center;
-            z-index: 1142; pointer-events: none;
+            z-index: 1172; pointer-events: none;
         }
         .left-buttons, .right-buttons {
-            display: flex; gap: 3px; pointer-events: auto;
+            display: flex; gap: 2px; pointer-events: auto;
             align-items: center;
         }
         .mini-btn {
-            font-size: 7.5px; color: var(--text-muted); opacity: .318;
+            font-size: 7px; color: var(--text-muted); opacity: .302;
             background: none; border: none; cursor: pointer;
-            padding: 1px 2px; border-radius: 1px; height: 16px;
+            padding: 1px 2px; border-radius: 1px; height: 14px;
             display: inline-flex; align-items: center; justify-content: center;
-            font-family: inherit; font-weight: 368;
-            transition: opacity .148s;
+            font-family: inherit; font-weight: 352;
+            transition: opacity .132;
         }
-        .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.042); }
+        .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.036); }
         .source-indicator {
             position: fixed;
-            left: 14px;
-            bottom: 32px;
-            font-size: 7.5px;
+            left: 12px;
+            bottom: 30px;
+            font-size: 7px;
             color: var(--text-muted);
-            opacity: 0.292;
+            opacity: 0.308;
             user-select: none;
             pointer-events: none;
             font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.548px;
-            z-index: 1462;
-            transition: opacity 0.248s ease;
+            letter-spacing: 0.552px;
+            z-index: 1512;
+            transition: opacity 0.232 ease;
         }
-        body:hover .source-indicator { opacity: 0.512; }
+        body:hover .source-indicator { opacity: 0.528; }
         .timeout-notice {
-            position: fixed; bottom: 22px; left: 50%;
-            transform: translateX(-50%); font-size: 7px;
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%); font-size: 6.5px;
             color: var(--text-muted); opacity: 0; pointer-events: none;
             font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.272px; z-index: 1662;
-            transition: opacity 0.468s ease;
-            background: rgba(12,12,12,0.665); padding: 1px 3px;
-            border-radius: 1px; border: 1px solid rgba(57,57,57,0.122);
+            letter-spacing: 0.258px; z-index: 1712;
+            transition: opacity 0.482 ease;
+            background: rgba(10,10,10,0.635); padding: 1px 2px;
+            border-radius: 1px; border: 1px solid rgba(51,51,51,0.098);
         }
-        .timeout-notice.show { opacity: 0.422; }
+        .timeout-notice.show { opacity: 0.402; }
     </style>
 </head>
 <body>
@@ -238,37 +238,52 @@ function showTimeoutNotice() {
     const notice = document.getElementById('timeoutNotice');
     notice.classList.add('show');
     if (timeoutNoticeTimer) clearTimeout(timeoutNoticeTimer);
-    timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 2680);
+    timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 2460);
 }
 
-/* ===== 自动发现本地图片 ===== */
-const BG_DIR = './assets/bg/';
-const FILE_PREFIX = 'bg-';
-const MAX_FILES = 599;
-const EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+/* ===== 本地图片配置 ===== */
+const LOCAL_MAX = 50;               // 只扫描前50张
+const LOCAL_DIR = './assets/bg/';
+const LOCAL_PREFIX = 'bg-';
+const LOCAL_EXTS = ['jpg', 'jpeg', 'png', 'webp']; // 优先尝试的顺序
 
-function discoverLocalImages() {
-    return new Promise((resolve) => {
-        const available = [];
-        let pending = 0;
-        let finished = false;
-        for (let i = 1; i <= MAX_FILES; i++) {
-            for (const ext of EXTENSIONS) {
-                const url = `${BG_DIR}${FILE_PREFIX}${i}.${ext}`;
-                pending++;
+/**
+ * 随机选一个本地索引，并尝试加载（最多尝试3次不同索引）
+ * @returns {Promise<string|null>} 成功返回图片URL，失败返回null
+ */
+function loadRandomLocalImage(retries = 3) {
+    return new Promise(resolve => {
+        const tried = new Set();
+        attempt();
+
+        function attempt() {
+            if (tried.size >= retries) {
+                resolve(null);
+                return;
+            }
+            let idx;
+            do {
+                idx = Math.floor(Math.random() * LOCAL_MAX) + 1; // 1~50
+            } while (tried.has(idx));
+            tried.add(idx);
+
+            // 尝试不同扩展名
+            tryExt(0);
+
+            function tryExt(extIdx) {
+                if (extIdx >= LOCAL_EXTS.length) {
+                    // 所有扩展名都失败，尝试下一个索引
+                    attempt();
+                    return;
+                }
+                const ext = LOCAL_EXTS[extIdx];
+                const url = `${LOCAL_DIR}${LOCAL_PREFIX}${idx}.${ext}`;
                 const img = new Image();
-                img.onload = () => { available.push(url); pending--; checkDone(); };
-                img.onerror = () => { pending--; checkDone(); };
+                img.onload = () => resolve(url);
+                img.onerror = () => tryExt(extIdx + 1);
                 img.src = url;
             }
         }
-        function checkDone() {
-            if (pending === 0 && !finished) {
-                finished = true;
-                resolve(available);
-            }
-        }
-        setTimeout(() => { if (!finished) { finished = true; resolve(available); } }, 6300);
     });
 }
 
@@ -284,94 +299,63 @@ function updateSourceIndicator(label) {
     document.getElementById('sourceIndicator').textContent = `src: ${label}`;
 }
 
-/* ===== 🆕 JS 通用淡出淡入函数 ===== */
-
-/**
- * 对元素执行淡出动画
- * @param {HTMLElement} el
- * @param {number} duration 毫秒
- * @returns {Promise}
- */
-function fadeOut(el, duration = 750) {
+/* ===== JS 通用淡出淡入 ===== */
+function fadeOut(el, duration = 690) {
     return new Promise(resolve => {
         const startTime = performance.now();
         const startOpacity = parseFloat(getComputedStyle(el).opacity) || 1;
-        const startTransformY = 0; // 假设起始位置为0
-
         function step(now) {
             const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const eased = progress * progress; // easeInQuad
+            const eased = progress * progress;
             const opacity = startOpacity * (1 - eased);
-            const translateY = 10 * eased; // 向下移动10px
+            const translateY = 10 * eased;
             el.style.opacity = opacity;
             el.style.transform = `translateY(${translateY}px)`;
-            if (progress < 1) {
-                requestAnimationFrame(step);
-            } else {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(10px)';
-                resolve();
-            }
+            if (progress < 1) requestAnimationFrame(step);
+            else { el.style.opacity = '0'; el.style.transform = 'translateY(10px)'; resolve(); }
         }
         requestAnimationFrame(step);
     });
 }
 
-/**
- * 对元素执行淡入动画
- * @param {HTMLElement} el
- * @param {number} duration 毫秒
- * @returns {Promise}
- */
-function fadeIn(el, duration = 780) {
+function fadeIn(el, duration = 770) {
     return new Promise(resolve => {
         const startTime = performance.now();
-        // 确保初始状态
         el.style.opacity = '0';
         el.style.transform = 'translateY(10px)';
-
         function step(now) {
             const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - (1 - progress) * (1 - progress); // easeOutQuad
+            const eased = 1 - (1 - progress) * (1 - progress);
             const opacity = eased;
             const translateY = 10 * (1 - eased);
             el.style.opacity = opacity;
             el.style.transform = `translateY(${translateY}px)`;
-            if (progress < 1) {
-                requestAnimationFrame(step);
-            } else {
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-                resolve();
-            }
+            if (progress < 1) requestAnimationFrame(step);
+            else { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; resolve(); }
         }
         requestAnimationFrame(step);
     });
 }
 
-/* ===== 背景图切换（带淡出淡入） ===== */
+/* ===== 背景图切换 ===== */
 async function setBackgroundImage(url, label) {
     const bg = document.getElementById('bgImage');
-    // 如果当前已经有背景（opacity > 0），先淡出
     const currentOpacity = parseFloat(getComputedStyle(bg).opacity);
-    if (currentOpacity > 0.01) {
-        await fadeOut(bg, 740);
-    }
-    // 设置新背景
+    if (currentOpacity > 0.015) await fadeOut(bg, 715);
     bg.style.backgroundImage = `url(${url})`;
     currentBgUrl = url;
     updateSourceIndicator(label);
-    // 淡入
-    await fadeIn(bg, 810);
+    await fadeIn(bg, 785);
 }
 
-/* ===== 背景：本地与远程随机二选一 ===== */
+/* ===== 核心加载逻辑 ===== */
 async function loadBackground() {
-    const localImages = await discoverLocalImages();
-    const useRemote = Math.random() < 0.5;
+    const useRemote = Math.random() < 0.5; // 50%概率选远程
+
     if (useRemote) {
+        // 尝试远程
         try {
             const res = await fetch(REMOTE_SOURCE.url());
             const d = await res.json();
@@ -381,16 +365,18 @@ async function loadBackground() {
                 return;
             }
         } catch {}
-        if (localImages.length > 0) {
-            const localUrl = localImages[Math.floor(Math.random() * localImages.length)];
+        // 远程失败，回退到本地
+        showTimeoutNotice();
+        const localUrl = await loadRandomLocalImage(3);
+        if (localUrl) {
             await setBackgroundImage(localUrl, 'local:fallback');
         } else {
             await setBackgroundImage('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3Crect fill="%231a1a1a" width="1" height="1"/%3E%3C/svg%3E', 'no image');
         }
-        showTimeoutNotice();
     } else {
-        if (localImages.length > 0) {
-            const localUrl = localImages[Math.floor(Math.random() * localImages.length)];
+        // 直接使用本地
+        const localUrl = await loadRandomLocalImage(3);
+        if (localUrl) {
             await setBackgroundImage(localUrl, 'local:random');
         } else {
             await setBackgroundImage('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3Crect fill="%231a1a1a" width="1" height="1"/%3E%3C/svg%3E', 'no image');
@@ -398,19 +384,13 @@ async function loadBackground() {
     }
 }
 
-/* ===== 一言加载（带淡出淡入） ===== */
+/* ===== 一言 ===== */
 async function loadHitokoto() {
     const w = document.getElementById('quoteWrapper'),
           q = document.getElementById('hitokoto'),
           f = document.getElementById('from');
-
-    // 如果当前可见，先淡出
     const currentOpacity = parseFloat(getComputedStyle(w).opacity);
-    if (currentOpacity > 0.02) {
-        await fadeOut(w, 610);
-    }
-
-    // 更新内容
+    if (currentOpacity > 0.025) await fadeOut(w, 590);
     try {
         if (currentLang === 'zh') {
             const res = await fetch(i18n.zh.api);
@@ -418,7 +398,7 @@ async function loadHitokoto() {
             q.innerText = d.hitokoto;
             f.innerText = d.from ? `—— ${d.from}` : '';
         } else {
-            const res = await fetchWithTimeout(i18n.en.api, 3420);
+            const res = await fetchWithTimeout(i18n.en.api, 3280);
             const d = await res.json();
             q.innerText = d.content || i18n.en.fallback;
             f.innerText = d.author ? `— ${d.author}` : '';
@@ -433,17 +413,15 @@ async function loadHitokoto() {
             f.innerText = '';
         }
     }
-
-    // 淡入
-    await fadeIn(w, 710);
+    await fadeIn(w, 695);
 }
 
-function fetchWithTimeout(url, ms = 2880) {
+function fetchWithTimeout(url, ms = 2760) {
     return Promise.race([fetch(url), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 }
 
 function reloadAll() { loadBackground(); loadHitokoto(); }
-function openSource() { if(currentBgUrl && !currentBgUrl.startsWith(BG_DIR) && !currentBgUrl.startsWith('data:')) window.open(currentBgUrl, '_blank', 'noopener'); }
+function openSource() { if(currentBgUrl && !currentBgUrl.startsWith(LOCAL_DIR) && !currentBgUrl.startsWith('data:')) window.open(currentBgUrl, '_blank', 'noopener'); }
 function goHome() { location.href='/'; }
 function goBack() { document.referrer ? history.back() : location.href='/'; }
 function toggleLang() { applyLang(currentLang==='zh'?'en':'zh'); }
@@ -453,13 +431,13 @@ document.addEventListener('mousemove', e => {
     document.getElementById('glow').style.top = e.clientY+'px';
 });
 
-/* ===== JS 驱动的 404 浮动动画 ===== */
+/* ===== 404 浮动动画 ===== */
 (function() {
     const errorEl = document.getElementById('errorCode');
     let startTime = performance.now();
     function floatLoop(time) {
         const elapsed = time - startTime;
-        const y = Math.sin(elapsed / 642) * 7;
+        const y = Math.sin(elapsed / 636) * 7;
         errorEl.style.transform = `translateY(${y}px)`;
         requestAnimationFrame(floatLoop);
     }
@@ -468,7 +446,7 @@ document.addEventListener('mousemove', e => {
 
 applyLang(currentLang);
 loadBackground();
-setInterval(loadHitokoto, 7300);
+setInterval(loadHitokoto, 7080);
 </script>
 </body>
 </html>
