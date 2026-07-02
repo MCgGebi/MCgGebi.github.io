@@ -80,7 +80,7 @@
             height: 34px;
             max-width: 280px;
             width: 100%;
-            transition: border-color .2;
+            transition: border-color .2s;
         }
         .search-box:focus-within {
             border-color: var(--accent);
@@ -118,7 +118,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 13px;
-            transition: all .2;
+            transition: all .2s;
             white-space: nowrap;
             text-decoration: none;
         }
@@ -141,7 +141,7 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            transition: all .2;
+            transition: all .2s;
         }
         .nav-menu-toggle:hover {
             background: rgba(255,255,255,.08);
@@ -160,12 +160,12 @@
             overflow: hidden;
             max-height: 0;
             opacity: 0;
-            transition: max-height .2 ease, opacity .15 ease;
+            transition: max-height .2s ease, opacity .15s ease;
             pointer-events: none;
             z-index: 102;
         }
         .nav-dropdown.open {
-            max-height: 470px;
+            max-height: 460px;
             opacity: 1;
             pointer-events: auto;
         }
@@ -190,7 +190,7 @@
         }
 
         /* 响应式切换 */
-        @media (max-width: 920px) {
+        @media (max-width: 940px) {
             .nav-buttons {
                 display: none;
             }
@@ -198,11 +198,11 @@
                 display: flex;
             }
             .search-box {
-                max-width: 155px;
+                max-width: 145px;
             }
         }
 
-        @media (min-width: 921px) {
+        @media (min-width: 941px) {
             .nav-menu-toggle {
                 display: none !important;
             }
@@ -215,7 +215,7 @@
         .main-content {
             padding: 20px;
             flex: 1;
-            max-width: 1520px;
+            max-width: 1540px;
             margin: 0 auto;
             width: 100%;
         }
@@ -227,7 +227,7 @@
             border-radius: 8px;
             margin-bottom: 16px;
             overflow: hidden;
-            transition: border-color .2;
+            transition: border-color .2s;
         }
         .category-card.open {
             border-color: var(--card-open-border);
@@ -241,7 +241,7 @@
             cursor: pointer;
             user-select: none;
             background: var(--card-header-bg);
-            transition: background .15;
+            transition: background .15s;
         }
         .category-header:hover {
             background: rgba(255,255,255,.04);
@@ -250,7 +250,7 @@
         .category-arrow {
             font-size: 12px;
             color: #666;
-            transition: transform .25;
+            transition: transform .25s;
             width: 14px;
             text-align: center;
         }
@@ -290,24 +290,24 @@
         .category-body {
             max-height: 0;
             overflow: hidden;
-            transition: max-height .55 cubic-bezier(0.23, 1, 0.72, 1), padding .4 ease;
+            transition: max-height .58s cubic-bezier(0.215, 0.61, 0.355, 1), padding .38s ease;
             padding: 0 16px;
         }
         .category-card.open .category-body {
-            max-height: 7500px;
+            max-height: 8500px;
             padding: 12px 16px 16px;
         }
 
         /* ===== 链接卡片网格 ===== */
         .link-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
             gap: 12px;
         }
 
         .link-card {
-            background: rgba(255,255,255,.04);
-            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.065);
             border-radius: 6px;
             padding: 14px;
             text-decoration: none;
@@ -315,11 +315,12 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            transition: all .2;
+            transition: all .2s;
             cursor: pointer;
+            position: relative;
         }
         .link-card:hover {
-            background: rgba(255,255,255,.08);
+            background: rgba(255,255,255,.085);
             border-color: var(--accent);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,.3);
@@ -354,12 +355,12 @@
             font-size: 11px;
             color: var(--accent);
             word-break: break-all;
-            opacity: .75;
+            opacity: .78;
         }
 
         .link-card.placeholder {
             border: 2px dashed #555;
-            background: rgba(255,255,255,0.015);
+            background: rgba(255,255,255,0.012);
             cursor: default;
             pointer-events: none;
         }
@@ -389,46 +390,40 @@
             display: none !important;
         }
 
-        /* 移动端卡片折叠（仅移动端，且仅在完整模式下生效） */
-        @media (max-width: 780px) {
-            .link-card {
-                padding: 10px 12px;
-                gap: 4px;
-                cursor: pointer;
-                position: relative;
-            }
+        /* 移动端：展开指示器 */
+        .expand-indicator {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            font-size: 10px;
+            color: #666;
+            transition: transform .2s;
+            pointer-events: auto; /* 确保可点击 */
+            z-index: 2;
+        }
+        .link-card.expanded .expand-indicator {
+            transform: rotate(180deg);
+        }
+
+        /* 移动端：URL 默认隐藏，展开后显示 */
+        @media (max-width: 790px) {
             .link-card .link-url {
                 display: none;
             }
             .link-card.expanded .link-url {
                 display: block;
             }
-            .link-card .expand-indicator {
-                position: absolute;
-                right: 12px;
-                top: 12px;
-                font-size: 10px;
-                color: #666;
-                transition: transform .2;
-            }
-            .link-card.expanded .expand-indicator {
-                transform: rotate(180deg);
-            }
-            /* 精简模式下隐藏指示器 */
-            .mode-compact .link-card .expand-indicator {
-                display: none !important;
-            }
         }
 
         /* ===== 无结果提示 ===== */
         .no-results {
             text-align: center;
-            padding: 70px 20px;
+            padding: 76px 20px;
             color: #888;
             font-size: 15px;
         }
         .no-results .big-icon {
-            font-size: 64px;
+            font-size: 66px;
             margin-bottom: 12px;
         }
 
@@ -451,7 +446,7 @@
         }
 
         /* ===== 响应式 ===== */
-        @media (max-width: 670px) {
+        @media (max-width: 690px) {
             .navbar {
                 padding: 0 10px;
                 gap: 6px;
@@ -460,7 +455,7 @@
                 font-size: 14px;
             }
             .search-box {
-                max-width: 115px;
+                max-width: 105px;
             }
             .main-content {
                 padding: 12px;
@@ -499,14 +494,14 @@
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,.65);
-            z-index: 199;
+            background: rgba(0,0,0,.63);
+            z-index: 299;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             visibility: hidden;
-            transition: opacity .3, visibility .3;
+            transition: opacity .3s, visibility .3s;
         }
         .modal-overlay.show {
             opacity: 1;
@@ -518,28 +513,28 @@
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 24px 28px;
-            max-width: 440px;
-            width: 92%;
-            max-height: 80vh;
+            max-width: 455px;
+            width: 94%;
+            max-height: 84vh;
             overflow-y: auto;
-            transform: scale(.88) translateY(20px);
-            transition: transform .35 cubic-bezier(0.175, 0.885, 0.335, 1.075);
+            transform: scale(.86) translateY(22px);
+            transition: transform .37s cubic-bezier(0.165, 0.855, 0.345, 1.095);
         }
         .modal-overlay.show .modal {
             transform: scale(1) translateY(0);
         }
 
         .modal h2 {
-            font-size: 19px;
+            font-size: 20px;
             color: #eee;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .modal .setting-group {
-            margin-bottom: 18px;
+            margin-bottom: 20px;
         }
         .modal .setting-label {
             font-size: 13px;
@@ -561,16 +556,10 @@
             padding: 4px 10px;
             border: 1px solid var(--border);
             border-radius: 4px;
-            transition: all .2;
+            transition: all .2s;
         }
         .modal .setting-options label:hover {
             border-color: var(--accent);
-        }
-        .modal .setting-options input[type="radio"]:checked + span {
-            color: var(--accent);
-        }
-        .modal .setting-options input[type="radio"]:checked ~ span {
-            color: var(--accent);
         }
         .modal .setting-options label:has(input:checked) {
             border-color: var(--accent);
@@ -578,19 +567,19 @@
         }
 
         .modal .btn-close {
-            margin-top: 12px;
+            margin-top: 14px;
             background: var(--accent);
             color: #fff;
             border: none;
-            padding: 8px 22px;
+            padding: 8px 24px;
             border-radius: 5px;
             font-size: 13px;
             cursor: pointer;
-            transition: opacity .2;
+            transition: opacity .2s;
             float: right;
         }
         .modal .btn-close:hover {
-            opacity: .82;
+            opacity: .81;
         }
         .modal::after {
             content: '';
@@ -602,7 +591,7 @@
 <body>
 
 <nav class="navbar">
-    <div class="nav-brand">🧭 <span id="brandText">导航主页</span> <span class="version">v2.1</span></div>
+    <div class="nav-brand">🧭 <span id="brandText">导航主页</span> <span class="version">v2.2</span></div>
     <div class="search-box">
         <span class="search-icon">🔍</span>
         <input type="text" id="searchInput" placeholder="" autocomplete="off">
@@ -612,7 +601,7 @@
     <!-- PC端按钮组 -->
     <div class="nav-buttons">
         <a href="https://github.com/mcggebi/mcggebi.github.io" target="_blank" rel="noopener noreferrer" id="navGithub">GitHub</a>
-        <button id="navAbout">关于</button>
+        <button id="navAbout">About</button>
         <button id="navRefresh">刷新</button>
         <button id="navSettings">设置</button>
     </div>
@@ -681,17 +670,15 @@
             statLinksLabel: '共',
             statLinksUnit: '个链接',
             statCatsUnit: '个分类',
-            aboutTitle: '🧭 导航主页 v2.1',
-            aboutContent: '基于折叠卡片框架，支持外部数据、搜索、多语言、精简/完整模式。\n点击分类标题展开/折叠。\n移动端可点击链接卡片查看更多信息。',
+            aboutTitle: '🧭 导航主页 v2.2',
+            aboutContent: '折叠卡片框架 · 外部数据 · 搜索 · 多语言 · 精简/完整模式\n点击分类标题展开/折叠\n移动端点击 ▼ 展开链接详情，点击卡片主体跳转',
             addHint: '💡 按照指南添加真实卡片',
             modalTitle: '设置',
             langLabel: '语言 / Language',
             cardModeLabel: '卡片信息模式',
             modeCompact: '精简',
             modeFull: '完整',
-            settingsClose: '✔ 关闭',
-            compactDesc: '仅显示标题和图标',
-            fullDesc: '显示完整信息'
+            settingsClose: '✔ 关闭'
         },
         en: {
             brand: 'Navigation Hub',
@@ -704,22 +691,20 @@
             statLinksLabel: 'Total',
             statLinksUnit: 'links',
             statCatsUnit: 'categories',
-            aboutTitle: '🧭 Navigation Hub v2.1',
-            aboutContent: 'Collapsible card framework with external data, search, multilingual, compact/full mode.\nClick category header to expand/collapse.\nOn mobile, tap a link card to see more info.',
+            aboutTitle: '🧭 Navigation Hub v2.2',
+            aboutContent: 'Collapsible cards · External data · Search · Multilingual · Compact/Full mode\nClick category header to expand/collapse\nOn mobile, tap ▼ to expand link details, tap card body to navigate',
             addHint: '💡 Follow the guide to add real cards',
             modalTitle: 'Settings',
             langLabel: 'Language / 语言',
             cardModeLabel: 'Card Display Mode',
             modeCompact: 'Compact',
             modeFull: 'Full',
-            settingsClose: '✔ Close',
-            compactDesc: 'Show title and icon only',
-            fullDesc: 'Show full information'
+            settingsClose: '✔ Close'
         }
     };
 
     let currentLang = localStorage.getItem('preferred_lang') || 'zh';
-    let currentCardMode = localStorage.getItem('card_mode') || 'full'; // 'compact' or 'full'
+    let currentCardMode = localStorage.getItem('card_mode') || 'full';
 
     function applyLanguage(lang) {
         currentLang = lang;
@@ -740,7 +725,6 @@
         document.getElementById('statLinksUnit').textContent = t.statLinksUnit;
         document.getElementById('statCatsUnit').textContent = t.statCatsUnit;
 
-        // 设置模态框内的文本
         document.getElementById('modalTitle').textContent = t.modalTitle;
         document.getElementById('langLabel').textContent = t.langLabel;
         document.getElementById('cardModeLabel').textContent = t.cardModeLabel;
@@ -748,17 +732,15 @@
         document.getElementById('modeFull').textContent = t.modeFull;
         document.getElementById('settingsClose').textContent = t.settingsClose;
 
-        // 同步 radio 选中状态
         document.querySelector('input[name="lang"][value="' + lang + '"]').checked = true;
         document.querySelector('input[name="cardMode"][value="' + currentCardMode + '"]').checked = true;
 
-        // 重新渲染卡片
         const filterText = document.getElementById('searchInput').value;
         const data = window.currentData || PLACEHOLDER_CATEGORIES;
         renderCategories(data, filterText);
     }
 
-    // 语言切换监听（设置内）
+    // 语言切换监听
     document.querySelectorAll('input[name="lang"]').forEach(el => {
         el.addEventListener('change', function() {
             if (this.checked) {
@@ -774,9 +756,7 @@
             if (this.checked) {
                 currentCardMode = this.value;
                 localStorage.setItem('card_mode', this.value);
-                // 应用模式到 body
                 document.body.classList.toggle('mode-compact', currentCardMode === 'compact');
-                // 重新渲染卡片（不需要重新获取数据，只改变显示）
                 const filterText = document.getElementById('searchInput').value;
                 const data = window.currentData || PLACEHOLDER_CATEGORIES;
                 renderCategories(data, filterText);
@@ -886,7 +866,6 @@
                 const urlHtml = isPlaceholder ? '' : `<div class="link-url">${item.url}</div>`;
                 const expandIndicator = `<span class="expand-indicator">▼</span>`;
 
-                // 精简模式下不显示 desc 和 url（CSS 已处理），但仍保留结构以便切换
                 linksHtml += `
                     <a href="${item.url}" target="${isPlaceholder ? '_self' : '_blank'}" rel="noopener noreferrer" 
                        class="link-card ${isPlaceholder ? 'placeholder' : ''}">
@@ -918,13 +897,16 @@
         document.getElementById('totalCategories').textContent = visibleCategories;
         noResults.classList.toggle('hidden', !(visibleCategories === 0 && lowerFilter));
 
-        // 移动端链接卡片点击展开（仅在完整模式下且非紧凑）
-        if (window.innerWidth <= 780 && !isCompact) {
-            document.querySelectorAll('.link-card').forEach(el => {
+        // 移动端：点击展开指示器切换详情，不跳转；卡片主体正常跳转
+        if (window.innerWidth <= 790 && !isCompact) {
+            document.querySelectorAll('.link-card .expand-indicator').forEach(el => {
                 el.addEventListener('click', function(e) {
-                    if (this.classList.contains('placeholder')) return;
-                    this.classList.toggle('expanded');
+                    e.stopPropagation();
                     e.preventDefault();
+                    const card = this.closest('.link-card');
+                    if (card && !card.classList.contains('placeholder')) {
+                        card.classList.toggle('expanded');
+                    }
                 });
             });
         }
@@ -1032,17 +1014,12 @@
     // 初始化
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
-        // 应用保存的语言和模式
         applyLanguage(currentLang);
-        // 卡片模式应用到 body
         document.body.classList.toggle('mode-compact', currentCardMode === 'compact');
-        // 设置 radio 初始状态
         document.querySelector('input[name="cardMode"][value="' + currentCardMode + '"]').checked = true;
 
-        // 渲染占位
         renderCategories(PLACEHOLDER_CATEGORIES, '');
         updateStats(PLACEHOLDER_CATEGORIES);
-        // 加载外部数据
         loadRealData();
     });
 </script>
