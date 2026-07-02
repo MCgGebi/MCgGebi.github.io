@@ -270,8 +270,7 @@ function showTimeoutNotice() {
     timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 1500);
 }
 
-/* ===== 🆕 图片源：loliapi + nekos.life + 本地 404.png ===== */
-// 🆕 改用 assets 目录
+/* ===== 图片源 ===== */
 const LOCAL_BG = './assets/404.png';
 
 const IMG_SOURCES = [
@@ -286,12 +285,6 @@ const IMG_SOURCES = [
         label: 'nekos.life',
         url: () => 'https://nekos.life/api/v2/img/wallpaper',
         parse: (d) => d?.url || null,
-    },
-    {
-        name: 'local',
-        label: 'local:404.png',
-        url: () => null,
-        parse: () => LOCAL_BG,
     }
 ];
 
@@ -299,56 +292,41 @@ function updateSourceIndicator(label) {
     document.getElementById('sourceIndicator').textContent = `src: ${label}`;
 }
 
-/* 每次刷新：loliapi / nekos.life 随机首选，本地固定第三 */
-function buildSourceOrder() {
-    const mains = [0, 1];
-    const first = mains[Math.floor(Math.random() * mains.length)];
-    return [first, ...mains.filter(i => i !== first), 2];
+/* ===== 🚀 核心异步逻辑 ===== */
+
+/**
+ * 异步预加载单张图片（不阻塞主线程）
+ */
+function preloadImage(url, label) {
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => {
+        const bg = document.getElementById('bgImage');
+        bg.style.backgroundImage = `url(${url})`;
+        currentBgUrl = url;
+        updateSourceIndicator(label);
+    };
+    img.onerror = () => {
+        // 单张图失败不影响整体
+    };
+    img.src = url;
 }
 
-function loadImageToBg(imgUrl, srcLabel, needCORS) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        if (needCORS) img.crossOrigin = 'anonymous';
-        img.referrerPolicy = 'no-referrer';
-        img.onload = () => {
-            const bg = document.getElementById('bgImage');
-            bg.style.backgroundImage = `url(${imgUrl})`;
-            currentBgUrl = imgUrl;
-            bg.classList.add('loaded');
-            updateSourceIndicator(srcLabel);
-            resolve();
-        };
-        img.onerror = () => reject(new Error('img_load_fail'));
-        img.src = imgUrl;
-    });
-}
-
+/**
+ * 异步尝试远程源（竞争模式）
+ */
 function trySources(order, idx) {
     if (idx >= order.length) {
-        // 所有源都失败，显示纯色背景
-        document.getElementById('bgImage').style.backgroundImage = 'none';
-        updateSourceIndicator('---');
+        // 两个远程都失败，fallback 已经在 loadBackground 里准备好了
         return;
     }
     const src = IMG_SOURCES[order[idx]];
-    if (src.name === 'local') {
-        loadImageToBg(src.parse(), src.label, false).catch(() => {
-            // 本地图片也加载失败（路径错误等），显示纯色
-            document.getElementById('bgImage').style.backgroundImage = 'none';
-            updateSourceIndicator('---');
-        });
-        return;
-    }
     fetch(src.url())
         .then(r => r.json())
         .then(d => {
             const imgUrl = src.parse(d);
             if (!imgUrl) throw new Error('parse_null');
-            loadImageToBg(imgUrl, src.label, false).catch(() => {
-                if (idx < order.length - 1) showTimeoutNotice();
-                trySources(order, idx + 1);
-            });
+            preloadImage(imgUrl, src.label);
         })
         .catch(() => {
             if (idx < order.length - 1) showTimeoutNotice();
@@ -356,18 +334,31 @@ function trySources(order, idx) {
         });
 }
 
+/**
+ * 🚀 主入口：动画永远不等待图片
+ */
 function loadBackground() {
     const bg = document.getElementById('bgImage');
     bg.classList.remove('loaded');
     updateSourceIndicator('...');
 
-    // 🆕 先铺本地 404.png 打底
-    bg.style.backgroundImage = `url(${LOCAL_BG})`;
-    currentBgUrl = LOCAL_BG;
-    updateSourceIndicator('local:404.png');
+    // ✅ 1. 动画立刻开始（不等待任何图片）
+    requestAnimationFrame(() => {
+        bg.classList.add('loaded');
+    });
 
+    // ✅ 2. 本地图：异步预加载（不阻塞）
+    preloadImage(LOCAL_BG, 'local:404.png');
+
+    // ✅ 3. 远程图：异步竞争
     const order = buildSourceOrder();
     trySources(order, 0);
+}
+
+function buildSourceOrder() {
+    const mains = [0, 1];
+    const first = mains[Math.floor(Math.random() * mains.length)];
+    return [first, ...mains.filter(i => i !== first)];
 }
 
 function fetchWithTimeout(url, ms = 3000) {
