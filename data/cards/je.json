@@ -1,0 +1,12 @@
+{
+  "name": "JAVA Edition",
+  "icon": "https://assets.mcasset.cloud/1.21.6/assets/icons/icon_32x32.png",
+  "items": [
+    {
+      "title": "Dialog Editor",
+      "desc": "",
+      "url": "./tool/java/dialogeditor",
+      "icon": "https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/dialog/warning_button.png"
+    }
+  ]
+}
