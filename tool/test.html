@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 测试</title>
+    <style>
+        body {
+            margin: 0; min-height: 100vh;
+            background: #1a1a1a;
+            display: flex; align-items: center; justify-content: center;
+            font-family: sans-serif;
+        }
+        .error-code {
+            font-size: clamp(72px,14vw,110px);
+            font-weight: 900;
+            color: #3b8526;
+            animation: float 4 ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,100%{transform:translateY(0)}
+            50%{transform:translateY(-6px)}
+        }
+        .quote {
+            color: #fff;
+            opacity: 0;
+            transition: opacity 0.6;
+        }
+        .quote.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div style="text-align:center;">
+        <div class="error-code">404</div>
+        <div class="quote" id="testQuote">加载中</div>
+    </div>
+
+    <script>
+        // 动画测试：3秒后显示文字
+        setTimeout(() => {
+            document.getElementById('testQuote').classList.add('show');
+        }, 500);
+    </script>
+</body>
+</html>
