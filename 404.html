@@ -270,8 +270,9 @@ function showTimeoutNotice() {
     timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 1500);
 }
 
-/* ===== 图片源：loliapi + nekos.life + 本地 404.png ===== */
-const LOCAL_BG = './data/404.png';
+/* ===== 🆕 图片源：loliapi + nekos.life + 本地 404.png ===== */
+// 🆕 改用 assets 目录，并使用绝对路径，避免 Jekyll 和相对路径问题
+const LOCAL_BG = '/assets/404.png';
 
 const IMG_SOURCES = [
     {
@@ -324,10 +325,16 @@ function loadImageToBg(imgUrl, srcLabel, needCORS) {
 }
 
 function trySources(order, idx) {
-    if (idx >= order.length) return;
+    if (idx >= order.length) {
+        // 所有源都失败，显示纯色背景
+        document.getElementById('bgImage').style.backgroundImage = 'none';
+        updateSourceIndicator('---');
+        return;
+    }
     const src = IMG_SOURCES[order[idx]];
     if (src.name === 'local') {
         loadImageToBg(src.parse(), src.label, false).catch(() => {
+            // 本地图片也加载失败（路径错误等），显示纯色
             document.getElementById('bgImage').style.backgroundImage = 'none';
             updateSourceIndicator('---');
         });
@@ -354,6 +361,7 @@ function loadBackground() {
     bg.classList.remove('loaded');
     updateSourceIndicator('...');
 
+    // 🆕 先铺本地 404.png 打底
     bg.style.backgroundImage = `url(${LOCAL_BG})`;
     currentBgUrl = LOCAL_BG;
     updateSourceIndicator('local:404.png');
