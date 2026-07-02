@@ -1,24 +1,96 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>Diagnose</title></head>
-<body style="background:#111;color:#0f0;font-family:monospace;padding:20px;">
-<h1>Diagnostic Page</h1>
-<div id="box" style="width:100px;height:100px;background:red;animation:move 2 infinite;"></div>
-<style>
-@keyframes move {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(200px); }
-}
-</style>
-<script>
-console.log('Script running');
-console.log('Animation property:', typeof document.body.style.animation);
-const box = document.getElementById('box');
-console.log('Box computed animation:', getComputedStyle(box).animationName);
-setTimeout(() => {
-  box.style.backgroundColor = 'blue';
-  console.log('Color changed after 1s');
-}, 1000);
-</script>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动画测试</title>
+    <style>
+        /* 强制使用 !important 防止被任何样式覆盖 */
+        #testBox {
+            width: 120px;
+            height: 60px;
+            background: #3b8526;
+            color: white;
+            font: bold 16px/60px sans-serif;
+            text-align: center;
+            border-radius: 8px;
+            margin: 40px auto;
+            animation: moveTest 2 ease-in-out infinite !important;
+        }
+
+        @keyframes moveTest {
+            0%   { transform: translateX(0); }
+            50%  { transform: translateX(200px); }
+            100% { transform: translateX(0); }
+        }
+
+        #status {
+            font-family: monospace;
+            padding: 10px;
+            background: #222;
+            color: #0f0;
+            margin: 20px auto;
+            max-width: 500px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body style="background:#111; text-align:center; padding:20px;">
+    <h1 style="color:#eee;">GH Pages 动画测试</h1>
+
+    <!-- 测试元素 -->
+    <div id="testBox">动画</div>
+
+    <!-- 诊断信息 -->
+    <div id="status">检测中...</div>
+
+    <script>
+        (function(){
+            var box = document.getElementById('testBox');
+            var status = document.getElementById('status');
+            var messages = [];
+
+            // 1. 检查浏览器是否支持 animation
+            messages.push('animation 属性类型: ' + typeof box.style.animation);
+
+            // 2. 获取计算后的动画名称
+            var animName = getComputedStyle(box).animationName;
+            messages.push('计算后的 animationName: "' + animName + '"');
+
+            // 3. 尝试强制设置动画（双重保险）
+            box.style.animation = 'moveTest 2s ease-in-out infinite';
+            var animNameAfter = getComputedStyle(box).animationName;
+            messages.push('强制设置后 animationName: "' + animNameAfter + '"');
+
+            // 4. 检查 @keyframes 是否存在
+            var hasKeyframes = false;
+            for (var sheet of document.styleSheets) {
+                try {
+                    for (var rule of sheet.cssRules) {
+                        if (rule.type === CSSRule.KEYFRAMES_RULE && rule.name === 'moveTest') {
+                            hasKeyframes = true;
+                            break;
+                        }
+                    }
+                } catch(e) {}
+            }
+            messages.push('@keyframes moveTest 存在: ' + hasKeyframes);
+
+            // 5. 检查是否被 !important 覆盖
+            var animProp = getComputedStyle(box).animation;
+            messages.push('完整 animation 属性: "' + animProp + '"');
+
+            // 6. 输出结果
+            status.innerHTML = messages.join('<br>');
+
+            // 7. 如果动画没生效，显示备用提示
+            if (animName === 'none' && animNameAfter === 'none') {
+                status.innerHTML += '<br><br><strong style="color:red;">动画未生效！</strong>';
+                status.innerHTML += '<br>请检查浏览器设置或扩展。';
+            } else {
+                status.innerHTML += '<br><br><strong style="color:green;">动画正常！</strong>';
+            }
+        })();
+    </script>
 </body>
 </html>
