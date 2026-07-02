@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Diagnose</title></head>
+<body style="background:#111;color:#0f0;font-family:monospace;padding:20px;">
+<h1>Diagnostic Page</h1>
+<div id="box" style="width:100px;height:100px;background:red;animation:move 2 infinite;"></div>
+<style>
+@keyframes move {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200px); }
+}
+</style>
+<script>
+console.log('Script running');
+console.log('Animation property:', typeof document.body.style.animation);
+const box = document.getElementById('box');
+console.log('Box computed animation:', getComputedStyle(box).animationName);
+setTimeout(() => {
+  box.style.backgroundColor = 'blue';
+  console.log('Color changed after 1s');
+}, 1000);
+</script>
+</body>
+</html>
