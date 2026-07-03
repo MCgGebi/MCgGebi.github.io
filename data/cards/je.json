@@ -5,7 +5,7 @@
     {
       "title": "Dialog Editor",
       "desc": "",
-      "url": "./tool/java/dialogeditor",
+      "url": "./tool/je/dialogeditor",
       "icon": "https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/dialog/warning_button.png"
     }
   ]
