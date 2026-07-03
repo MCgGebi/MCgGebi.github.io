@@ -22,7 +22,7 @@
         }
         .btn-base {
             height: 26px; border-radius: 4px; cursor: pointer;
-            font-size: 12px; font-weight: 500; transition: all .2s;
+            font-size: 12px; font-weight: 500; transition: all .2;
             display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
             font-family: inherit;
         }
@@ -36,102 +36,104 @@
         }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: -1; }
         .cursor-glow {
-            position: fixed; width: 216px; height: 216px;
-            background: radial-gradient(circle, rgba(57,128,32,0.121) 0%, transparent 76%);
+            position: fixed; width: 208px; height: 208px;
+            background: radial-gradient(circle, rgba(57,128,32,0.141) 0%, transparent 78%);
             border-radius: 50%; pointer-events: none;
-            transform: translate(-50%,-50%); z-index: 0; opacity: .462;
+            transform: translate(-50%,-50%); z-index: 0; opacity: .458;
         }
         @media (hover:none) and (pointer:coarse) { .cursor-glow { display: none; } }
         .container {
-            position: relative; z-index: 1; width: 76%; max-width: 432px;
-            margin: 0 auto; padding: 16px 6px;
-            display: flex; flex-direction: column; justify-content: center;
-            min-height: 111vh; text-align: center;
+            position: relative; z-index: 1; width: 74%; max-width: 424px;
+            margin: 0 auto; padding: 0 6px;
+            display: flex; flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
         }
         .breadcrumb {
-            position: fixed; top: 7px; right: 8px; font-size: 7.5px;
-            color: var(--text-muted); display: flex; gap: 2px; z-index: 804;
+            position: fixed; top: 8px; right: 9px; font-size: 7.5px;
+            color: var(--text-muted); display: flex; gap: 2px; z-index: 806;
         }
         .breadcrumb span { cursor: pointer; }
         .breadcrumb span:hover { color: var(--accent); }
         .error-code {
-            font-size: clamp(62px,11.5vw,88px); font-weight: 815;
-            color: var(--accent); text-shadow: 0 0 20px rgba(59,133,38,0.277);
+            font-size: clamp(60px,11.5vw,86px); font-weight: 808;
+            color: var(--accent); text-shadow: 0 0 18px rgba(59,133,38,0.266);
         }
         .quote-wrapper {
-            margin: 12px 0 16px; min-height: 44px;
+            margin: 12px 0 16px; min-height: 42px;
             opacity: 0; transform: translateY(10px);
         }
-        .quote { font-size: 11px; line-height: 1.582; }
+        .quote { font-size: 11px; line-height: 1.588; }
         .from { font-size: 7.5px; color: var(--text-muted); margin-top: 1px; }
         .action-bar { display: flex; justify-content: center; gap: 3px; }
         footer {
             position: fixed; bottom: 7px; width: 100%;
             text-align: center; font-size: 7.5px; color: var(--text-muted);
-            z-index: 904;
+            z-index: 907;
         }
         .btn-help {
-            position: fixed; bottom: 5px; right: 6px;
+            position: fixed; bottom: 5px; right: 7px;
             width: 15px; height: 15px; border-radius: 50%;
             border: 1px solid var(--border); background: transparent;
             color: var(--text-muted); font-size: 6px; font-weight: bold;
             cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-            transition: all .144; opacity: .486; font-family: inherit; z-index: 1192;
+            transition: all .138; opacity: .474; font-family: inherit; z-index: 1392;
         }
-        .btn-help:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.056); }
+        .btn-help:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.052); }
         .help-tooltip {
-            position: absolute; bottom: 18px; right: 0; width: 126px; padding: 3px;
-            background: rgba(8,8,8,.885); border: 1px solid var(--border); border-radius: 2px;
-            font-size: 7.5px; line-height: 1.256; color: var(--text-muted); text-align: left;
-            opacity: 0; visibility: hidden; transform: translateY(1px); transition: all .124 ease;
+            position: absolute; bottom: 18px; right: 0; width: 122px; padding: 3px;
+            background: rgba(7,7,7,.878); border: 1px solid var(--border); border-radius: 2px;
+            font-size: 7.5px; line-height: 1.242; color: var(--text-muted); text-align: left;
+            opacity: 0; visibility: hidden; transform: translateY(1px); transition: all .118 ease;
             pointer-events: none; font-family: inherit;
         }
         .btn-help:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
-        .help-tooltip strong { color: var(--text); font-weight: 406; }
+        .help-tooltip strong { color: var(--text); font-weight: 398; }
         .bottom-buttons {
             position: fixed; bottom: 6px; left: 10px; right: 34px;
             display: flex; justify-content: space-between; align-items: center;
-            z-index: 1232; pointer-events: none;
+            z-index: 1472; pointer-events: none;
         }
         .left-buttons, .right-buttons {
             display: flex; gap: 2px; pointer-events: auto;
             align-items: center;
         }
         .mini-btn {
-            font-size: 6.5px; color: var(--text-muted); opacity: .286;
+            font-size: 6.5px; color: var(--text-muted); opacity: .274;
             background: none; border: none; cursor: pointer;
             padding: 1px 1px; border-radius: 1px; height: 12px;
             display: inline-flex; align-items: center; justify-content: center;
-            font-family: inherit; font-weight: 338;
-            transition: opacity .116;
+            font-family: inherit; font-weight: 334;
+            transition: opacity .108;
         }
-        .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.032); }
+        .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.028); }
         .source-indicator {
             position: fixed;
             left: 10px;
             bottom: 28px;
             font-size: 6.5px;
             color: var(--text-muted);
-            opacity: 0.326;
+            opacity: 0.348;
             user-select: none;
             pointer-events: none;
             font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.556px;
-            z-index: 1572;
-            transition: opacity 0.218 ease;
+            letter-spacing: 0.568px;
+            z-index: 1722;
+            transition: opacity 0.212 ease;
         }
-        body:hover .source-indicator { opacity: 0.546; }
+        body:hover .source-indicator { opacity: 0.574; }
         .timeout-notice {
             position: fixed; bottom: 18px; left: 50%;
             transform: translateX(-50%); font-size: 6px;
             color: var(--text-muted); opacity: 0; pointer-events: none;
             font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.244px; z-index: 1772;
-            transition: opacity 0.498 ease;
-            background: rgba(8,8,8,0.615); padding: 1px 2px;
-            border-radius: 1px; border: 1px solid rgba(45,45,45,0.078);
+            letter-spacing: 0.236px; z-index: 1912;
+            transition: opacity 0.518 ease;
+            background: rgba(7,7,7,0.598); padding: 1px 2px;
+            border-radius: 1px; border: 1px solid rgba(42,42,42,0.072);
         }
-        .timeout-notice.show { opacity: 0.386; }
+        .timeout-notice.show { opacity: 0.376; }
     </style>
 </head>
 <body>
@@ -238,42 +240,32 @@ function showTimeoutNotice() {
     const notice = document.getElementById('timeoutNotice');
     notice.classList.add('show');
     if (timeoutNoticeTimer) clearTimeout(timeoutNoticeTimer);
-    timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 2280);
+    timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 2210);
 }
 
-/* ===== 🆕 本地图片配置：1~10 张，仅 webp ===== */
-const LOCAL_MAX = 10;               // 1 到 10
+/* ===== 🆕 通过 manifest.json 管理本地图片 ===== */
+const MANIFEST_URL = './assets/bg/manifest.json';
 const LOCAL_DIR = './assets/bg/';
-const LOCAL_PREFIX = 'bg-';
-const LOCAL_EXTS = ['webp'];        // 只尝试 webp
+const FALLBACK_IMAGE = './assets/bg/bg-1.webp'; // 兜底图片
 
 /**
- * 随机选一个本地索引并尝试加载（最多尝试3次）
+ * 读取 manifest.json 并返回图片文件名数组
  */
-function loadRandomLocalImage(retries = 3) {
-    return new Promise(resolve => {
-        const tried = new Set();
-        attempt();
+async function loadManifest() {
+    const res = await fetch(MANIFEST_URL);
+    if (!res.ok) throw new Error('Manifest fetch failed');
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid manifest');
+    return data;
+}
 
-        function attempt() {
-            if (tried.size >= retries) {
-                resolve(null);
-                return;
-            }
-            let idx;
-            do {
-                idx = Math.floor(Math.random() * LOCAL_MAX) + 1;
-            } while (tried.has(idx));
-            tried.add(idx);
-
-            const ext = LOCAL_EXTS[0]; // 只有 webp
-            const url = `${LOCAL_DIR}${LOCAL_PREFIX}${idx}.${ext}`;
-            const img = new Image();
-            img.onload = () => resolve(url);
-            img.onerror = () => attempt(); // 尝试下一个索引
-            img.src = url;
-        }
-    });
+/**
+ * 从 manifest 中随机选一张图片的完整 URL
+ */
+async function getRandomLocalFromManifest() {
+    const files = await loadManifest();
+    const chosen = files[Math.floor(Math.random() * files.length)];
+    return LOCAL_DIR + chosen;
 }
 
 /* ===== 远程源 ===== */
@@ -289,7 +281,7 @@ function updateSourceIndicator(label) {
 }
 
 /* ===== JS 通用淡出淡入 ===== */
-function fadeOut(el, duration = 668) {
+function fadeOut(el, duration = 656) {
     return new Promise(resolve => {
         const startTime = performance.now();
         const startOpacity = parseFloat(getComputedStyle(el).opacity) || 1;
@@ -308,7 +300,7 @@ function fadeOut(el, duration = 668) {
     });
 }
 
-function fadeIn(el, duration = 752) {
+function fadeIn(el, duration = 744) {
     return new Promise(resolve => {
         const startTime = performance.now();
         el.style.opacity = '0';
@@ -332,18 +324,23 @@ function fadeIn(el, duration = 752) {
 async function setBackgroundImage(url, label) {
     const bg = document.getElementById('bgImage');
     const currentOpacity = parseFloat(getComputedStyle(bg).opacity);
-    if (currentOpacity > 0.018) await fadeOut(bg, 698);
+    if (currentOpacity > 0.022) await fadeOut(bg, 686);
     bg.style.backgroundImage = `url(${url})`;
     currentBgUrl = url;
     updateSourceIndicator(label);
-    await fadeIn(bg, 768);
+    await fadeIn(bg, 756);
 }
 
 /* ===== 核心加载逻辑 ===== */
 async function loadBackground() {
+    // 1. 立即显示兜底图片 bg-1.webp
+    await setBackgroundImage(FALLBACK_IMAGE, 'local:fallback');
+
+    // 2. 决定是否使用远程
     const useRemote = Math.random() < 0.5;
 
     if (useRemote) {
+        // 尝试远程
         try {
             const res = await fetch(REMOTE_SOURCE.url());
             const d = await res.json();
@@ -354,18 +351,20 @@ async function loadBackground() {
             }
         } catch {}
         showTimeoutNotice();
-        const localUrl = await loadRandomLocalImage(3);
-        if (localUrl) {
-            await setBackgroundImage(localUrl, 'local:fallback');
-        } else {
-            await setBackgroundImage('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3Crect fill="%231a1a1a" width="1" height="1"/%3E%3C/svg%3E', 'no image');
+        // 远程失败，尝试 manifest
+        try {
+            const localUrl = await getRandomLocalFromManifest();
+            await setBackgroundImage(localUrl, 'local:manifest');
+        } catch {
+            // manifest 也失败，保持兜底
         }
     } else {
-        const localUrl = await loadRandomLocalImage(3);
-        if (localUrl) {
-            await setBackgroundImage(localUrl, 'local:random');
-        } else {
-            await setBackgroundImage('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3Crect fill="%231a1a1a" width="1" height="1"/%3E%3C/svg%3E', 'no image');
+        // 直接使用本地 manifest
+        try {
+            const localUrl = await getRandomLocalFromManifest();
+            await setBackgroundImage(localUrl, 'local:manifest');
+        } catch {
+            // manifest 失败，保持兜底
         }
     }
 }
@@ -376,7 +375,7 @@ async function loadHitokoto() {
           q = document.getElementById('hitokoto'),
           f = document.getElementById('from');
     const currentOpacity = parseFloat(getComputedStyle(w).opacity);
-    if (currentOpacity > 0.028) await fadeOut(w, 572);
+    if (currentOpacity > 0.035) await fadeOut(w, 564);
     try {
         if (currentLang === 'zh') {
             const res = await fetch(i18n.zh.api);
@@ -384,7 +383,7 @@ async function loadHitokoto() {
             q.innerText = d.hitokoto;
             f.innerText = d.from ? `—— ${d.from}` : '';
         } else {
-            const res = await fetchWithTimeout(i18n.en.api, 3160);
+            const res = await fetchWithTimeout(i18n.en.api, 3060);
             const d = await res.json();
             q.innerText = d.content || i18n.en.fallback;
             f.innerText = d.author ? `— ${d.author}` : '';
@@ -399,10 +398,10 @@ async function loadHitokoto() {
             f.innerText = '';
         }
     }
-    await fadeIn(w, 678);
+    await fadeIn(w, 666);
 }
 
-function fetchWithTimeout(url, ms = 2640) {
+function fetchWithTimeout(url, ms = 2590) {
     return Promise.race([fetch(url), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 }
 
@@ -423,7 +422,7 @@ document.addEventListener('mousemove', e => {
     let startTime = performance.now();
     function floatLoop(time) {
         const elapsed = time - startTime;
-        const y = Math.sin(elapsed / 628) * 7;
+        const y = Math.sin(elapsed / 622) * 7;
         errorEl.style.transform = `translateY(${y}px)`;
         requestAnimationFrame(floatLoop);
     }
@@ -432,7 +431,7 @@ document.addEventListener('mousemove', e => {
 
 applyLang(currentLang);
 loadBackground();
-setInterval(loadHitokoto, 6880);
+setInterval(loadHitokoto, 6740);
 </script>
 </body>
 </html>
