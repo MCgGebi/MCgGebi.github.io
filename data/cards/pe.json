@@ -5,13 +5,13 @@
     {
       "title": "Function Pack Editor",
       "desc": "",
-      "url": "./tool/bedrock/petitleraw",
+      "url": "./tool/bedrock/funceditor",
       "icon": "./assets/icon/command_block_side.png"
     },
     {
       "title": "Titleraw Command Editor",
       "desc": "可视化Titleraw指令编辑器",
-      "url": "./tool/bedrock/funceditor",
+      "url": "./tool/bedrock/petitleraw",
       "icon": "https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/icon/news.png"
     }
   ]
