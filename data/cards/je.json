@@ -4,7 +4,7 @@
   "items": [
     {
       "title": "Dialog Editor",
-      "desc": "",
+      "desc": "可视化数据包Dialog编辑器",
       "url": "./tool/je/dialogeditor",
       "icon": "https://assets.mcasset.cloud/1.21.6/assets/minecraft/textures/gui/sprites/dialog/warning_button.png"
     }
