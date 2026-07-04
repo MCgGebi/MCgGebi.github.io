@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>登录 Irminsul</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+    --bg-color: #1a1a1a;
+    --panel: #2b2b2b;
+    --border: #444;
+    --text: #e0e0e0;
+    --accent: #3b8526;
+}
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-color);
+    background-image: url('./assets/bg/bg-1.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+body.bg-fallback {
+    background-image: none;
+}
+
+.login {
+    width: 340px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 26px 24px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+.title img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+.icon-fallback {
+    width: 28px;
+    height: 28px;
+    background: #555;
+    border-radius: 4px;
+}
+
+/* ===== 密码输入框 + 按钮 ===== */
+.input-group {
+    position: relative;
+    margin-bottom: 12px;
+}
+.input-group input {
+    width: 100%;
+    padding: 8px 36px 8px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #222;
+    color: var(--text);
+    font-size: 13px;
+}
+.input-group input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+.toggle-pwd {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+.toggle-pwd:hover {
+    color: var(--accent);
+    background: rgba(59,133,38,.1);
+}
+.toggle-pwd svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+button {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover {
+    opacity: .85;
+}
+
+#msg {
+    margin-top: 10px;
+    font-size: 12px;
+    text-align: center;
+    display: none;
+}
+.msg-error { color: #ff6b6b; }
+.msg-warn  { color: #ffa94d; }
+</style>
+</head>
+
+<body>
+
+<div class="login">
+    <div class="title">
+        <img
+            src="./assets/mg/na/Irminsul.webp"
+            alt=""
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+        >
+        <div class="icon-fallback" style="display:none;"></div>
+        登录 Irminsul
+    </div>
+
+    <div class="input-group">
+        <input id="u" type="text" placeholder="用户名">
+    </div>
+
+    <div class="input-group">
+        <input id="p" type="password" placeholder="密码">
+        <button class="toggle-pwd" onclick="togglePwd()" aria-label="显示或隐藏密码">
+            <!-- 睁眼 -->
+            <svg id="eyeOpen" viewBox="0 0 24 24">
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+            <!-- 闭眼 -->
+            <svg id="eyeClosed" viewBox="0 0 24 24" style="display:none;">
+                <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.78 0-3.47.46-4.93 1.27L7.17 6.97C8.46 6.35 10.07 7 12 7zm-1.07 1.14L13 9.21c.57.25 1.09.59 1.54 1.01l2.17-2.17c-.88-.53-1.84-.94-2.87-1.21L10.93 8.14zM2.01 3.87l2.68 2.68C3.06 7.83 1.77 9.53 1 11.5 2.73 15.89 7 19 12 19c1.98 0 3.88-.47 5.55-1.31l3.43 3.43 1.41-1.41L3.42 2.46 2.01 3.87zm7.5 7.5l2.61 2.61c-.04.01-.08.02-.12.02-1.66 0-3-1.34-3-3z"/>
+            </svg>
+        </button>
+    </div>
+
+    <button onclick="login()">登 录</button>
+    <div id="msg"></div>
+</div>
+
+<script>
+/* 背景兜底 */
+const bgImg = new Image();
+bgImg.src = './assets/bg/bg-1.webp';
+bgImg.onerror = () => document.body.classList.add('bg-fallback');
+
+/* ===== 显示/隐藏密码 ===== */
+function togglePwd() {
+    const pwd = document.getElementById('p');
+    const open = document.getElementById('eyeOpen');
+    const closed = document.getElementById('eyeClosed');
+
+    if (pwd.type === 'password') {
+        pwd.type = 'text';
+        open.style.display = 'none';
+        closed.style.display = 'block';
+    } else {
+        pwd.type = 'password';
+        open.style.display = 'block';
+        closed.style.display = 'none';
+    }
+}
+
+/* ===== 加载账号配置 ===== */
+let auth = null;
+
+fetch('./data/mg/Irminsul.json')
+    .then(r => r.json())
+    .then(data => auth = data)
+    .catch(() => {
+        showMsg('无法加载认证信息', 'warn');
+    });
+
+/* ===== Token ===== */
+function genToken() {
+    const raw = Date.now().toString(36) +
+                Math.random().toString(36).substring(2);
+    return btoa(raw).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16);
+}
+
+/* ===== 登录 ===== */
+function login() {
+    if (!auth) {
+        showMsg('认证信息未就绪', 'warn');
+        return;
+    }
+
+    const u = document.getElementById('u').value.trim();
+    const p = document.getElementById('p').value;
+
+    if (u === auth.user && p === auth.pass) {
+        location.href = './data/mg/na/loading?_=' + genToken();
+    } else {
+        showMsg('用户名或密码错误', 'error');
+    }
+}
+
+/* ===== 提示 ===== */
+function showMsg(text, type) {
+    const el = document.getElementById('msg');
+    el.className = type === 'warn' ? 'msg-warn' : 'msg-error';
+    el.innerText = text;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 1500);
+}
+</script>
+
+</body>
+</html>
