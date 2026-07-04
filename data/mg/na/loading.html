@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Irminsul</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+    --bg-color: #1a1a1a;
+    --panel: #2b2b2b;
+    --border: #444;
+    --text: #e0e0e0;
+    --accent: #3b8526;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg-color);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    width: 600px;
+    min-height: 400px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px;
+}
+
+.header {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+}
+
+.content {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #aaa;
+}
+
+/* 防偷看 */
+.hidden {
+    display: none;
+}
+</style>
+</head>
+
+<body class="hidden">
+
+<div class="container">
+    <div class="header">🌿 Irminsul Terminal</div>
+    <div class="content">
+        <p>主界面内容区域。</p>
+        <p>当前状态：已通过验证。</p>
+        <p>后续内容将在此处渲染。</p>
+        <p>请勿直接访问此路径。</p>
+    </div>
+</div>
+
+<script>
+/* ===== 参数校验 ===== */
+(function () {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('_');
+
+    // 校验规则（必须与登录页一致）
+    function isValidToken(t) {
+        return (
+            t &&
+            t.length === 16 &&
+            /^[a-zA-Z0-9]+$/.test(t)
+        );
+    }
+
+    if (!isValidToken(token)) {
+        // 无提示，直接跳转
+        location.replace('../login.html');
+        return;
+    }
+
+    // 校验通过，显示页面
+    document.body.classList.remove('hidden');
+})();
+</script>
+
+</body>
+</html>
