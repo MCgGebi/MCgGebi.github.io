@@ -69,27 +69,60 @@ body {
 </div>
 
 <script>
-/* ===== 参数校验 ===== */
 (function () {
     const params = new URLSearchParams(location.search);
-    const token = params.get('_');
+    const payload = params.get('_');
 
-    // 校验规则（必须与登录页一致）
-    function isValidToken(t) {
-        return (
-            t &&
-            t.length === 16 &&
-            /^[a-zA-Z0-9]+$/.test(t)
-        );
-    }
-
-    if (!isValidToken(token)) {
-        // 无提示，直接跳转
-        location.replace('/login');
+    // 基础格式校验
+    if (!payload) {
+        location.replace('/login.html');
         return;
     }
 
-    // 校验通过，显示页面
+    let token, timestamp;
+
+    try {
+        const decoded = atob(payload);
+        [token, timestamp] = decoded.split('.');
+    } catch (e) {
+        location.replace('/login.html');
+        return;
+    }
+
+    // Token 格式校验
+    if (
+        !token ||
+        !timestamp ||
+        token.length !== 16 ||
+        !/^[a-zA-Z0-9]+$/.test(token)
+    ) {
+        location.replace('/login.html');
+        return;
+    }
+
+    // 时间戳校验（60秒有效）
+    const now = Date.now();
+    const ts = Number(timestamp);
+    if (isNaN(ts) || now - ts > 60000) {
+        sessionStorage.clear();
+        location.replace('/login.html');
+        return;
+    }
+
+    // sessionStorage 校验（一次性）
+    const storedToken = sessionStorage.getItem('irminsul_token');
+    const storedTs = sessionStorage.getItem('irminsul_ts');
+
+    if (
+        storedToken !== token ||
+        storedTs !== timestamp
+    ) {
+        sessionStorage.clear();
+        location.replace('/login.html');
+        return;
+    }
+
+    // ✅ 校验通过
     document.body.classList.remove('hidden');
 })();
 </script>
