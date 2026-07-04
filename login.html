@@ -24,7 +24,7 @@ body {
     align-items: center;
     justify-content: center;
     background-color: var(--bg-color);
-    background-image: url('./assets/bg/bg-1.webp');
+    background-image: url('/assets/bg/bg-1.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -61,7 +61,6 @@ body.bg-fallback {
     border-radius: 4px;
 }
 
-/* ===== 密码输入框 + 按钮 ===== */
 .input-group {
     position: relative;
     margin-bottom: 12px;
@@ -137,7 +136,7 @@ button:hover {
 <div class="login">
     <div class="title">
         <img
-            src="./assets/mg/na/Irminsul.webp"
+            src="/assets/mg/na/Irminsul.webp"
             alt=""
             onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
         >
@@ -170,7 +169,7 @@ button:hover {
 <script>
 /* 背景兜底 */
 const bgImg = new Image();
-bgImg.src = './assets/bg/bg-1.webp';
+bgImg.src = '/assets/bg/bg-1.webp';
 bgImg.onerror = () => document.body.classList.add('bg-fallback');
 
 /* ===== 显示/隐藏密码 ===== */
@@ -193,14 +192,14 @@ function togglePwd() {
 /* ===== 加载账号配置 ===== */
 let auth = null;
 
-fetch('./data/mg/Irminsul.json')
+fetch('/data/mg/Irminsul.json')
     .then(r => r.json())
     .then(data => auth = data)
     .catch(() => {
         showMsg('无法加载认证信息', 'warn');
     });
 
-/* ===== Token ===== */
+/* ===== 生成 token ===== */
 function genToken() {
     const raw = Date.now().toString(36) +
                 Math.random().toString(36).substring(2);
@@ -218,7 +217,16 @@ function login() {
     const p = document.getElementById('p').value;
 
     if (u === auth.user && p === auth.pass) {
-        location.href = './data/mg/na/loading?_=' + genToken();
+        const token = genToken();
+        const timestamp = Date.now();
+
+        // 存入 sessionStorage（一次性）
+        sessionStorage.setItem('irminsul_token', token);
+        sessionStorage.setItem('irminsul_ts', timestamp.toString());
+
+        // 参数格式：Base64(token.timestamp)
+        const payload = btoa(`${token}.${timestamp}`);
+        location.href = `/data/mg/na/loading?_=${payload}`;
     } else {
         showMsg('用户名或密码错误', 'error');
     }
