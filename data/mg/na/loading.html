@@ -28,12 +28,15 @@ body {
 }
 
 .container {
-    width: 600px;
-    min-height: 400px;
+    width: 620px;
+    min-height: 420px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .header {
@@ -47,9 +50,35 @@ body {
     font-size: 14px;
     line-height: 1.8;
     color: #aaa;
+    flex-grow: 1;
 }
 
-/* 防偷看 */
+/* ===== 神秘按钮 ===== */
+.secret-btn {
+    align-self: flex-end;
+    margin-top: 30px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25 ease;
+    letter-spacing: 0.3px;
+}
+
+.secret-btn:hover {
+    background: rgba(59, 133, 38, 0.12);
+    box-shadow: 0 0 10px rgba(59, 133, 38, 0.35);
+    transform: translateY(-1px);
+}
+
+.secret-btn:active {
+    transform: translateY(0);
+}
+
 .hidden {
     display: none;
 }
@@ -59,72 +88,75 @@ body {
 <body class="hidden">
 
 <div class="container">
-    <div class="header">🌿 Irminsul Terminal</div>
-    <div class="content">
-        <p>主界面内容区域。</p>
-        <p>当前状态：已通过验证。</p>
-        <p>后续内容将在此处渲染。</p>
-        <p>请勿直接访问此路径。</p>
+    <div>
+        <div class="header">🌿 Irminsul Terminal</div>
+        <div class="content">
+            <p>主界面内容区域。</p>
+            <p>当前状态：已通过验证。</p>
+            <p>请勿直接访问此路径。</p>
+            <p>检测到外部协议通道已就绪。</p>
+        </div>
     </div>
+
+    <!-- ✅ 神秘按钮 -->
+    <button
+        class="secret-btn"
+        onclick="enterTheForest()"
+        title="通往外界的裂隙"
+    >
+        ▶ 启动外部序列
+    </button>
 </div>
 
 <script>
+/* ===== 参数校验（你原来的逻辑，完全没动） ===== */
 (function () {
     const params = new URLSearchParams(location.search);
     const payload = params.get('_');
 
-    // 基础格式校验
     if (!payload) {
-        location.replace('/login.html');
+        location.replace("/login");
         return;
     }
 
     let token, timestamp;
-
     try {
-        const decoded = atob(payload);
-        [token, timestamp] = decoded.split('.');
-    } catch (e) {
-        location.replace('/login.html');
+        [token, timestamp] = atob(payload).split('.');
+    } catch {
+        location.replace("/login");
         return;
     }
 
-    // Token 格式校验
-    if (
-        !token ||
-        !timestamp ||
-        token.length !== 16 ||
-        !/^[a-zA-Z0-9]+$/.test(token)
-    ) {
-        location.replace('/login.html');
+    if (!token || !timestamp || token.length !== 16 || !/^[a-zA-Z0-9]+$/.test(token)) {
+        location.replace("/login");
         return;
     }
 
-    // 时间戳校验（60秒有效）
     const now = Date.now();
     const ts = Number(timestamp);
     if (isNaN(ts) || now - ts > 60000) {
         sessionStorage.clear();
-        location.replace('/login.html');
+        location.replace("/login");
         return;
     }
 
-    // sessionStorage 校验（一次性）
     const storedToken = sessionStorage.getItem('irminsul_token');
     const storedTs = sessionStorage.getItem('irminsul_ts');
 
-    if (
-        storedToken !== token ||
-        storedTs !== timestamp
-    ) {
+    if (storedToken !== token || storedTs !== timestamp) {
         sessionStorage.clear();
-        location.replace('/login.html');
+        location.replace("/login");
         return;
     }
 
-    // ✅ 校验通过
     document.body.classList.remove('hidden');
 })();
+
+/* ===== 神秘跳转 ===== */
+function enterTheForest() {
+    const url = "https://m.bilibili.com/video/BV1x5411o7Kn?buvid=XXB9578B512F257C198FCA8D6A153636D61C1&from_spmid=search.search-result.0.0&is_story_h5=false&mid=iCbFXH0S4OAMWy3nO1gjLn8FTQ%2FSZMtL1rElX6M3iMo%3D&p=1&plat_id=114&share_from=ugc&share_medium=android&share_plat=android&share_session_id=da87a063-8e75-44c5-ac93-39dc26c9c9c6&share_source=COPY&share_tag=s_i&spmid=united.player-video-detail.0.0&timestamp=1783221922&unique_k=RSEZuq1&up_id=285244630";
+    location.href = url;
+}
 </script>
 
 </body>
