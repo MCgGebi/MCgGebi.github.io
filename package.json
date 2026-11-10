@@ -1,0 +1,23 @@
+{
+  "name": "dbp-hub",
+  "version": "0.9.32",
+  "description": "DBP-HUB · Minecraft 工具站，插件式懒加载架构（JS / HTML / Markdown），亮色/暗色/跟随系统三模主题",
+  "scripts": {
+    "verify": "node test/verify.js",
+    "e2e": "node test/e2e-real.js",
+    "smoke": "node test/smoke.js",
+    "regress": "node test/regress.js",
+    "prove": "node test/prove-dbp.js",
+    "ui": "node test/diag-ui.js",
+    "fatal": "node test/fatal-boot.js",
+    "link": "node test/link-type.js",
+    "test": "node test/verify.js && node test/e2e-real.js && node test/smoke.js && node test/regress.js && node test/prove-dbp.js && node test/diag-ui.js && node test/fatal-boot.js && node test/link-type.js && node test/settings.js && node test/easter-theme-drag.js && node test/home-v2.js && node test/fake-crash.js && node test/announcement.js && node test/ann-delay.js && node test/ann-height-page.js && node test/iframe-edge.js && node test/iframe-real.js && node test/iframe-follow.js && node test/inline-fixed.js && node test/error-log-404.js && node test/notfound-404.js && node test/quiet-404-wallpaper.js && node test/wallpaper-retry.js && node test/plugin-inner-404.js",
+    "start": "python3 -m http.server 8000",
+    "settings": "node test/settings.js",
+    "egg": "node test/easter-theme-drag.js",
+    "test:new": "node test/error-log-404.js"
+  },
+  "devDependencies": {
+    "jsdom": "^22.1.0"
+  }
+}

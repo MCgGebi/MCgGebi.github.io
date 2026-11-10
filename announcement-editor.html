@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a1a1a" />
+<title>公告编辑器 · DBP-HUB</title>
+
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  独立工具页：不注册进 plugins.json / 路由 / 任何菜单与设置页。  ║
+  ║  站点内【没有任何入口】，只能直接访问本文件 URL 打开。          ║
+  ║  输出目标：./js/announcements.json                              ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+
+<!-- 早期主题应用（与 index.html 完全一致，防闪烁、跟随系统、同步自定义强调色） -->
+<script>
+(function () {
+  var stored = null;
+  try { stored = localStorage.getItem('dbp-theme'); } catch (e) {}
+  var theme = stored || 'system';
+  function resolve(t) {
+    if (t !== 'system') return t;
+    try {
+      if (window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+    } catch (e) {}
+    return 'dark';
+  }
+  var resolved = resolve(theme);
+  document.documentElement.setAttribute('data-theme', resolved);
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', resolved === 'light' ? '#f5f5f5' : '#1a1a1a');
+  window.__AE_THEME = theme;
+
+  /* 跟随系统：系统主题变化时实时切换 */
+  try {
+    var mq = window.matchMedia('(prefers-color-scheme: light)');
+    var onChange = function () {
+      var cur = window.__AE_THEME;
+      if (cur !== 'system') return;
+      var r = resolve('system');
+      document.documentElement.setAttribute('data-theme', r);
+      if (meta) meta.setAttribute('content', r === 'light' ? '#f5f5f5' : '#1a1a1a');
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  } catch (e) {}
+
+  /* 自定义主题色 */
+  (function () {
+    var DEFAULT = '#3b8526', c = DEFAULT;
+    try { c = localStorage.getItem('dbp-accent') || DEFAULT; } catch (e) {}
+    if (!/^#[0-9a-fA-F]{6}$/.test(c)) c = DEFAULT;
+    var root = document.documentElement, n = parseInt(c.slice(1), 16);
+    var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    var clamp = function (v) { return Math.max(0, Math.min(255, Math.round(v))); };
+    var hex = function (a, bb, cc) {
+      return '#' + [a, bb, cc].map(function (v) { return ('0' + clamp(v).toString(16)).slice(-2); }).join('');
+    };
+    root.style.setProperty('--accent', c);
+    root.style.setProperty('--accent-dark', hex(r - 71, g - 71, b - 71));
+    root.style.setProperty('--accent-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.14)');
+    root.style.setProperty('--accent-glow', 'rgba(' + r + ',' + g + ',' + b + ',0.30)');
+    root.style.setProperty('--accent-soft', 'rgba(' + r + ',' + g + ',' + b + ',0.08)');
+  })();
+})();
+</script>
+
+<link rel="stylesheet" href="./vendor/font-awesome.min.css?v=0.9.32" />
+<link rel="stylesheet" href="./styles/main.css?v=0.9.32" />
+
+<style>
+/* ============================================================
+   公告编辑器 · 复用主页设计令牌（ae- 前缀，不与主站冲突）
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+}
+button, input, textarea, select { font-family: inherit; }
+button { cursor: pointer; }
+
+/* ---------- 顶栏 ---------- */
+.ae-topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--topbar-height);
+  background: var(--nav-bg, var(--panel));
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 16px; z-index: 200;
+}
+.ae-brand { display: flex; align-items: center; gap: 9px; user-select: none; white-space: nowrap; }
+.ae-logo {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark, #2a6a1c));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #fff;
+}
+.ae-name { font-size: 15px; font-weight: 700; }
+.ae-badge {
+  font-size: 10px; background: var(--purple); color: #fff;
+  padding: 2px 6px; border-radius: 3px; font-weight: 400;
+}
+.ae-private {
+  font-size: 10px; color: var(--text-muted);
+  border: 1px dashed var(--border); padding: 2px 7px; border-radius: 4px;
+}
+.ae-spacer { flex: 1; }
+.ae-saved { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+.ae-saved i { color: var(--success); }
+.ae-saved.dirty i { color: var(--warn); }
+
+.ae-menu-wrap { position: relative; display: flex; align-items: center; }
+.ae-menu-btn {
+  width: 34px; height: 34px; border-radius: 4px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--text-muted); font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.ae-menu-btn:hover, .ae-menu-btn.active {
+  color: var(--accent); border-color: var(--accent-dim); background: var(--accent-dim);
+}
+.ae-dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 208px; padding: 6px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.45);
+  z-index: 260;
+  max-height: calc(100vh - 60px); max-height: calc(100dvh - 60px);
+  overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain;
+  opacity: 0; transform: translateY(-8px) scale(.97); pointer-events: none;
+  transition: opacity .18s ease, transform .18s cubic-bezier(.34,1.3,.64,1);
+}
+.ae-dropdown.open { opacity: 1; transform: none; pointer-events: auto; }
+.ae-menu-group {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  color: var(--text-muted); padding: 7px 10px 4px;
+  position: sticky; top: -6px; background: var(--panel-2); z-index: 1;
+}
+.ae-menu-item {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 10px; border: 0; border-radius: 5px;
+  background: transparent; color: var(--text-secondary);
+  font-size: 12.5px; text-align: left;
+}
+.ae-menu-item i { width: 15px; text-align: center; color: var(--text-muted); }
+.ae-menu-item:hover { background: var(--accent-dim); color: var(--text); }
+.ae-menu-item:hover i { color: var(--accent); }
+.ae-menu-item.danger { color: var(--danger); }
+.ae-menu-item.danger i { color: var(--danger); }
+.ae-menu-item.danger:hover { background: rgba(220,53,69,.12); }
+.ae-menu-sep { height: 1px; background: var(--border); margin: 5px 4px; }
+
+/* ---------- 布局 ---------- */
+.ae-layout {
+  position: absolute;
+  top: var(--topbar-height); bottom: 30px; left: 0; right: 0;
+  display: flex; min-height: 0;
+}
+.ae-side {
+  width: 288px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.ae-side-head { padding: 12px 12px 8px; border-bottom: 1px solid var(--border); }
+.ae-side-title { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; font-weight: 700; font-size: 13px; }
+.ae-side-title .ae-count {
+  margin-left: auto; font-size: 10px; font-weight: 600;
+  background: var(--accent-dim); color: var(--accent);
+  padding: 2px 7px; border-radius: 999px;
+}
+.ae-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 30px; padding: 0 11px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--panel-2);
+  color: var(--text-secondary); font-size: 12px;
+  transition: var(--transition);
+}
+.ae-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ae-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ae-btn.primary:hover { background: var(--accent-hover); }
+.ae-btn.danger { color: var(--danger); }
+.ae-btn.danger:hover { border-color: var(--danger); background: rgba(220,53,69,.1); }
+.ae-btn.sm { height: 26px; padding: 0 9px; font-size: 11.5px; }
+.ae-btn.full { width: 100%; }
+.ae-search {
+  width: 100%; height: 30px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg); color: var(--text); font-size: 12px; outline: none;
+}
+.ae-search:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+
+.ae-list { flex: 1; overflow-y: auto; padding: 8px; min-height: 0; }
+.ae-card {
+  padding: 9px 10px; margin-bottom: 7px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--panel-2); cursor: pointer;
+  transition: var(--transition);
+}
+.ae-card:hover { border-color: var(--border-light); transform: translateY(-1px); }
+.ae-card.active { border-color: var(--accent); background: var(--accent-dim); }
+.ae-card-top { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+.ae-card-id {
+  font-size: 10px; font-weight: 700; color: var(--accent);
+  background: var(--accent-dim); padding: 1px 6px; border-radius: 3px;
+}
+.ae-card-date { font-size: 10.5px; color: var(--text-muted); margin-left: auto; }
+.ae-card-title {
+  font-size: 12.5px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ae-card-sub {
+  font-size: 11px; color: var(--text-muted); margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ae-card-tags { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+.ae-chip {
+  font-size: 10px; padding: 1px 7px; border-radius: 999px;
+  border: 1px solid var(--border); color: var(--text-muted);
+}
+.ae-chip.latest { color: var(--success); border-color: var(--success); }
+.ae-chip.bad { color: var(--danger); border-color: var(--danger); }
+.ae-side-foot {
+  padding: 9px 12px; border-top: 1px solid var(--border);
+  font-size: 10.5px; color: var(--text-muted); line-height: 1.6;
+}
+
+/* ---------- 编辑区 ---------- */
+.ae-main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; padding: 18px 20px 30px; }
+.ae-inner { max-width: 1080px; margin: 0 auto; }
+.ae-empty {
+  height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  color: var(--text-muted); text-align: center;
+}
+.ae-empty i { font-size: 40px; opacity: .35; }
+.ae-empty h2 { margin: 0; font-size: 16px; color: var(--text-secondary); font-weight: 600; }
+.ae-empty p { margin: 0; font-size: 12px; line-height: 1.8; }
+
+.ae-editor-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.ae-editor-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.ae-editor-head .ae-id-badge {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  background: var(--accent-dim); padding: 3px 9px; border-radius: 4px;
+}
+.ae-editor-head .ae-spacer { flex: 1; }
+
+.ae-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px; margin-bottom: 14px;
+}
+.ae-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ae-field.wide { grid-column: 1 / -1; }
+.ae-label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.ae-label .req { color: var(--danger); }
+.ae-input, .ae-select, .ae-textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg); color: var(--text); font-size: 12.5px;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.ae-input, .ae-select { height: 32px; padding: 0 10px; }
+.ae-textarea { padding: 10px 12px; resize: vertical; line-height: 1.7; }
+.ae-input:focus, .ae-select:focus, .ae-textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim);
+}
+.ae-input.bad, .ae-textarea.bad { border-color: var(--danger); }
+.ae-hint { font-size: 10.5px; color: var(--text-muted); }
+
+.ae-panel {
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); overflow: hidden;
+}
+.ae-panel-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-bottom: 1px solid var(--border);
+  background: var(--panel-2); font-size: 12px; font-weight: 600;
+}
+.ae-tab {
+  border: 0; background: transparent; color: var(--text-muted);
+  font-size: 11.5px; padding: 4px 9px; border-radius: 4px;
+}
+.ae-tab.on { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+.ae-split { display: grid; grid-template-columns: 1fr 1fr; min-height: 320px; }
+.ae-split > div { min-width: 0; }
+.ae-split .ae-left { border-right: 1px solid var(--border); }
+.ae-textarea.body-editor {
+  border: 0; border-radius: 0; min-height: 320px; height: 100%;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px; background: var(--panel);
+}
+.ae-textarea.body-editor:focus { box-shadow: none; }
+.ae-preview {
+  padding: 14px 18px; overflow-y: auto; max-height: 460px;
+  min-height: 320px; background: var(--panel);
+}
+.ae-preview:empty::before { content: '暂无正文，左侧输入 Markdown 后这里实时预览'; color: var(--text-muted); font-size: 12px; }
+.ae-preview h1, .ae-preview h2, .ae-preview h3 { color: var(--text); margin: 14px 0 8px; }
+.ae-preview h1 { font-size: 18px; } .ae-preview h2 { font-size: 16px; } .ae-preview h3 { font-size: 14px; }
+.ae-preview p { margin: 8px 0; line-height: 1.75; }
+.ae-preview ul, .ae-preview ol { padding-left: 1.5em; margin: 8px 0; }
+.ae-preview li { margin: 4px 0; line-height: 1.7; }
+.ae-preview code { background: var(--panel-2); padding: 1px 5px; border-radius: 3px; font-size: 11.5px; color: var(--accent); }
+.ae-preview pre { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; overflow-x: auto; }
+.ae-preview pre code { background: transparent; padding: 0; color: inherit; }
+.ae-preview blockquote { border-left: 3px solid var(--accent); margin: 10px 0; padding: 4px 12px; color: var(--text-muted); background: var(--accent-soft); }
+.ae-preview table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.ae-preview th, .ae-preview td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+.ae-preview th { background: var(--panel-2); }
+.ae-preview a { color: var(--accent); }
+.ae-preview hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+.ae-preview img { max-width: 100%; }
+
+.ae-validate {
+  margin-top: 12px; padding: 9px 12px; border-radius: 6px;
+  font-size: 11.5px; line-height: 1.7;
+}
+.ae-validate.ok { background: rgba(40,167,69,.10); color: var(--success); border: 1px solid rgba(40,167,69,.3); }
+.ae-validate.bad { background: rgba(220,53,69,.10); color: var(--danger); border: 1px solid rgba(220,53,69,.3); }
+
+/* ---------- 状态栏 ---------- */
+.ae-status {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 30px;
+  border-top: 1px solid var(--border); background: var(--panel);
+  display: flex; align-items: center; gap: 16px; padding: 0 14px;
+  font-size: 10.5px; color: var(--text-muted); z-index: 150;
+}
+.ae-status b { color: var(--text-secondary); font-weight: 600; }
+.ae-status .ae-spacer { flex: 1; }
+
+/* ---------- 通用模态 ---------- */
+.ae-overlay {
+  position: fixed; inset: 0; z-index: 8000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(0,0,0,.58);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  animation: aeFade .2s ease-out;
+}
+@keyframes aeFade { from { opacity: 0; } to { opacity: 1; } }
+.ae-modal {
+  width: 100%; max-width: 560px; max-height: 78vh; max-height: 78dvh;
+  min-height: 0; margin: auto;
+  display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  animation: aePop .24s cubic-bezier(.34,1.4,.64,1);
+}
+@keyframes aePop { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+.ae-modal-head {
+  display: flex; align-items: center; gap: 9px; flex-shrink: 0;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: var(--panel-2); font-weight: 700; font-size: 13px;
+}
+.ae-modal-head .ae-x {
+  margin-left: auto; border: 0; background: transparent;
+  color: var(--text-muted); font-size: 17px; width: 24px; height: 24px;
+  border-radius: 4px;
+}
+.ae-modal-head .ae-x:hover { color: var(--text); background: var(--border); }
+.ae-modal-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 16px; font-size: 12.5px; line-height: 1.75;
+}
+.ae-modal-foot {
+  flex-shrink: 0; display: flex; gap: 8px; justify-content: flex-end;
+  padding: 11px 16px; border-top: 1px solid var(--border); background: var(--panel-2);
+}
+.ae-json {
+  width: 100%; min-height: 280px; padding: 11px 13px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--text);
+  font-family: "SFMono-Regular", Consolas, monospace; font-size: 11.5px;
+  line-height: 1.65; resize: vertical; outline: none;
+}
+.ae-json:focus { border-color: var(--accent); }
+
+/* ---------- Toast ---------- */
+.ae-toast {
+  position: fixed; left: 50%; bottom: 52px; transform: translate(-50%, 12px);
+  z-index: 9500; padding: 9px 16px; border-radius: 6px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg); color: var(--text); font-size: 12px;
+  opacity: 0; pointer-events: none; transition: all .22s ease;
+  max-width: 82vw; text-align: center;
+}
+.ae-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.ae-toast.ok { border-color: var(--success); }
+.ae-toast.err { border-color: var(--danger); }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 860px) {
+  .ae-side { width: 218px; }
+  .ae-split { grid-template-columns: 1fr; }
+  .ae-split .ae-left { border-right: 0; border-bottom: 1px solid var(--border); }
+  .ae-textarea.body-editor { min-height: 200px; }
+  .ae-preview { min-height: 180px; }
+}
+@media (max-width: 620px) {
+  .ae-private, .ae-saved span { display: none; }
+  .ae-layout { flex-direction: column; }
+  .ae-side { width: 100%; height: 190px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .ae-side-foot { display: none; }
+  .ae-list { display: flex; gap: 7px; overflow-x: auto; overflow-y: hidden; padding: 7px; }
+  .ae-card { min-width: 168px; margin-bottom: 0; flex-shrink: 0; }
+  .ae-main { padding: 14px 12px 24px; }
+  .ae-grid { grid-template-columns: 1fr; }
+  .ae-status { gap: 9px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 顶栏 ============ -->
+<header class="ae-topbar">
+  <div class="ae-brand">
+    <div class="ae-logo"><i class="fas fa-bullhorn"></i></div>
+    <span class="ae-name">公告编辑器</span>
+    <span class="ae-badge">JSON</span>
+    <span class="ae-private">独立页 · 无入口</span>
+  </div>
+  <div class="ae-spacer"></div>
+  <div class="ae-saved" id="saved"><i class="fas fa-circle-check"></i><span>草稿已同步</span></div>
+  <div class="ae-menu-wrap">
+    <button class="ae-menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="菜单">
+      <i class="fas fa-ellipsis-vertical"></i>
+    </button>
+    <div class="ae-dropdown" id="menu" role="menu">
+      <div class="ae-menu-group">数据</div>
+      <button class="ae-menu-item" data-act="reload"><i class="fas fa-cloud-arrow-down"></i>从服务器重新加载</button>
+      <button class="ae-menu-item" data-act="import"><i class="fas fa-file-import"></i>导入 JSON</button>
+      <button class="ae-menu-item" data-act="json"><i class="fas fa-code"></i>预览完整 JSON</button>
+      <button class="ae-menu-item" data-act="copy"><i class="fas fa-copy"></i>复制 JSON</button>
+      <button class="ae-menu-item" data-act="export"><i class="fas fa-file-arrow-down"></i>下载 announcements.json</button>
+      <div class="ae-menu-sep"></div>
+      <div class="ae-menu-group">视图</div>
+      <button class="ae-menu-item" data-act="preview"><i class="fas fa-eye"></i>预览公告弹窗</button>
+      <button class="ae-menu-item" data-act="new"><i class="fas fa-plus"></i>新增公告</button>
+      <button class="ae-menu-item" data-act="search"><i class="fas fa-magnifying-glass"></i>聚焦搜索</button>
+      <div class="ae-menu-sep"></div>
+      <div class="ae-menu-group">危险</div>
+      <button class="ae-menu-item danger" data-act="clear"><i class="fas fa-trash"></i>清空本地草稿</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 主体 ============ -->
+<div class="ae-layout">
+  <aside class="ae-side">
+    <div class="ae-side-head">
+      <div class="ae-side-title">
+        <i class="fas fa-list" style="color:var(--accent)"></i> 公告列表
+        <span class="ae-count" id="count">0</span>
+      </div>
+      <input class="ae-search" id="search" placeholder="搜索标题 / 内容 / ID…  ( / )" autocomplete="off" />
+      <button class="ae-btn primary full" id="addBtn" style="margin-top:8px"><i class="fas fa-plus"></i> 新增公告</button>
+    </div>
+    <div class="ae-list" id="list"></div>
+    <div class="ae-side-foot">
+      按 <b>ID 降序</b>排列，与线上归档一致。<br />
+      新增更大的 ID 即视为「新公告」，会再次弹出。
+    </div>
+  </aside>
+
+  <main class="ae-main" id="main">
+    <div class="ae-inner" id="inner"></div>
+  </main>
+</div>
+
+<!-- ============ 状态栏 ============ -->
+<footer class="ae-status">
+  <span>共 <b id="stCount">0</b> 条</span>
+  <span>最大 ID <b id="stMax">—</b></span>
+  <span>版本 <b id="stVer">—</b></span>
+  <span>校验 <b id="stValid">—</b></span>
+  <span class="ae-spacer"></span>
+  <span>Ctrl+S 下载 · Ctrl+N 新增 · Esc 关闭</span>
+</footer>
+
+<!-- ============ 通用模态容器 ============ -->
+<div id="modalHost"></div>
+
+<!-- ============ Toast ============ -->
+<div class="ae-toast" id="toast"></div>
+
+<!-- 隐藏的文件输入 -->
+<input type="file" id="fileInput" accept=".json,application/json" style="display:none" />
+
+<script>
+(function () {
+  'use strict';
+
+  /* ==========================================================
+     常量
+     ========================================================== */
+  var DATA_URL = './js/announcements.json';
+  var DRAFT_KEY = 'dbp-ann-editor-draft';
+  var TAGS = ['公告', '更新', '特性', '修复', '紧急', '维护'];
+  var TAG_ICONS = {
+    '公告': 'fas fa-bullhorn', '更新': 'fas fa-arrows-rotate', '特性': 'fas fa-sparkles',
+    '修复': 'fas fa-wrench', '紧急': 'fas fa-triangle-exclamation', '维护': 'fas fa-screwdriver-wrench'
+  };
+
+  var state = { version: '0.9.20', list: [], selectedId: null, filter: '', bodyTab: 'split' };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var today = function () {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  };
+
+  /* ==========================================================
+     Markdown → HTML（与 js/plugin-loader.js 的 markdownToHtml 同款）
+     ========================================================== */
+  function mdToHtml(md) {
+    if (!md) return '';
+    var lines = String(md).replace(/\r\n/g, '\n').split('\n');
+    var html = [], i = 0;
+    function inline(t) {
+      t = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+      t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+      t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      t = t.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      t = t.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+      return t;
+    }
+    function codeBlock() {
+      i++;
+      var lang = lines[i - 1].replace(/^```/, '').trim();
+      var code = [];
+      while (i < lines.length && lines[i].indexOf('```') !== 0) { code.push(lines[i]); i++; }
+      i++;
+      var cls = lang ? ' class="language-' + esc(lang) + '"' : '';
+      var raw = code.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return '<pre><code' + cls + '>' + raw + '</code></pre>\n';
+    }
+    function table(headerLine) {
+      var heads = headerLine.split('|').map(function (s) { return s.trim(); }).filter(Boolean);
+      var rows = []; i += 2;
+      while (i < lines.length && lines[i].trim() !== '' && lines[i].indexOf('|') !== -1) {
+        rows.push(lines[i].split('|').map(function (s) { return s.trim(); }).filter(Boolean)); i++;
+      }
+      var out = '<table><thead><tr>';
+      heads.forEach(function (h) { out += '<th>' + inline(h) + '</th>'; });
+      out += '</tr></thead><tbody>';
+      rows.forEach(function (r) {
+        out += '<tr>';
+        r.forEach(function (c) { out += '<td>' + inline(c) + '</td>'; });
+        out += '</tr>';
+      });
+      return out + '</tbody></table>\n';
+    }
+    function list(isOrdered) {
+      var items = [], re = isOrdered ? /^\d+\.\s+/ : /^[-*+]\s+/;
+      while (i < lines.length && re.test(lines[i])) {
+        items.push(lines[i].replace(isOrdered ? /^\d+\.\s+/ : /^[-*+]\s+/, '')); i++;
+      }
+      var tag = isOrdered ? 'ol' : 'ul', out = '<' + tag + '>';
+      items.forEach(function (it) {
+        var tm = it.match(/^\[([ x])\]\s+(.*)$/);
+        if (tm) out += '<li><input type="checkbox" disabled' + (tm[1] === 'x' ? ' checked' : '') + '> ' + inline(tm[2]) + '</li>';
+        else out += '<li>' + inline(it) + '</li>';
+      });
+      return out + '</' + tag + '>\n';
+    }
+    while (i < lines.length) {
+      var line = lines[i];
+      if (line.trim() === '') { i++; continue; }
+      if (line.indexOf('```') === 0) { html.push(codeBlock()); continue; }
+      if (/^[-*_]{3,}\s*$/.test(line.trim())) { html.push('<hr>\n'); i++; continue; }
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) { html.push('<h' + h[1].length + '>' + inline(h[2].trim()) + '</h' + h[1].length + '>\n'); i++; continue; }
+      if (line.indexOf('>') === 0) {
+        var q = [];
+        while (i < lines.length && lines[i].indexOf('>') === 0) { q.push(lines[i].replace(/^>\s?/, '')); i++; }
+        html.push('<blockquote>' + inline(q.join(' ')) + '</blockquote>\n'); continue;
+      }
+      if (line.indexOf('|') !== -1 && i + 1 < lines.length && /^[\s|:-]+$/.test(lines[i + 1])) { html.push(table(line)); continue; }
+      if (/^\d+\.\s+/.test(line)) { html.push(list(true)); continue; }
+      if (/^[-*+]\s+/.test(line)) { html.push(list(false)); continue; }
+      var para = [line]; i++;
+      while (i < lines.length && lines[i].trim() !== '' &&
+             lines[i].indexOf('#') !== 0 && lines[i].indexOf('```') !== 0 &&
+             lines[i].indexOf('>') !== 0 && !/^[-*+]\s/.test(lines[i]) &&
+             !/^\d+\.\s+/.test(lines[i]) && lines[i].indexOf('|') === -1) { para.push(lines[i]); i++; }
+      html.push('<p>' + inline(para.join(' ')) + '</p>\n');
+    }
+    return html.join('');
+  }
+
+  /* ==========================================================
+     数据规范化 / 排序 / 校验
+     ========================================================== */
+  function normalize(raw) {
+    return (raw || []).map(function (a) {
+      return {
+        id: Number(a && a.id != null ? a.id : 0),
+        title: String(a && a.title || ''),
+        subtitle: String(a && a.subtitle || ''),
+        date: String(a && a.date || ''),
+        tag: String(a && a.tag || '公告'),
+        body: String(a && a.body || '')
+      };
+    });
+  }
+  function sorted() {
+    return state.list.slice().sort(function (x, y) {
+      if (y.id !== x.id) return y.id - x.id;
+      return String(y.date || '').localeCompare(String(x.date || ''));
+    });
+  }
+  function maxId() {
+    return state.list.reduce(function (m, a) { return Math.max(m, Number(a.id) || 0); }, 0);
+  }
+  function current() {
+    return state.list.filter(function (a) { return a.id === state.selectedId; })[0] || null;
+  }
+  function validate() {
+    var errs = [], seen = {};
+    if (!state.list.length) errs.push('公告列表为空');
+    state.list.forEach(function (a) {
+      if (!Number.isInteger(a.id) || a.id <= 0) errs.push('存在非法 ID（必须为正整数）');
+      if (seen[a.id]) errs.push('ID ' + a.id + ' 重复');
+      seen[a.id] = 1;
+      if (!a.title.trim()) errs.push('ID ' + a.id + ' 缺少标题');
+      if (a.date && !/^\d{4}-\d{2}-\d{2}$/.test(a.date)) errs.push('ID ' + a.id + ' 日期格式应为 YYYY-MM-DD');
+      if (!a.tag.trim()) errs.push('ID ' + a.id + ' 缺少标签');
+    });
+    return errs;
+  }
+  function toJSON() {
+    return { version: state.version || '0.9.20', announcements: sorted() };
+  }
+
+  /* ==========================================================
+     草稿持久化
+     ========================================================== */
+  var saveTimer = null;
+  function saveDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(toJSON()));
+        setSaved(true);
+      } catch (e) { setSaved(false); }
+    }, 320);
+  }
+  function setSaved(ok) {
+    var el = $('saved');
+    el.classList.toggle('dirty', !ok);
+    el.innerHTML = ok
+      ? '<i class="fas fa-circle-check"></i><span>草稿已同步</span>'
+      : '<i class="fas fa-circle-exclamation"></i><span>未保存</span>';
+  }
+  function loadDraft() {
+    try {
+      var s = localStorage.getItem(DRAFT_KEY);
+      if (!s) return null;
+      var d = JSON.parse(s);
+      if (!d || !Array.isArray(d.announcements)) return null;
+      return d;
+    } catch (e) { return null; }
+  }
+  function setData(d, quiet) {
+    state.version = String(d.version || '0.9.20');
+    state.list = normalize(d.announcements);
+    state.selectedId = sorted()[0] ? sorted()[0].id : null;
+    renderAll();
+    if (!quiet) toast('已载入 ' + state.list.length + ' 条公告', 'ok');
+  }
+
+  /* ==========================================================
+     Toast
+     ========================================================== */
+  var toastTimer = null;
+  function toast(msg, type) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'ae-toast show' + (type ? ' ' + type : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = 'ae-toast'; }, 2300);
+  }
+
+  /* ==========================================================
+     通用模态（确认 / JSON / 导入）
+     ========================================================== */
+  function closeModal() {
+    $('modalHost').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  function openModal(opts) {
+    var host = $('modalHost');
+    host.innerHTML =
+      '<div class="ae-overlay" id="aeOverlay">' +
+        '<div class="ae-modal" role="dialog" aria-modal="true">' +
+          '<div class="ae-modal-head"><i class="' + (opts.icon || 'fas fa-circle-info') + '" style="color:var(--accent)"></i>' +
+            esc(opts.title) + '<button class="ae-x" id="aeX" title="关闭">&times;</button></div>' +
+          '<div class="ae-modal-body" id="aeBody">' + (opts.body || '') + '</div>' +
+          '<div class="ae-modal-foot" id="aeFoot"></div>' +
+        '</div>' +
+      '</div>';
+    var foot = $('aeFoot');
+    (opts.buttons || []).forEach(function (b) {
+      var btn = document.createElement('button');
+      btn.className = 'ae-btn' + (b.primary ? ' primary' : '') + (b.danger ? ' danger' : '');
+      btn.textContent = b.label;
+      btn.onclick = function () { b.onClick(); };
+      foot.appendChild(btn);
+    });
+    $('aeX').onclick = closeModal;
+    $('aeOverlay').addEventListener('mousedown', function (e) {
+      if (e.target === $('aeOverlay')) closeModal();
+    });
+    if (opts.onOpen) opts.onOpen();
+  }
+  function confirmBox(title, msg, onYes, danger) {
+    openModal({
+      title: title, icon: danger ? 'fas fa-triangle-exclamation' : 'fas fa-circle-question',
+      body: '<div style="line-height:1.8">' + msg + '</div>',
+      buttons: [
+        { label: '取消', onClick: closeModal },
+        { label: '确定', primary: !danger, danger: !!danger, onClick: function () { closeModal(); onYes(); } }
+      ]
+    });
+  }
+
+  /* ==========================================================
+     渲染：列表
+     ========================================================== */
+  function renderList() {
+    var arr = sorted(), kw = state.filter.trim().toLowerCase();
+    if (kw) {
+      arr = arr.filter(function (a) {
+        return (a.title + ' ' + a.subtitle + ' ' + a.body + ' ' + a.id + ' ' + a.tag).toLowerCase().indexOf(kw) !== -1;
+      });
+    }
+    var errs = validate(), badIds = {};
+    (errs || []).forEach(function (e) {
+      var m = e.match(/ID (\d+)/);
+      if (m) badIds[m[1]] = 1;
+    });
+    var newest = arr.length ? arr[0].id : null;
+    $('list').innerHTML = arr.length ? arr.map(function (a) {
+      var isLatest = (!kw && a.id === newest);
+      var chips = '<span class="ae-chip">' + esc(a.tag) + '</span>';
+      if (isLatest) chips += '<span class="ae-chip latest">★ 最新</span>';
+      if (badIds[a.id] || !a.title.trim()) chips += '<span class="ae-chip bad">待修正</span>';
+      return '<div class="ae-card' + (a.id === state.selectedId ? ' active' : '') + '" data-id="' + a.id + '">' +
+        '<div class="ae-card-top"><span class="ae-card-id">#' + a.id + '</span>' +
+          '<span class="ae-card-date">' + esc(a.date || '无日期') + '</span></div>' +
+        '<div class="ae-card-title">' + esc(a.title || '（未命名）') + '</div>' +
+        '<div class="ae-card-sub">' + esc(a.subtitle || '无副标题') + '</div>' +
+        '<div class="ae-card-tags">' + chips + '</div>' +
+      '</div>';
+    }).join('') : '<div style="padding:24px 10px;text-align:center;color:var(--text-muted);font-size:12px">' +
+      (kw ? '没有匹配的公告' : '还没有公告，点上方「新增公告」') + '</div>';
+
+    Array.prototype.forEach.call($('list').querySelectorAll('.ae-card'), function (el) {
+      el.onclick = function () {
+        state.selectedId = Number(el.getAttribute('data-id'));
+        renderAll();
+      };
+    });
+    $('count').textContent = state.list.length;
+  }
+
+  /* ==========================================================
+     渲染：编辑区
+     ========================================================== */
+  function renderEditor() {
+    var a = current();
+    if (!a) {
+      $('inner').innerHTML =
+        '<div class="ae-empty"><i class="fas fa-bullhorn"></i>' +
+        '<h2>选择一条公告开始编辑</h2>' +
+        '<p>左侧列表按 ID 降序排列，与线上归档一致。<br />' +
+        '编辑内容会自动存为本地草稿，导出后覆盖 <code>js/announcements.json</code> 即可生效。</p>' +
+        '<button class="ae-btn primary" id="emptyAdd"><i class="fas fa-plus"></i> 新增第一条公告</button></div>';
+      $('emptyAdd').onclick = addNew;
+      return;
+    }
+    var errs = validate();
+    var myErrs = errs.filter(function (e) {
+      return e.indexOf('ID ' + a.id) !== -1 || e.indexOf('存在非法 ID') !== -1 && (!Number.isInteger(a.id) || a.id <= 0);
+    });
+    var tagOpts = TAGS.slice();
+    if (tagOpts.indexOf(a.tag) === -1 && a.tag) tagOpts.push(a.tag);
+    var optsHtml = tagOpts.map(function (t) {
+      return '<option value="' + esc(t) + '"' + (t === a.tag ? ' selected' : '') + '>' + esc(t) + '</option>';
+    }).join('') + '<option value="__custom"' + (tagOpts.indexOf(a.tag) === -1 ? ' selected' : '') + '>自定义…</option>';
+
+    $('inner').innerHTML =
+      '<div class="ae-editor-head">' +
+        '<h2>' + esc(a.title || '未命名公告') + '</h2>' +
+        '<span class="ae-id-badge">ID #' + a.id + '</span>' +
+        '<span class="ae-spacer"></span>' +
+        '<button class="ae-btn sm" id="btnPreviewOne"><i class="fas fa-eye"></i> 预览这条</button>' +
+        '<button class="ae-btn sm danger" id="btnDelete"><i class="fas fa-trash"></i> 删除</button>' +
+      '</div>' +
+
+      '<div class="ae-grid">' +
+        '<div class="ae-field"><label class="ae-label">ID <span class="req">*</span> <span class="ae-hint">数字、唯一，更大 = 更新</span></label>' +
+          '<input class="ae-input" id="fId" type="number" min="1" step="1" value="' + a.id + '" /></div>' +
+        '<div class="ae-field"><label class="ae-label">日期</label>' +
+          '<input class="ae-input" id="fDate" type="date" value="' + esc(a.date) + '" /></div>' +
+        '<div class="ae-field"><label class="ae-label">标签 <span class="req">*</span></label>' +
+          '<select class="ae-select" id="fTag">' + optsHtml + '</select>' +
+          '<input class="ae-input" id="fTagCustom" placeholder="自定义标签" style="display:none;margin-top:5px" value="' + esc(a.tag) + '" /></div>' +
+        '<div class="ae-field"><label class="ae-label">图标 <span class="ae-hint">仅预览用，跟随标签</span></label>' +
+          '<input class="ae-input" value="' + esc(TAG_ICONS[a.tag] || 'fas fa-bullhorn') + '" disabled /></div>' +
+        '<div class="ae-field wide"><label class="ae-label">标题 <span class="req">*</span></label>' +
+          '<input class="ae-input" id="fTitle" value="' + esc(a.title) + '" placeholder="公告标题" /></div>' +
+        '<div class="ae-field wide"><label class="ae-label">副标题 <span class="ae-hint">一句话概括</span></label>' +
+          '<input class="ae-input" id="fSub" value="' + esc(a.subtitle) + '" placeholder="例如：首页焕新 · 公告系统" /></div>' +
+      '</div>' +
+
+      '<div class="ae-panel">' +
+        '<div class="ae-panel-head"><i class="fas fa-pen" style="color:var(--accent)"></i> 正文（Markdown）' +
+          '<span class="ae-spacer"></span>' +
+          '<button class="ae-tab' + (state.bodyTab === 'split' ? ' on' : '') + '" data-tab="split">分栏</button>' +
+          '<button class="ae-tab' + (state.bodyTab === 'edit' ? ' on' : '') + '" data-tab="edit">仅编辑</button>' +
+          '<button class="ae-tab' + (state.bodyTab === 'view' ? ' on' : '') + '" data-tab="view">仅预览</button>' +
+        '</div>' +
+        '<div class="ae-split" id="split">' +
+          '<div class="ae-left" id="paneEdit"><textarea class="ae-textarea body-editor" id="fBody" spellcheck="false" placeholder="## 标题&#10;&#10;- 支持 **粗体**、`代码`、表格、列表、引用、代码块…">' + esc(a.body) + '</textarea></div>' +
+          '<div id="paneView"><div class="ae-preview markdown-body" id="mdPreview"></div></div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="ae-validate ' + (myErrs.length ? 'bad' : 'ok') + '" id="valBox">' +
+        (myErrs.length
+          ? '<i class="fas fa-triangle-exclamation"></i> ' + myErrs.map(esc).join('；')
+          : '<i class="fas fa-circle-check"></i> 本条字段完整。全局校验：' + (errs.length ? errs.length + ' 项待修正' : '全部通过')) +
+      '</div>';
+
+    applyTab();
+    renderMd();
+
+    /* 字段双向绑定：只更新 state，不重渲染表单，避免丢焦点 */
+    bind('fId', 'id', function (v) { return parseInt(v, 10); }, true);
+    bind('fDate', 'date', String);
+    bind('fTitle', 'title', String);
+    bind('fSub', 'subtitle', String);
+    bind('fBody', 'body', String);
+
+    $('fTag').onchange = function () {
+      if (this.value === '__custom') {
+        $('fTagCustom').style.display = '';
+        $('fTagCustom').focus();
+      } else {
+        $('fTagCustom').style.display = 'none';
+        current().tag = this.value;
+        afterChange(true);
+      }
+    };
+    $('fTagCustom').oninput = function () {
+      current().tag = this.value;
+      afterChange(true);
+    };
+
+    Array.prototype.forEach.call($('inner').querySelectorAll('.ae-tab'), function (b) {
+      b.onclick = function () { state.bodyTab = b.getAttribute('data-tab'); applyTab(); renderAll(); };
+    });
+    $('btnDelete').onclick = function () { removeCurrent(); };
+    $('btnPreviewOne').onclick = function () { openAnnPreview([a], 0); };
+  }
+
+  function bind(id, key, conv, structural) {
+    var el = $(id);
+    if (!el) return;
+    el.addEventListener('input', function () {
+      var a = current();
+      if (!a) return;
+      var v = conv(el.value);
+      if (key === 'id') {
+        var old = a.id;
+        if (!Number.isInteger(v) || v <= 0) { el.classList.add('bad'); return; }
+        el.classList.remove('bad');
+        a.id = v;
+        state.selectedId = v;
+        var badge = document.querySelector('.ae-editor-head .ae-id-badge');
+        if (badge) badge.textContent = 'ID #' + v;
+      } else {
+        a[key] = v;
+      }
+      afterChange(!!structural || key === 'id' || key === 'title' || key === 'date' || key === 'tag');
+      if (key === 'body') renderMd();
+      if (key === 'title') {
+        var h = document.querySelector('.ae-editor-head h2');
+        if (h) h.textContent = v || '未命名公告';
+      }
+    });
+  }
+
+  function afterChange(rerenderList) {
+    saveDraft();
+    if (rerenderList) renderList();
+    else renderStatus();
+    var a = current(), errs = validate();
+    var myErrs = a ? errs.filter(function (e) { return e.indexOf('ID ' + a.id) !== -1; }) : [];
+    var box = $('valBox');
+    if (box) {
+      box.className = 'ae-validate ' + (myErrs.length ? 'bad' : 'ok');
+      box.innerHTML = myErrs.length
+        ? '<i class="fas fa-triangle-exclamation"></i> ' + myErrs.map(esc).join('；')
+        : '<i class="fas fa-circle-check"></i> 本条字段完整。全局校验：' + (errs.length ? errs.length + ' 项待修正' : '全部通过');
+    }
+    renderStatus();
+  }
+
+  function applyTab() {
+    var t = state.bodyTab, e = $('paneEdit'), v = $('paneView'), s = $('split');
+    if (!s) return;
+    s.style.gridTemplateColumns = t === 'split' ? '1fr 1fr' : '1fr';
+    e.style.display = t === 'view' ? 'none' : '';
+    v.style.display = t === 'edit' ? 'none' : '';
+    if (e.firstElementChild) e.firstElementChild.style.borderRight = '0';
+  }
+  function renderMd() {
+    var a = current(), box = $('mdPreview');
+    if (box) box.innerHTML = mdToHtml(a ? a.body : '');
+  }
+
+  /* ==========================================================
+     渲染：状态栏 / 全量
+     ========================================================== */
+  function renderStatus() {
+    var errs = validate();
+    $('stCount').textContent = state.list.length;
+    $('stMax').textContent = state.list.length ? maxId() : '—';
+    $('stVer').textContent = state.version || '—';
+    $('stValid').textContent = errs.length ? errs.length + ' 项问题' : '通过';
+    $('stValid').style.color = errs.length ? 'var(--danger)' : 'var(--success)';
+  }
+  function renderAll() {
+    renderList();
+    renderEditor();
+    renderStatus();
+  }
+
+  /* ==========================================================
+     操作：新增 / 删除
+     ========================================================== */
+  function addNew() {
+    var nid = maxId() + 1;
+    state.list.push({
+      id: nid, title: '新公告', subtitle: '', date: today(), tag: '公告',
+      body: '## 新公告\n\n在这里写正文，支持 **Markdown**。\n'
+    });
+    state.selectedId = nid;
+    state.filter = '';
+    $('search').value = '';
+    saveDraft();
+    renderAll();
+    toast('已新增 #' + nid + '（记得改标题）', 'ok');
+    var t = $('fTitle');
+    if (t) { t.focus(); t.select(); }
+  }
+  function removeCurrent() {
+    var a = current();
+    if (!a) return;
+    confirmBox('删除公告 #' + a.id,
+      '确定删除 <b>' + esc(a.title || '未命名') + '</b> 吗？<br />' +
+      '<span style="color:var(--text-muted)">只影响本地草稿，导出后才会改变线上文件。</span>',
+      function () {
+        state.list = state.list.filter(function (x) { return x !== a; });
+        state.selectedId = sorted()[0] ? sorted()[0].id : null;
+        saveDraft(); renderAll();
+        toast('已删除 #' + a.id, 'ok');
+      }, true);
+  }
+
+  /* ==========================================================
+     操作：导入 / 导出 / JSON
+     ========================================================== */
+  function exportFile() {
+    var errs = validate();
+    var doIt = function () {
+      var text = JSON.stringify(toJSON(), null, 2);
+      var blob = new Blob([text + '\n'], { type: 'application/json;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'announcements.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      toast('已下载 announcements.json，覆盖 js/ 下同名文件即可', 'ok');
+    };
+    if (errs.length) {
+      confirmBox('仍有 ' + errs.length + ' 项校验问题',
+        '建议先修正再导出：<br /><span style="color:var(--danger)">' + errs.map(esc).join('<br />') + '</span>',
+        doIt, true);
+    } else doIt();
+  }
+  function copyJSON() {
+    var text = JSON.stringify(toJSON(), null, 2);
+    var ok = function () { toast('JSON 已复制到剪贴板', 'ok'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, function () { fallbackCopy(text, ok); });
+    } else fallbackCopy(text, ok);
+  }
+  function fallbackCopy(text, ok) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { toast('复制失败，请用「预览完整 JSON」手动复制', 'err'); }
+    document.body.removeChild(ta);
+  }
+  function openJSON() {
+    openModal({
+      title: '完整 JSON', icon: 'fas fa-code',
+      body: '<textarea class="ae-json" id="jsonBox" spellcheck="false" readonly></textarea>',
+      buttons: [
+        { label: '复制', primary: true, onClick: function () { copyJSON(); } },
+        { label: '关闭', onClick: closeModal }
+      ],
+      onOpen: function () { $('jsonBox').value = JSON.stringify(toJSON(), null, 2); }
+    });
+  }
+  function openImport() {
+    openModal({
+      title: '导入 JSON', icon: 'fas fa-file-import',
+      body: '<p style="margin:0 0 10px;color:var(--text-muted)">粘贴 <code>announcements.json</code> 内容，或' +
+            '<button class="ae-btn sm" id="pickFile" style="margin:0 5px"><i class="fas fa-folder-open"></i> 选择文件</button>' +
+            '。导入会<b>覆盖</b>当前草稿。</p>' +
+            '<textarea class="ae-json" id="importBox" spellcheck="false" placeholder="{ &quot;version&quot;: &quot;0.9.20&quot;, &quot;announcements&quot;: [...] }"></textarea>',
+      buttons: [
+        { label: '取消', onClick: closeModal },
+        { label: '导入并覆盖', primary: true, onClick: function () {
+          var raw = $('importBox').value.trim();
+          if (!raw) { toast('请先粘贴内容', 'err'); return; }
+          try {
+            var d = JSON.parse(raw);
+            if (!d || !Array.isArray(d.announcements)) throw new Error('缺少 announcements 数组');
+            closeModal();
+            setData(d);
+            saveDraft();
+          } catch (e) {
+            toast('解析失败：' + e.message, 'err');
+          }
+        } }
+      ],
+      onOpen: function () {
+        $('pickFile').onclick = function () { $('fileInput').click(); };
+        $('fileInput').onchange = function () {
+          var f = this.files && this.files[0];
+          if (!f) return;
+          var rd = new FileReader();
+          rd.onload = function () { if ($('importBox')) $('importBox').value = String(rd.result); };
+          rd.readAsText(f, 'utf-8');
+          this.value = '';
+        };
+      }
+    });
+  }
+  function reloadServer() {
+    confirmBox('从服务器重新加载',
+      '会丢弃当前本地草稿，重新读取 <code>./js/announcements.json</code>。',
+      function () { fetchServer(true); }, true);
+  }
+  function clearDraft() {
+    confirmBox('清空本地草稿',
+      '将删除浏览器里保存的草稿并重新从服务器加载。<br />' +
+      '<span style="color:var(--text-muted)">不会改动服务器上的任何文件。</span>',
+      function () {
+        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+        fetchServer(true);
+      }, true);
+  }
+  function fetchServer(loud) {
+    fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        if (!d || !Array.isArray(d.announcements)) throw new Error('JSON 结构不正确');
+        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+        setData(d, true);
+        saveDraft();
+        toast('已从服务器载入 ' + state.list.length + ' 条公告', 'ok');
+      })
+      .catch(function (e) {
+        toast('读取失败：' + e.message + '（可用「导入 JSON」或本地服务器打开）', 'err');
+        if (!state.list.length && loud) openImport();
+      });
+  }
+
+  /* ==========================================================
+     操作：预览公告弹窗（复用主站 .ann-* 样式，视觉 1:1）
+     ========================================================== */
+  var pv = { items: [], idx: 0 };
+  function openAnnPreview(items, start) {
+    pv.items = items && items.length ? items : sorted();
+    pv.idx = start || 0;
+    if (!pv.items.length) { toast('还没有公告可预览', 'err'); return; }
+    renderAnnPreview();
+  }
+  function renderAnnPreview() {
+    var a = pv.items[pv.idx], n = pv.items.length;
+    var host = $('modalHost');
+    host.innerHTML =
+      '<div class="ann-overlay" id="pvOverlay" style="z-index:9000">' +
+        '<div class="ann-modal">' +
+          '<div class="ann-head">' +
+            '<span class="ann-tag"><i class="' + esc(TAG_ICONS[a.tag] || 'fas fa-bullhorn') + '"></i> ' + esc(a.tag) + '</span>' +
+            '<span class="ann-date">' + esc(a.date) + '</span>' +
+            '<span style="margin-left:auto;font-size:11px;color:var(--text-muted)">第 ' + (pv.idx + 1) + ' / ' + n + ' 条</span>' +
+            '<button class="ann-x" id="pvX" style="border:0;background:transparent;color:var(--text-muted);font-size:17px;cursor:pointer">&times;</button>' +
+          '</div>' +
+          '<div class="ann-content" style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden">' +
+            '<h3 class="ann-title">' + esc(a.title) + '</h3>' +
+            (a.subtitle ? '<p class="ann-sub">' + esc(a.subtitle) + '</p>' : '') +
+            '<div class="ann-body markdown-body" style="flex:1 1 auto;min-height:0;overflow-y:auto">' + mdToHtml(a.body) + '</div>' +
+          '</div>' +
+          '<div class="ann-foot" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border);background:var(--panel-2);flex-wrap:wrap">' +
+            '<button class="ann-never" id="pvNever" style="border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer">不再显示</button>' +
+            '<div class="ann-nav" style="margin-left:auto;display:flex;align-items:center;gap:7px">' +
+              '<button class="ann-nav-btn" id="pvPrev" style="border:1px solid var(--border);background:transparent;color:var(--text-muted);width:26px;height:26px;border-radius:4px;cursor:pointer"' + (pv.idx === 0 ? ' disabled' : '') + '>&larr;</button>' +
+              pv.items.map(function (_, i) {
+                return '<span class="ann-dot' + (i === pv.idx ? ' on' : (i < pv.idx ? ' done' : '')) + '" style="width:6px;height:6px;border-radius:50%;background:var(--border);display:inline-block"></span>';
+              }).join('') +
+              '<button class="ann-nav-btn" id="pvNext" style="border:1px solid var(--border);background:transparent;color:var(--text-muted);width:26px;height:26px;border-radius:4px;cursor:pointer"' + (pv.idx === n - 1 ? ' disabled' : '') + '>&rarr;</button>' +
+            '</div>' +
+            '<button class="ae-btn primary sm" id="pvGo">' + (pv.idx === n - 1 ? '我知道了' : '下一条') + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    $('pvX').onclick = closeModal;
+    $('pvNever').onclick = function () { toast('预览模式：不会真的写入已读列表'); };
+    $('pvPrev').onclick = function () { if (pv.idx > 0) { pv.idx--; renderAnnPreview(); } };
+    $('pvNext').onclick = function () { if (pv.idx < n - 1) { pv.idx++; renderAnnPreview(); } };
+    $('pvGo').onclick = function () {
+      if (pv.idx < n - 1) { pv.idx++; renderAnnPreview(); }
+      else closeModal();
+    };
+    $('pvOverlay').addEventListener('mousedown', function (e) {
+      if (e.target === $('pvOverlay')) closeModal();
+    });
+  }
+
+  /* ==========================================================
+     菜单 / 快捷键
+     ========================================================== */
+  function closeMenu() {
+    $('menu').classList.remove('open');
+    $('menuBtn').classList.remove('active');
+    $('menuBtn').setAttribute('aria-expanded', 'false');
+  }
+  function toggleMenu() {
+    var open = $('menu').classList.toggle('open');
+    $('menuBtn').classList.toggle('active', open);
+    $('menuBtn').setAttribute('aria-expanded', String(open));
+    if (open) $('menu').scrollTop = 0;
+  }
+  var ACTIONS = {
+    reload: reloadServer,
+    import: openImport,
+    json: openJSON,
+    copy: copyJSON,
+    export: exportFile,
+    preview: function () { openAnnPreview(sorted(), 0); },
+    new: addNew,
+    search: function () { $('search').focus(); },
+    clear: clearDraft
+  };
+
+  function init() {
+    /* 菜单 */
+    $('menuBtn').onclick = function (e) { e.stopPropagation(); toggleMenu(); };
+    Array.prototype.forEach.call($('menu').querySelectorAll('.ae-menu-item'), function (b) {
+      b.onclick = function () {
+        var act = b.getAttribute('data-act');
+        closeMenu();
+        if (ACTIONS[act]) ACTIONS[act]();
+      };
+    });
+    document.addEventListener('mousedown', function (e) {
+      if (!$('menu').contains(e.target) && e.target !== $('menuBtn') && !$('menuBtn').contains(e.target)) closeMenu();
+    });
+
+    /* 列表 / 搜索 / 新增 */
+    $('addBtn').onclick = addNew;
+    $('search').addEventListener('input', function () {
+      state.filter = this.value;
+      renderList();
+    });
+
+    /* 启动：优先恢复草稿，否则读服务器 */
+    var draft = loadDraft();
+    if (draft) {
+      setData(draft, true);
+      toast('已恢复本地草稿（' + state.list.length + ' 条）', 'ok');
+      /* 后台静默检查服务器版本，仅在草稿为空时接管 */
+      if (!state.list.length) fetchServer(false);
+    } else {
+      fetchServer(false);
+    }
+
+    /* 快捷键 */
+    document.addEventListener('keydown', function (e) {
+      var ctrl = e.ctrlKey || e.metaKey;
+      if (e.key === 'Escape' && $('modalHost').innerHTML) { closeModal(); return; }
+      if (ctrl && e.key.toLowerCase() === 's') { e.preventDefault(); exportFile(); return; }
+      if (ctrl && e.key.toLowerCase() === 'n') { e.preventDefault(); addNew(); return; }
+      var tag = (e.target && e.target.tagName || '').toLowerCase();
+      var typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+      if (e.key === '/' && !typing) { e.preventDefault(); $('search').focus(); }
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+</body>
+</html>

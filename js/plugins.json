@@ -1,0 +1,208 @@
+{
+  "version": "0.9.20",
+  "categories": [
+    {
+      "id": "common",
+      "type": "folder",
+      "title": "常用工具",
+      "icon": "fas fa-star",
+      "order": 10,
+      "children": [
+        {
+          "id": "home",
+          "type": "plugin",
+          "title": "首页",
+          "icon": "fas fa-home",
+          "path": "/home",
+          "badge": "",
+          "badgeClass": "",
+          "version": "0.9.4"
+        }
+      ]
+    },
+    {
+      "id": "advanced",
+      "type": "folder",
+      "title": "进阶工具",
+      "icon": "fas fa-cogs",
+      "order": 20,
+      "children": [
+        {
+          "id": "redstone",
+          "type": "folder",
+          "title": "红石系统",
+          "icon": "fas fa-bolt",
+          "children": [
+            {
+              "id": "calc",
+              "type": "plugin",
+              "title": "计算器",
+              "icon": "fas fa-calculator",
+              "path": "/redstone/calc",
+              "badge": "",
+              "badgeClass": "",
+              "version": "0.1.0",
+              "src": "./js/pages/calc.js",
+              "order": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "html-plugins",
+      "type": "folder",
+      "title": "HTML 插件示例",
+      "icon": "fas fa-file-code",
+      "order": 50,
+      "children": [
+        {
+          "id": "pixel-art-tool",
+          "type": "plugin",
+          "title": "像素画工具 (HTML)",
+          "icon": "fas fa-paint-brush",
+          "path": "/html-demo/pixel-art",
+          "badge": "HTML",
+          "badgeClass": "new",
+          "pluginType": "html",
+          "renderMode": "iframe",
+          "src": "./plugins/html/pixel-art.html",
+          "version": "0.1.0"
+        },
+        {
+          "id": "html-demo-iframe",
+          "type": "plugin",
+          "title": "HTML Demo (iframe)",
+          "icon": "fas fa-window-restore",
+          "path": "/html-demo/iframe",
+          "badge": "HTML",
+          "badgeClass": "new",
+          "pluginType": "html",
+          "renderMode": "iframe",
+          "src": "./plugins/html/demo-iframe.html",
+          "version": "0.1.0"
+        },
+        {
+          "id": "html-demo-inline",
+          "type": "plugin",
+          "title": "HTML Demo (inline)",
+          "icon": "fas fa-code",
+          "path": "/html-demo/inline",
+          "badge": "HTML",
+          "badgeClass": "new",
+          "pluginType": "html",
+          "renderMode": "inline",
+          "src": "./plugins/html/demo-inline.html",
+          "version": "0.1.0"
+        }
+      ]
+    },
+    {
+      "id": "dev",
+      "type": "folder",
+      "title": "开发工具",
+      "icon": "fas fa-code",
+      "order": 90,
+      "children": [
+        {
+          "id": "unclib",
+          "type": "plugin",
+          "title": "特殊字符表",
+          "version": "0.1.0",
+          "icon": "fas fa-u",
+          "path": "/unclib",
+          "src": "./plugins/html/unclib.html",
+          "pluginType": "html",
+          "renderMode": "iframe",
+          "order": 20
+        },
+        {
+          "id": "test",
+          "type": "plugin",
+          "title": "插件测试场",
+          "icon": "fas fa-flask",
+          "path": "/test",
+          "badge": "",
+          "badgeClass": "",
+          "version": "0.9.4"
+        }
+      ]
+    },
+    {
+      "id": "website",
+      "type": "folder",
+      "title": "网站信息",
+      "icon": "fas fa-info-circle",
+      "order": 100,
+      "children": [
+        {
+          "id": "plugin-readme",
+          "type": "plugin",
+          "title": "插件开发文档",
+          "version": "0.5.0",
+          "icon": "fas fa-cube",
+          "path": "/plugin-readme",
+          "badge": "MD",
+          "badgeClass": "md",
+          "src": "./plugins/markdown/plugin-readme.md",
+          "pluginType": "markdown"
+        },
+        {
+          "id": "about",
+          "type": "plugin",
+          "title": "关于本站",
+          "icon": "fas fa-circle-info",
+          "path": "/about",
+          "badge": "",
+          "badgeClass": "",
+          "version": "0.9.5"
+        }
+      ]
+    },
+    {
+      "id": "markdown-docs",
+      "type": "folder",
+      "title": "Markdown 文档",
+      "icon": "fas fa-book-open",
+      "order": 60,
+      "children": [
+        {
+          "id": "changelog",
+          "type": "plugin",
+          "title": "更新日志",
+          "icon": "fas fa-clipboard-list",
+          "path": "/docs/changelog",
+          "badge": "MD",
+          "badgeClass": "md",
+          "pluginType": "markdown",
+          "src": "./plugins/markdown/changelog.md",
+          "version": "0.9.5"
+        },
+        {
+          "id": "dev-notes",
+          "type": "plugin",
+          "title": "开发笔记",
+          "icon": "fas fa-sticky-note",
+          "path": "/docs/dev-notes",
+          "badge": "MD",
+          "badgeClass": "md",
+          "pluginType": "markdown",
+          "src": "./plugins/markdown/dev-notes.md",
+          "version": "0.1.0"
+        },
+        {
+          "id": "mc-guide",
+          "type": "plugin",
+          "title": "Minecraft 新手指南",
+          "icon": "fas fa-scroll",
+          "path": "/docs/mc-guide",
+          "badge": "MD",
+          "badgeClass": "md",
+          "pluginType": "markdown",
+          "src": "./plugins/markdown/mc-guide.md",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  ]
+}

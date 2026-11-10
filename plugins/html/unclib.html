@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>特殊字符速查表 · 一键复制</title>
+<style>
+:root{
+  --bg:#0f1116; --bg2:#151922; --card:#1a1f2b; --card2:#202634;
+  --line:#2c3444; --txt:#e6e9f0; --dim:#98a2b8; --dim2:#6b7488;
+  --acc:#5b9dff; --acc2:#7cd0ff; --ok:#3ddc97; --warn:#ffb454; --danger:#ff6b6b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #1d2740 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #23203a 0%, transparent 55%),
+    var(--bg);
+  color:var(--txt);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  padding:0 0 calc(40px + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+.wrap{max-width:1000px;margin:0 auto;padding:0 14px}
+
+header{padding:calc(22px + env(safe-area-inset-top)) 0 10px}
+h1{margin:0 0 6px;font-size:22px;letter-spacing:.5px}
+h1 .em{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin:0;color:var(--dim);font-size:12.5px}
+
+/* 搜索 */
+.search{position:sticky;top:0;z-index:20;padding:10px 0 8px;background:linear-gradient(180deg,var(--bg) 70%,transparent)}
+.sbox{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 12px}
+.sbox input{flex:1;background:none;border:0;outline:none;color:var(--txt);font-size:14px;min-width:0}
+.sbox .icon{color:var(--dim2);font-size:14px}
+.clear{display:none;background:none;border:0;color:var(--dim2);font-size:18px;padding:0 2px;cursor:pointer}
+.sbox.has .clear{display:block}
+
+/* 分类 */
+.cats{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--dim);
+  border-radius:999px;padding:7px 13px;font-size:13px;cursor:pointer;white-space:nowrap;transition:.15s}
+.chip.on{background:linear-gradient(135deg,var(--acc),#4b7fe0);border-color:transparent;color:#fff;font-weight:600}
+
+/* 工具条 */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 12px;color:var(--dim2);font-size:12.5px}
+.bar .acts{display:flex;gap:8px}
+.mini{background:var(--card2);border:1px solid var(--line);color:var(--dim);border-radius:9px;padding:5px 10px;font-size:12px;cursor:pointer}
+.mini:active{transform:scale(.96)}
+
+/* 网格 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:12px 12px 11px;cursor:pointer;transition:.15s;overflow:hidden}
+.card:active{transform:scale(.97);border-color:var(--acc)}
+.card.copied{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+.char{font-size:30px;line-height:1.25;height:38px;display:flex;align-items:center;justify-content:center;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif;word-break:break-all}
+.char.inv{border:1px dashed #4a5872;border-radius:8px;background:rgba(120,140,180,.08);color:var(--dim2)}
+.nm{margin-top:6px;font-size:12.5px;color:var(--txt);text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.code{margin-top:3px;font-size:11px;color:var(--dim2);text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.tag{position:absolute;top:6px;right:6px;font-size:10px;padding:2px 5px;border-radius:6px;
+  background:rgba(255,107,107,.14);color:#ff9d9d;border:1px solid rgba(255,107,107,.3)}
+.tag.g{background:rgba(61,220,151,.12);color:var(--ok);border-color:rgba(61,220,151,.28)}
+.note{margin-top:7px;color:var(--dim2);font-size:11.5px;line-height:1.5;
+  border-top:1px dashed #2b3345;padding-top:7px}
+
+/* 分区标题 */
+.sec{grid-column:1/-1;margin:14px 0 2px;font-size:13px;color:var(--acc2);font-weight:600;display:flex;align-items:center;gap:8px}
+.sec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+
+.empty{padding:50px 0;text-align:center;color:var(--dim2);font-size:13px}
+
+/* 工具箱 */
+.tools{margin-top:26px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.tools h2{margin:0 0 4px;font-size:15px}
+.tools .tip{color:var(--dim2);font-size:12px;margin:0 0 12px}
+textarea,input.ti{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+  color:var(--txt);padding:10px;font-size:13px;outline:none;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+textarea{min-height:64px}
+.row{display:flex;gap:8px;align-items:flex-start;margin-top:10px}
+.row textarea,.row input.ti{flex:1}
+.cp{flex:0 0 auto;background:var(--card2);border:1px solid var(--line);color:var(--dim);
+  border-radius:10px;padding:9px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.cp:active{transform:scale(.95)}
+.lbl{font-size:11.5px;color:var(--dim2);margin:12px 0 4px}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);
+  background:#0b0d12ee;border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:12px;
+  font-size:13px;opacity:0;pointer-events:none;transition:.22s;z-index:99;max-width:88vw;text-align:center;
+  backdrop-filter:blur(8px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast b{color:var(--ok)}
+
+/* modal */
+.mask{position:fixed;inset:0;background:#05070ccc;backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:flex-end;justify-content:center}
+.mask.on{display:flex}
+.sheet{width:100%;max-width:520px;background:var(--bg2);border:1px solid var(--line);border-bottom:0;
+  border-radius:18px 18px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+  animation:up .22s ease}
+@keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+.sheet .big{font-size:44px;text-align:center;margin:6px 0 10px;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif}
+.sheet .big.inv{border:1px dashed #4a5872;border-radius:12px;background:rgba(120,140,180,.08);padding:6px}
+.sheet h3{margin:0 0 2px;font-size:16px;text-align:center}
+.sheet .en{color:var(--dim2);font-size:11.5px;text-align:center;margin-bottom:6px;font-family:ui-monospace,monospace}
+.sheet .desc{color:var(--dim);font-size:12.5px;background:#11151d;border:1px solid var(--line);
+  border-radius:10px;padding:9px 11px;margin:10px 0 12px}
+.kv{display:flex;align-items:center;gap:8px;background:#11151d;border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px;margin-bottom:7px}
+.kv .k{flex:0 0 62px;color:var(--dim2);font-size:11.5px}
+.kv .v{flex:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  color:var(--txt);word-break:break-all;cursor:pointer}
+.kv .v:active{color:var(--acc2)}
+.close{margin-top:12px;width:100%;background:var(--card2);border:1px solid var(--line);
+  color:var(--dim);border-radius:12px;padding:11px;font-size:14px;cursor:pointer}
+footer{margin-top:26px;color:var(--dim2);font-size:11.5px;text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span class="em">特殊字符速查表</span> · 点击即复制</h1>
+  <p class="sub">零宽字符 / 不可见字符 / 各类空格 / 控制符 / 组合符 / 同形混淆字 / 花体字母 —— 共 <span id="total">0</span> 个</p>
+</header>
+
+<div class="search">
+  <div class="sbox" id="sbox">
+    <span class="icon">🔍</span>
+    <input id="q" type="search" placeholder="搜名称、说明或码点，如 零宽 / 200B / ⠀" autocomplete="off">
+    <button class="clear" id="clear" aria-label="清空">×</button>
+  </div>
+</div>
+
+<div class="cats" id="cats"></div>
+
+<div class="bar">
+  <span id="count">—</span>
+  <span class="acts">
+    <button class="mini" id="copyAll">复制当前全部</button>
+    <button class="mini" id="toggleInv">隐藏说明</button>
+  </span>
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="empty" id="empty" style="display:none">没有匹配到字符，换个关键词试试</div>
+
+<div class="tools">
+  <h2>🧰 转换工具箱</h2>
+  <p class="tip">把任意文字与转义形式互转，方便在代码、HTML、URL 里插入这些字符。</p>
+  <textarea id="src" placeholder="在这里输入文字，例如：你好​世界"></textarea>
+  <div class="lbl">Unicode 转义（JS / Python）</div>
+  <div class="row"><input class="ti" id="o1" readonly><button class="cp" data-t="o1">复制</button></div>
+  <div class="lbl">HTML 实体</div>
+  <div class="row"><input class="ti" id="o2" readonly><button class="cp" data-t="o2">复制</button></div>
+  <div class="lbl">URL 编码</div>
+  <div class="row"><input class="ti" id="o3" readonly><button class="cp" data-t="o3">复制</button></div>
+  <div class="lbl">反向：转义 / 实体 / %XX → 文本</div>
+  <div class="row"><textarea id="dec" placeholder="粘贴 \u200B 或 &#x200B; 或 %E2%80%8B"></textarea><button class="cp" id="doDec">解码</button></div>
+  <div class="row"><input class="ti" id="o4" readonly><button class="cp" data-t="o4">复制</button></div>
+</div>
+
+<footer>
+  提示：不可见字符复制后看不到任何变化，属正常现象 —— 点卡片右下角或长按卡片可查看码点确认。<br>
+  部分字符（零宽字符、RTL 覆盖符等）可能被平台过滤或影响文本排版，请谨慎使用。
+</footer>
+</div>
+
+<div id="toast"></div>
+
+<div class="mask" id="mask">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+/* ============ 分类 ============ */
+const CATS = [
+  {id:'zero',   name:'零宽字符'},
+  {id:'invis',  name:'不可见/控制'},
+  {id:'space',  name:'各类空格'},
+  {id:'bidi',   name:'双向文本控制'},
+  {id:'comb',   name:'组合叠加符'},
+  {id:'look',   name:'同形混淆字'},
+  {id:'punct',  name:'特殊标点'},
+  {id:'style',  name:'花体字母'},
+  {id:'block',  name:'方块/线条'},
+  {id:'emoji',  name:'Emoji 修饰'},
+];
+
+/* ============ 数据 ============ */
+const D = [];
+const add = (c,n,en,cat,note,inv)=>D.push({c,n,en,cat,note:note||'',inv:!!inv});
+
+/* --- 零宽字符 --- */
+add(0x200B,'零宽空格','ZERO WIDTH SPACE','zero','最常用：不占宽度、不显示，常用于空白昵称、隐藏水印、防爬标记',1);
+add(0x200C,'零宽不连字','ZERO WIDTH NON-JOINER','zero','阻止前后字符连写（如波斯语、emoji）',1);
+add(0x200D,'零宽连字','ZERO WIDTH JOINER','zero','把两个字符连成一个，emoji 家族组合就靠它',1);
+add(0xFEFF,'零宽不换行空格','ZERO WIDTH NO-BREAK SPACE (BOM)','zero','也是文件头 BOM，常混在复制来的文本里导致报错',1);
+add(0x2060,'词连接符','WORD JOINER','zero','禁止在此断行，无任何显示',1);
+add(0x2061,'函数应用符','FUNCTION APPLICATION','zero','数学排版用，不可见',1);
+add(0x2062,'不可见乘号','INVISIBLE TIMES','zero','数学排版中表示隐含乘法',1);
+add(0x2063,'不可见分隔符','INVISIBLE SEPARATOR','zero','数学排版中表示隐含分隔',1);
+add(0x2064,'不可见加号','INVISIBLE PLUS','zero','数学排版中表示隐含加法',1);
+add(0x180E,'蒙古文元音分隔符','MONGOLIAN VOWEL SEPARATOR','zero','已被 Unicode 废弃，但仍是零宽不可见字符',1);
+add(0x00AD,'软连字符','SOFT HYPHEN','zero','正常不显示，只在行尾断词时才显示连字符',1);
+
+/* --- 不可见 / 控制 --- */
+add(0x0000,'空字符','NULL','invis','C0 控制符，字符串结束标志，多数输入框会吞掉',1);
+add(0x0007,'响铃符','BELL','invis','早期终端会响一声，现在只是不可见控制符',1);
+add(0x0008,'退格符','BACKSPACE','invis','C0 控制符',1);
+add(0x000B,'纵向制表符','LINE TABULATION','invis','垂直 Tab',1);
+add(0x000C,'换页符','FORM FEED','invis','分页控制符',1);
+add(0x000D,'回车符','CARRIAGE RETURN','invis','CR，与 LF 组成 Windows 换行',1);
+add(0x001B,'转义符','ESCAPE','invis','终端 ANSI 转义序列的开头',1);
+add(0x007F,'删除符','DELETE','invis','C0 控制符',1);
+add(0x009F,'应用程序命令','APPLICATION PROGRAM COMMAND','invis','C1 控制符，不可见',1);
+add(0x061C,'阿拉伯文字母标记','ARABIC LETTER MARK','invis','不可见的双向控制标记',1);
+add(0x3164,'韩文填充符','HANGUL FILLER','invis','显示为一个空白方块位，做"空白昵称"的经典选择',1);
+add(0xFFA0,'半角韩文填充符','HALFWIDTH HANGUL FILLER','invis','半角版本，同样显示为空白',1);
+add(0x115F,'韩文初声填充符','HANGUL CHOSEONG FILLER','invis','显示为空白，常用于绕过空白昵称检测',1);
+add(0x1160,'韩文中声填充符','HANGUL JUNGSEONG FILLER','invis','显示为空白',1);
+add(0x2800,'盲文空白','BRAILLE PATTERN BLANK','invis','六个点全空，视觉上完全空白',1);
+add(0xFFFC,'对象替换符','OBJECT REPLACEMENT CHARACTER','invis','占位符，代表一个任意对象（图片/附件）',0);
+add(0xFFFD,'替换字符','REPLACEMENT CHARACTER','invis','编码错误时显示的"菱形问号"',0);
+add(0xE000,'私用区字符','PRIVATE USE AREA','invis','无统一字形，各系统渲染不同',1);
+add(0x0009,'横向制表符','TAB','invis','最常见的缩进控制符',1);
+
+/* --- 各类空格 --- */
+add(0x0020,'普通空格','SPACE','space','最常见的半角空格');
+add(0x00A0,'不换行空格','NO-BREAK SPACE (nbsp)','space','HTML 里的 &nbsp;，不会被折行、不会被合并');
+add(0x2000,'半方空白','EN QUAD','space','宽度等于 en（半个 em）');
+add(0x2001,'全方空白','EM QUAD','space','宽度等于 em');
+add(0x2002,'En 空格','EN SPACE','space','排版常用，宽度为一个字母 n');
+add(0x2003,'Em 空格','EM SPACE','space','排版常用，宽度为一个字母 m');
+add(0x2004,'三分之一空格','THREE-PER-EM SPACE','space','1/3 em 宽');
+add(0x2005,'四分之一空格','FOUR-PER-EM SPACE','space','1/4 em 宽');
+add(0x2006,'六分之一空格','SIX-PER-EM SPACE','space','1/6 em 宽');
+add(0x2007,'数字空格','FIGURE SPACE','space','宽度等于数字，用于数字对齐');
+add(0x2008,'标点空格','PUNCTUATION SPACE','space','宽度等于句点');
+add(0x2009,'细空格','THIN SPACE','space','排版中用于千分位分隔');
+add(0x200A,'发丝空格','HAIR SPACE','space','最窄的空格，几乎看不出来');
+add(0x202F,'窄不换行空格','NARROW NO-BREAK SPACE','space','不折行的窄空格，法语排版常用');
+add(0x205F,'中等数学空格','MEDIUM MATHEMATICAL SPACE','space','数学公式中的间隔');
+add(0x3000,'中文全角空格','IDEOGRAPHIC SPACE','space','输入法全角状态下的空格');
+add(0x2028,'行分隔符','LINE SEPARATOR','space','Unicode 换行，某些 JSON 解析会报错');
+add(0x2029,'段分隔符','PARAGRAPH SEPARATOR','space','Unicode 分段');
+
+/* --- 双向文本控制 --- */
+add(0x200E,'左至右标记 LRM','LEFT-TO-RIGHT MARK','bidi','强制后续文本从左往右排',1);
+add(0x200F,'右至左标记 RLM','RIGHT-TO-LEFT MARK','bidi','强制后续文本从右往左排',1);
+add(0x202A,'LRE 左至右嵌入','LEFT-TO-RIGHT EMBEDDING','bidi','',1);
+add(0x202B,'RLE 右至左嵌入','RIGHT-TO-LEFT EMBEDDING','bidi','',1);
+add(0x202C,'PDF 弹出方向格式','POP DIRECTIONAL FORMATTING','bidi','结束 LRE/RLE/LRO/RLO 的作用范围',1);
+add(0x202D,'LRO 左至右覆盖','LEFT-TO-RIGHT OVERRIDE','bidi','强制覆盖字符自身方向',1);
+add(0x202E,'RLO 右至左覆盖','RIGHT-TO-LEFT OVERRIDE','bidi','让文字顺序整体反转，文件名伪装常用手段',1);
+add(0x2066,'LRI 左至右隔离','LEFT-TO-RIGHT ISOLATE','bidi','',1);
+add(0x2067,'RLI 右至左隔离','RIGHT-TO-LEFT ISOLATE','bidi','',1);
+add(0x2068,'FSI 首个强字符隔离','FIRST STRONG ISOLATE','bidi','',1);
+add(0x2069,'PDI 弹出隔离','POP DIRECTIONAL ISOLATE','bidi','结束隔离',1);
+add(0xE0001,'语言标签','LANGUAGE TAG','bidi','不可见的语言标注字符',1);
+
+/* --- 组合叠加符 --- */
+add(0x0300,'组合钝音符','COMBINING GRAVE ACCENT','comb','叠加在字母上：a + ̀ = à');
+add(0x0301,'组合锐音符','COMBINING ACUTE ACCENT','comb','á');
+add(0x0302,'组合抑扬符','COMBINING CIRCUMFLEX','comb','â');
+add(0x0303,'组合波浪符','COMBINING TILDE','comb','ã');
+add(0x0304,'组合长音符','COMBINING MACRON','comb','ā');
+add(0x0305,'组合上划线','COMBINING OVERLINE','comb','给字符加顶线');
+add(0x0308,'组合分音符','COMBINING DIAERESIS','comb','ä');
+add(0x030A,'组合上圆圈','COMBINING RING ABOVE','comb','å');
+add(0x0327,'组合下加符','COMBINING CEDILLA','comb','ç');
+add(0x0332,'组合下划线','COMBINING LOW LINE','comb','给字符加下划线，可与任意字符叠加');
+add(0x0336,'组合长删除线','COMBINING LONG STROKE OVERLAY','comb','给字符加贯穿删除线');
+add(0x0338,'组合长斜线','COMBINING LONG SOLIDUS OVERLAY','comb','≠ 里的那道斜线');
+add(0x034F,'组合字素连接符','COMBINING GRAPHEME JOINER','comb','让两个字符被当成一个整体处理',1);
+add(0x0361,'组合双倒置短音符','COMBINING DOUBLE INVERTED BREVE','comb','用于"彐"形连字');
+add(0x20E3,'组合封闭键帽','COMBINING ENCLOSING KEYCAP','comb','把字符变成键帽 emoji：1 + ⃣ = 1️⃣');
+add(0xFE00,'变体选择符-1','VARIATION SELECTOR-1','comb','指定字形的变体',1);
+add(0xFE0F,'变体选择符-16','VARIATION SELECTOR-16','comb','强制以 emoji 彩色样式显示',1);
+add(0xFE0E,'变体选择符-15','VARIATION SELECTOR-15','comb','强制以文本黑白样式显示',1);
+add(0xE0100,'变体选择符-17','VARIATION SELECTOR-17','comb','补充平面变体选择符',1);
+
+/* --- 同形混淆字 --- */
+add(0x0430,'西里尔 а','CYRILLIC SMALL A','look','与拉丁 a 几乎一模一样');
+add(0x0435,'西里尔 е','CYRILLIC SMALL E','look','与 e 混淆');
+add(0x043E,'西里尔 о','CYRILLIC SMALL O','look','与 o / 0 混淆');
+add(0x0440,'西里尔 р','CYRILLIC SMALL ER','look','与 p 混淆');
+add(0x0441,'西里尔 с','CYRILLIC SMALL ES','look','与 c 混淆');
+add(0x0445,'西里尔 х','CYRILLIC SMALL HA','look','与 x 混淆');
+add(0x04BB,'西里尔 һ','CYRILLIC SMALL SHHA','look','与 h 混淆');
+add(0x0455,'西里尔 ѕ','CYRILLIC SMALL DZE','look','与 s 混淆');
+add(0x04CF,'西里尔 ӏ','CYRILLIC SMALL PALOCHKA','look','与 l / | 混淆');
+add(0x0410,'西里尔 А','CYRILLIC CAPITAL A','look','与 A 混淆');
+add(0x0412,'西里尔 В','CYRILLIC CAPITAL VE','look','与 B 混淆');
+add(0x03BF,'希腊 ο','GREEK SMALL OMICRON','look','与 o 混淆');
+add(0x03BD,'希腊 ν','GREEK SMALL NU','look','与 v 混淆');
+add(0x03C4,'希腊 τ','GREEK SMALL TAU','look','与 t 混淆');
+add(0xFF41,'全角 ａ','FULLWIDTH LATIN SMALL A','look','全角拉丁字母');
+add(0xFF21,'全角 Ａ','FULLWIDTH LATIN CAPITAL A','look','全角拉丁字母');
+add(0x3007,'汉字 〇','IDEOGRAPHIC NUMBER ZERO','look','与数字 0 混淆');
+add(0x25CB,'白圆圈 ○','WHITE CIRCLE','look','与数字 0 混淆');
+add(0x2010,'连字符 ‐','HYPHEN','look','与减号 - 混淆');
+add(0x2013,'短破折号 –','EN DASH','look','与减号 - 混淆');
+add(0x2212,'减号 −','MINUS SIGN','look','真正的数学减号');
+add(0xFF0D,'全角减号 －','FULLWIDTH HYPHEN-MINUS','look','与减号混淆');
+add(0x00B7,'间隔号 ·','MIDDLE DOT','look','与 • ･ ・ 相似');
+add(0x30FB,'片假名中点 ・','KATAKANA MIDDLE DOT','look','与 · 相似');
+add(0xFF65,'半角中点 ･','HALFWIDTH KATAKANA MIDDLE DOT','look','与 · 相似');
+add(0x212B,'埃米符号 Å','ANGSTROM SIGN','look','与 Å (U+00C5) 等价但码点不同');
+add(0x2160,'罗马数字 Ⅰ','ROMAN NUMERAL ONE','look','与字母 I 混淆');
+
+/* --- 特殊标点 --- */
+add(0x2018,'左单引号 ‘','LEFT SINGLE QUOTATION MARK','punct','排版用弯引号');
+add(0x2019,'右单引号 ’','RIGHT SINGLE QUOTATION MARK','punct','英文撇号也用它');
+add(0x201C,'左双引号 “','LEFT DOUBLE QUOTATION MARK','punct','中文引号前一半');
+add(0x201D,'右双引号 ”','RIGHT DOUBLE QUOTATION MARK','punct','中文引号后一半');
+add(0x2014,'破折号 —','EM DASH','punct','中文破折号');
+add(0x2015,'水平线 ―','HORIZONTAL BAR','punct','引用对话用');
+add(0x2011,'不换行连字符 ‑','NON-BREAKING HYPHEN','punct','不会在此断行');
+add(0x2026,'省略号 …','HORIZONTAL ELLIPSIS','punct','');
+add(0x00AB,'左双角引号 «','LEFT-POINTING DOUBLE ANGLE','punct','');
+add(0x00BB,'右双角引号 »','RIGHT-POINTING DOUBLE ANGLE','punct','');
+add(0x2039,'左单角引号 ‹','SINGLE LEFT-POINTING ANGLE','punct','');
+add(0x203A,'右单角引号 ›','SINGLE RIGHT-POINTING ANGLE','punct','');
+add(0x3001,'顿号 、','IDEOGRAPHIC COMMA','punct','中文并列停顿');
+add(0x3002,'句号 。','IDEOGRAPHIC FULL STOP','punct','');
+add(0xFF0C,'全角逗号 ，','FULLWIDTH COMMA','punct','');
+add(0xFF1F,'全角问号 ？','FULLWIDTH QUESTION MARK','punct','');
+add(0xFF01,'全角叹号 ！','FULLWIDTH EXCLAMATION MARK','punct','');
+add(0x3010,'左书名号 【','LEFT BLACK LENTICULAR BRACKET','punct','');
+add(0x3011,'右书名号 】','RIGHT BLACK LENTICULAR BRACKET','punct','');
+add(0x300C,'左引号 「','LEFT CORNER BRACKET','punct','');
+add(0x300D,'右引号 」','RIGHT CORNER BRACKET','punct','');
+add(0xFF5E,'全角波浪号 ～','FULLWIDTH TILDE','punct','');
+add(0x2044,'分数斜线 ⁄','FRACTION SLASH','punct','配合数字可组成 1⁄2');
+add(0x2020,'剑标 †','DAGGER','punct','注释标记');
+add(0x2021,'双剑标 ‡','DOUBLE DAGGER','punct','');
+add(0x00A7,'节标记 §','SECTION SIGN','punct','');
+add(0x00B6,'段落标记 ¶','PILCROW SIGN','punct','');
+add(0x00A9,'版权 ©','COPYRIGHT SIGN','punct','');
+add(0x00AE,'注册商标 ®','REGISTERED SIGN','punct','');
+add(0x2122,'商标 ™','TRADE MARK SIGN','punct','');
+add(0x2030,'千分号 ‰','PER MILLE SIGN','punct','');
+add(0x00B0,'度 °','DEGREE SIGN','punct','');
+add(0x2103,'摄氏度 ℃','DEGREE CELSIUS','punct','');
+add(0x00D7,'乘号 ×','MULTIPLICATION SIGN','punct','');
+add(0x00F7,'除号 ÷','DIVISION SIGN','punct','');
+add(0x2260,'不等于 ≠','NOT EQUAL TO','punct','');
+add(0x2248,'约等于 ≈','ALMOST EQUAL TO','punct','');
+add(0x2605,'实心星 ★','BLACK STAR','punct','');
+add(0x2606,'空心星 ☆','WHITE STAR','punct','');
+add(0x2713,'对勾 ✓','CHECK MARK','punct','');
+add(0x2717,'叉 ✗','BALLOT X','punct','');
+add(0x2190,'左箭头 ←','LEFTWARDS ARROW','punct','');
+add(0x2192,'右箭头 →','RIGHTWARDS ARROW','punct','');
+add(0x2191,'上箭头 ↑','UPWARDS ARROW','punct','');
+add(0x2193,'下箭头 ↓','DOWNWARDS ARROW','punct','');
+add(0x2660,'黑桃 ♠','BLACK SPADE SUIT','punct','');
+add(0x2665,'红心 ♥','BLACK HEART SUIT','punct','');
+add(0x2022,'圆点 •','BULLET','punct','无序列表符号');
+
+/* --- 花体字母（数学字母 + 小型大写 + 上下标）--- */
+const MATH = [
+  ['数学粗体',0x1D400],['数学斜体',0x1D434],['数学粗斜体',0x1D468],
+  ['数学手写体',0x1D49C],['数学粗手写体',0x1D4D0],['数学哥特体',0x1D504],
+  ['数学双线体',0x1D538],['数学粗哥特体',0x1D56C],['数学无衬线',0x1D5A0],
+  ['数学粗无衬线',0x1D5D4],['数学无衬线斜体',0x1D608],['数学等宽体',0x1D670]
+];
+MATH.forEach(([n,b])=>{
+  add(b,'花体 A · '+n,'MATHEMATICAL '+n,'style','大写 A 的 '+n+' 形式，整段字母连续排列');
+  add(b+26,'花体 a · '+n,'MATHEMATICAL '+n+' (small)','style','小写 a 的 '+n+' 形式');
+});
+const SC = [['ᴀ',0x1D00],['ʙ',0x0299],['ᴄ',0x1D04],['ᴅ',0x1D05],['ᴇ',0x1D07],
+  ['ꜰ',0xA730],['ɢ',0x0262],['ʜ',0x029C],['ɪ',0x026A],['ᴊ',0x1D0A],['ᴋ',0x1D0B],
+  ['ʟ',0x029F],['ᴍ',0x1D0D],['ɴ',0x0274],['ᴏ',0x1D0F],['ᴘ',0x1D18],['ʀ',0x0280],
+  ['ꜱ',0xA731],['ᴛ',0x1D1B],['ᴜ',0x1D1C],['ᴠ',0x1D20],['ᴡ',0x1D21],['ʏ',0x028F],['ᴢ',0x1D22]];
+SC.forEach(([ch,cp],i)=>add(cp,'小型大写字母 '+ch,'LATIN LETTER SMALL CAPITAL','style','小号大写样式，社交平台特殊字体常用'));
+const SS = [['⁰',0x2070],['¹',0x00B9],['²',0x00B2],['³',0x00B3],['⁴',0x2074],['⁵',0x2075],
+  ['⁶',0x2076],['⁷',0x2077],['⁸',0x2078],['⁹',0x2079],['⁺',0x207A],['⁻',0x207B],['ⁿ',0x207F]];
+SS.forEach(([ch,cp])=>add(cp,'上标 '+ch,'SUPERSCRIPT '+ch,'style',''));
+const SB = [['₀',0x2080],['₁',0x2081],['₂',0x2082],['₃',0x2083],['₄',0x2084],['₅',0x2085],
+  ['₆',0x2086],['₇',0x2087],['₈',0x2088],['₉',0x2089],['₊',0x208A],['₋',0x208B],['ₐ',0x2090],['ₑ',0x2091],['ₓ',0x2093]];
+SB.forEach(([ch,cp])=>add(cp,'下标 '+ch,'SUBSCRIPT '+ch,'style',''));
+add(0x24B6,'带圈大写 Ⓐ','CIRCLED LATIN CAPITAL A','style','');
+add(0x24D0,'带圈小写 ⓐ','CIRCLED LATIN SMALL A','style','');
+add(0x1F150,'反白字母 🅐','NEGATIVE CIRCLED LATIN CAPITAL A','style','');
+add(0x1F170,'字母按钮 🅰','NEGATIVE SQUARED LATIN CAPITAL A','style','');
+add(0x249C,'括号包围小写 ⒜','PARENTHESIZED LATIN SMALL LETTER A','style','');
+
+/* --- 方块 / 线条 --- */
+[[0x2588,'█ 全实块'],[0x2589,'▉ 七分之八块'],[0x258A,'▊ 四分之三块'],[0x258B,'▋ 八分之五块'],
+ [0x258C,'▌ 左半块'],[0x258D,'▍ 八分之三块'],[0x258E,'▎ 四分之一块'],[0x258F,'▏ 八分之一块'],
+ [0x2591,'░ 淡阴影'],[0x2592,'▒ 中阴影'],[0x2593,'▓ 深阴影'],[0x25A0,'■ 黑方块'],
+ [0x25A1,'□ 白方块'],[0x25AA,'▪ 小黑方'],[0x25AB,'▫ 小白方'],[0x2B1B,'⬛ 大黑方'],[0x2B1C,'⬜ 大白方']
+].forEach(([c,n])=>add(c,n,'BLOCK ELEMENT','block','进度条、占位、装饰常用'));
+[[0x2500,'─ 细横线'],[0x2502,'│ 细竖线'],[0x250C,'┌ 左上'],[0x2510,'┐ 右上'],[0x2514,'└ 左下'],
+ [0x2518,'┘ 右下'],[0x251C,'├ 左接'],[0x2524,'┤ 右接'],[0x252C,'┬ 上接'],[0x2534,'┴ 下接'],[0x253C,'┼ 交叉'],
+ [0x2501,'━ 粗横线'],[0x2503,'┃ 粗竖线'],[0x250F,'┏ 粗左上'],[0x2513,'┓ 粗右上'],
+ [0x2517,'┗ 粗左下'],[0x251B,'┛ 粗右下'],[0x2550,'═ 双横线'],[0x2551,'║ 双竖线'],[0x2554,'╔ 双线左上'],
+ [0x2557,'╗ 双线右上'],[0x255A,'╚ 双线左下'],[0x255D,'╝ 双线右下']
+].forEach(([c,n])=>add(c,n,'BOX DRAWING','block','制表符，画文本表格/树状图'));
+
+/* --- Emoji 修饰 --- */
+add(0x1F3FB,'浅肤色修饰符','EMOJI MODIFIER FITZPATRICK TYPE-1-2','emoji','跟在人物 emoji 后面改肤色');
+add(0x1F3FC,'中浅肤色修饰符','EMOJI MODIFIER FITZPATRICK TYPE-3','emoji','');
+add(0x1F3FE,'中深肤色修饰符','EMOJI MODIFIER FITZPATRICK TYPE-5','emoji','');
+add(0x1F3FF,'深肤色修饰符','EMOJI MODIFIER FITZPATRICK TYPE-6','emoji','');
+add(0xE0020,'标签空格','TAG SPACE','emoji','旗序标签字符，不可见',1);
+add(0xE0067,'标签字母 g','TAG LATIN SMALL LETTER G','emoji','配合 🏴 拼出英格兰旗 🏴󠁧󠁢󠁥󠁮󠁧󠁿',1);
+add(0xE0062,'标签字母 b','TAG LATIN SMALL LETTER B','emoji','旗序标签字符，不可见',1);
+add(0xE0065,'标签字母 e','TAG LATIN SMALL LETTER E','emoji','旗序标签字符，不可见',1);
+add(0x1F3F4,'黑旗 🏴','WAVING BLACK FLAG','emoji','旗序起始字符');
+add(0x1F1E6,'区域指示符 A','REGIONAL INDICATOR A','emoji','两面字母拼国旗，如 🇨🇳');
+add(0x1F1E7,'区域指示符 B','REGIONAL INDICATOR B','emoji','');
+add(0x1F1E8,'区域指示符 C','REGIONAL INDICATOR C','emoji','与 A 组合成 🇨🇦 等');
+
+/* ============ 工具函数 ============ */
+const hex = c => 'U+' + c.toString(16).toUpperCase().padStart(4,'0');
+const ch = c => { try{ return String.fromCodePoint(c); }catch(e){ return '?'; } };
+const esc = c => c > 0xFFFF ? '\\u{'+c.toString(16).toUpperCase()+'}' : '\\u'+c.toString(16).toUpperCase().padStart(4,'0');
+const ent = c => '&#x'+c.toString(16).toUpperCase()+';';
+const urlenc = c => Array.from(new TextEncoder().encode(ch(c))).map(b=>'%'+b.toString(16).toUpperCase().padStart(2,'0')).join('');
+const utf8 = c => Array.from(new TextEncoder().encode(ch(c))).map(b=>b.toString(16).toUpperCase().padStart(2,'0')).join(' ');
+
+function copy(text, tip){
+  const done = ()=> toast((tip||'已复制') + ' <b>' + (text.length>12 ? text.slice(0,12)+'…' : text) + '</b>');
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallback());
+  } else fallback();
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('复制失败，请长按手动选择'); }
+    document.body.removeChild(ta);
+  }
+}
+let tt;
+function toast(html){
+  const t = document.getElementById('toast');
+  t.innerHTML = html; t.classList.add('on');
+  clearTimeout(tt); tt = setTimeout(()=>t.classList.remove('on'), 1600);
+}
+
+/* ============ 渲染 ============ */
+let cat = 'all', kw = '', showNote = true;
+const grid = document.getElementById('grid');
+const totalN = document.getElementById('total');
+totalN.textContent = D.length;
+
+const catsEl = document.getElementById('cats');
+catsEl.innerHTML = '<button class="chip on" data-c="all">全部</button>' +
+  CATS.map(c=>'<button class="chip" data-c="'+c.id+'">'+c.name+'</button>').join('');
+catsEl.onclick = e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  [...catsEl.children].forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); cat = b.dataset.c; render();
+};
+
+function match(it){
+  if(cat!=='all' && it.cat!==cat) return false;
+  if(!kw) return true;
+  const s = kw.toLowerCase();
+  return it.n.toLowerCase().includes(s) || it.en.toLowerCase().includes(s) ||
+         it.note.toLowerCase().includes(s) || hex(it.c).toLowerCase().includes(s) ||
+         it.c.toString(16).includes(s.replace(/^u\+/,'')) ||
+         ch(it.c) === kw;
+}
+
+function render(){
+  const list = D.filter(match);
+  const cur = CATS.find(c=>c.id===cat);
+  document.getElementById('count').textContent = '显示 ' + list.length + ' / ' + D.length + ' 个' +
+    (cur ? ' · ' + cur.name : '');
+  grid.innerHTML = '';
+  document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+
+  if(cat === 'all' && !kw){
+    CATS.forEach(c=>{
+      const sub = list.filter(x=>x.cat===c.id);
+      if(!sub.length) return;
+      const h = document.createElement('div');
+      h.className='sec'; h.textContent = c.name + '（' + sub.length + '）';
+      grid.appendChild(h);
+      sub.forEach(it=>grid.appendChild(card(it)));
+    });
+  } else {
+    list.forEach(it=>grid.appendChild(card(it)));
+  }
+}
+
+function card(it){
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML =
+    '<div class="char'+(it.inv?' inv':'')+'"></div>' +
+    (it.inv ? '<span class="tag">不可见</span>' : '') +
+    '<div class="nm"></div><div class="code"></div>' +
+    (showNote && it.note ? '<div class="note"></div>' : '');
+  el.querySelector('.char').textContent = ch(it.c);
+  el.querySelector('.nm').textContent = it.n;
+  el.querySelector('.code').textContent = hex(it.c);
+  if(showNote && it.note) el.querySelector('.note').textContent = it.note;
+
+  el.onclick = ()=>{
+    copy(ch(it.c), '已复制 ' + hex(it.c) + ' ');
+    el.classList.add('copied'); setTimeout(()=>el.classList.remove('copied'),600);
+  };
+  let timer;
+  const go = ()=>{ clearTimeout(timer); timer = setTimeout(()=>openSheet(it), 520); };
+  el.addEventListener('pointerdown', ()=>{ if(it.note||true) go(); });
+  el.addEventListener('pointerup', ()=>clearTimeout(timer));
+  el.addEventListener('pointermove', ()=>clearTimeout(timer));
+  el.addEventListener('pointercancel', ()=>clearTimeout(timer));
+  el.addEventListener('contextmenu', e=>{ e.preventDefault(); openSheet(it); });
+  return el;
+}
+
+/* ============ 详情弹层 ============ */
+const mask = document.getElementById('mask'), sheet = document.getElementById('sheet');
+function openSheet(it){
+  const rows = [
+    ['Unicode', hex(it.c)],
+    ['十进制', it.c],
+    ['UTF-8', utf8(it.c)],
+    ['HTML 实体', ent(it.c)],
+    ['JS 转义', esc(it.c)],
+    ['URL 编码', urlenc(it.c)],
+  ];
+  sheet.innerHTML =
+    '<div class="big'+(it.inv?' inv':'')+'">'+escapeHtml(ch(it.c))+'</div>' +
+    '<h3>'+escapeHtml(it.n)+'</h3>' +
+    '<div class="en">'+escapeHtml(it.en)+'</div>' +
+    (it.note ? '<div class="desc">'+escapeHtml(it.note)+'</div>' : '') +
+    rows.map(r=>'<div class="kv"><span class="k">'+r[0]+'</span><span class="v" data-v="'+escapeHtml(r[1])+'">'+escapeHtml(r[1])+'</span></div>').join('') +
+    '<button class="cp" id="cpChar" style="width:100%;margin-top:6px">复制这个字符</button>' +
+    '<button class="close">关闭</button>';
+  sheet.querySelectorAll('.v').forEach(v=>{
+    v.onclick = ()=> copy(v.dataset.v, '已复制 ');
+  });
+  sheet.querySelector('#cpChar').onclick = ()=> copy(ch(it.c), '已复制 ' + hex(it.c) + ' ');
+  sheet.querySelector('.close').onclick = closeSheet;
+  mask.classList.add('on');
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function closeSheet(){ mask.classList.remove('on'); }
+mask.onclick = e => { if(e.target === mask) closeSheet(); };
+
+/* ============ 交互 ============ */
+const q = document.getElementById('q'), sbox = document.getElementById('sbox');
+q.oninput = ()=>{ kw = q.value.trim(); sbox.classList.toggle('has', !!kw); render(); };
+document.getElementById('clear').onclick = ()=>{ q.value=''; kw=''; sbox.classList.remove('has'); render(); };
+document.getElementById('toggleInv').onclick = function(){
+  showNote = !showNote;
+  this.textContent = showNote ? '隐藏说明' : '显示说明';
+  render();
+};
+document.getElementById('copyAll').onclick = ()=>{
+  const list = D.filter(match);
+  copy(list.map(x=>ch(x.c)).join(''), '已复制 ' + list.length + ' 个字符：');
+};
+
+document.querySelectorAll('.cp[data-t]').forEach(b=>{
+  b.onclick = ()=> copy(document.getElementById(b.dataset.t).value, '已复制 ');
+});
+
+/* 转换工具 */
+const src = document.getElementById('src');
+const o1 = document.getElementById('o1'), o2 = document.getElementById('o2'), o3 = document.getElementById('o3'), o4 = document.getElementById('o4');
+src.oninput = ()=>{
+  const s = Array.from(src.value);
+  o1.value = s.map(x=>{const p=x.codePointAt(0);return p>0xFFFF?'\\u{'+p.toString(16).toUpperCase()+'}':'\\u'+p.toString(16).toUpperCase().padStart(4,'0');}).join('');
+  o2.value = s.map(x=>'&#x'+x.codePointAt(0).toString(16).toUpperCase()+';').join('');
+  o3.value = encodeURIComponent(src.value);
+};
+document.getElementById('doDec').onclick = ()=>{
+  let t = document.getElementById('dec').value;
+  t = t.replace(/\\u\{([0-9a-fA-F]+)\}/g, (m,h)=>String.fromCodePoint(parseInt(h,16)))
+       .replace(/\\u([0-9a-fA-F]{4})/g, (m,h)=>String.fromCharCode(parseInt(h,16)))
+       .replace(/&#x([0-9a-fA-F]+);/gi, (m,h)=>String.fromCodePoint(parseInt(h,16)))
+       .replace(/&#(\d+);/g, (m,d)=>String.fromCodePoint(+d));
+  t = t.replace(/(%[0-9A-Fa-f]{2})+/g, m=>{ try{ return decodeURIComponent(m); }catch(e){ return m; } });
+  o4.value = t;
+  toast('已解码 <b>'+ (t.length>10? t.slice(0,10)+'…' : t) +'</b>');
+};
+
+render();
+</script>
+</body>
+</html>

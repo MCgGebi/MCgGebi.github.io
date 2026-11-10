@@ -1,0 +1,182 @@
+{
+  "version": "0.9.20",
+  "note": "彩蛋事件注册表 —— 类插件系统，但不主动加载：只有用户点击「千万别点」时才 fetch 本文件并随机抽取一个事件。每个事件用 duration 单独设置持续时间（毫秒）：-1 = 永久持续（不自动恢复，刷新页面才消失）；0 = 禁用该事件（不会被抽到）；大于 0 = 经过该毫秒数后自动清除该事件的效果（各彩蛋互相独立，一个到期不影响其它）。",
+  "events": [
+    {
+      "id": 1,
+      "name": "中国人会飞",
+      "desc": "黄皮肤才对，讲中文才飞",
+      "type": "openUrl",
+      "icon": "fas fa-plane",
+      "params": {
+        "url": "https://m.bilibili.com/video/BV1QCgK6YEuM"
+      },
+      "duration": -1
+    },
+    {
+      "id": 2,
+      "name": "Never Gonna Give You Up",
+      "desc": "经典 Rickroll，你被耍了",
+      "type": "openUrl",
+      "icon": "fas fa-music",
+      "params": {
+        "url": "https://m.bilibili.com/video/BV1GJ411x7h7"
+      },
+      "duration": -1
+    },
+    {
+      "id": 3,
+      "name": "8-bit 音效轰炸",
+      "desc": "自备的合成音，不需要音频文件",
+      "type": "sound",
+      "icon": "fas fa-volume-up",
+      "params": {
+        "notes": [
+          523,
+          659,
+          784,
+          1047
+        ],
+        "wave": "square"
+      },
+      "duration": -1
+    },
+    {
+      "id": 4,
+      "name": "文字乱码",
+      "desc": "页面文字开始胡言乱语",
+      "type": "scramble",
+      "icon": "fas fa-font",
+      "params": {
+        "charset": "!@#$%^&*<>?/\\|~+=─█▓▒░"
+      },
+      "duration": 8000
+    },
+    {
+      "id": 5,
+      "name": "二进制代码雨",
+      "desc": "01001000 01100101 01101100 01101100 01101111",
+      "type": "matrix",
+      "icon": "fas fa-code",
+      "params": {
+        "color": "#3b8526",
+        "fontSize": 16
+      },
+      "duration": 15000
+    },
+    {
+      "id": 6,
+      "name": "颜色反转",
+      "desc": "世界颠倒了",
+      "type": "invert",
+      "icon": "fas fa-adjust",
+      "params": {},
+      "duration": 12000
+    },
+    {
+      "id": 7,
+      "name": "炫彩主题",
+      "desc": "彩虹色轮流转，闪瞎双眼",
+      "type": "rainbow",
+      "icon": "fas fa-palette",
+      "params": {},
+      "duration": 12000
+    },
+    {
+      "id": 8,
+      "name": "你屏幕有根毛",
+      "desc": "别擦了，擦不掉的",
+      "type": "hair",
+      "icon": "fas fa-minus",
+      "params": {
+        "count": 3
+      },
+      "duration": -1
+    },
+    {
+      "id": 9,
+      "name": "地震模式",
+      "desc": "页面开始剧烈抖动",
+      "type": "shake",
+      "icon": "fas fa-house-crack",
+      "params": {
+        "intensity": 6
+      },
+      "duration": 8000
+    },
+    {
+      "id": 10,
+      "name": "迪厅灯光",
+      "desc": "灯光师已就位",
+      "type": "disco",
+      "icon": "fas fa-compact-disc",
+      "params": {},
+      "duration": 10000
+    },
+    {
+      "id": 11,
+      "name": "撒花庆祝",
+      "desc": "恭喜你发现了这里",
+      "type": "confetti",
+      "icon": "fas fa-party-horn",
+      "params": {
+        "count": 80
+      },
+      "duration": -1
+    },
+    {
+      "id": 12,
+      "name": "系统崩溃",
+      "desc": "蓝屏了",
+      "type": "fakeCrash",
+      "icon": "fas fa-skull-crossbones",
+      "params": {
+        "text": "DBP_HUB_EXCEPTION",
+        "cols": 20,
+        "rows": 14,
+        "step": 9
+      },
+      "duration": -1
+    },
+    {
+      "id": 13,
+      "name": "弹幕护体",
+      "desc": "前方高能预警",
+      "type": "danmaku",
+      "icon": "fas fa-comment-dots",
+      "params": {
+        "texts": [
+          "666",
+          "前方高能",
+          "up主威武",
+          "别点了",
+          "哈哈哈哈哈",
+          "AWSL",
+          "你被耍了",
+          "AWSL"
+        ]
+      },
+      "duration": 15000
+    },
+    {
+      "id": 14,
+      "name": "重力失效",
+      "desc": "整个世界旋转了起来",
+      "type": "spin",
+      "icon": "fas fa-rotate",
+      "params": {
+        "deg": 180
+      },
+      "duration": 10000
+    },
+    {
+      "id": 15,
+      "name": "呼吸缩放",
+      "desc": "页面在深呼吸",
+      "type": "pulse",
+      "icon": "fas fa-expand",
+      "params": {},
+      "duration": 10000
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>像素画工具</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .pa-container { max-width: 900px; margin: 0 auto; }
+    .pa-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .pa-header h1 {
+      font-size: 22px;
+      color: #f72585;
+      margin-bottom: 4px;
+    }
+    .pa-header p {
+      font-size: 12px;
+      color: #888;
+    }
+    .pa-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+    .pa-toolbar label {
+      font-size: 12px;
+      color: #aaa;
+    }
+    .pa-toolbar input[type="color"] {
+      width: 40px; height: 32px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .pa-toolbar input[type="number"] {
+      width: 60px;
+      padding: 6px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #2a2a3e;
+      color: #eee;
+      font-size: 13px;
+    }
+    .pa-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pa-btn:hover { transform: translateY(-1px); }
+    .pa-btn-primary { background: #4361ee; color: #fff; }
+    .pa-btn-danger { background: #f72585; color: #fff; }
+    .pa-btn-success { background: #06d6a0; color: #111; }
+
+    .pa-canvas-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .pa-canvas {
+      display: grid;
+      gap: 0;
+      border: 2px solid #444;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .pa-cell {
+      width: 20px; height: 20px;
+      border: 1px solid rgba(255,255,255,0.03);
+      cursor: crosshair;
+      transition: transform 0.1s;
+    }
+    .pa-cell:hover { transform: scale(1.2); z-index: 1; }
+
+    .pa-palette {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      padding: 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+    .pa-swatch {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s;
+    }
+    .pa-swatch:hover { transform: scale(1.2); }
+    .pa-swatch.active { border-color: #fff; }
+
+    .pa-output {
+      background: #0f0f1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #4cc9f0;
+      max-height: 150px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="pa-container">
+    <div class="pa-header">
+      <h1>🎨 像素画工具</h1>
+      <p>选择颜色 → 点击格子涂色 → 导出你的作品</p>
+    </div>
+
+    <div class="pa-toolbar">
+      <label>网格:</label>
+      <input type="number" id="paGridSize" value="16" min="4" max="48" onchange="initCanvas()">
+      <label>颜色:</label>
+      <input type="color" id="paColor" value="#f72585">
+      <button class="pa-btn pa-btn-primary" onclick="initCanvas()">🔄 重置画布</button>
+      <button class="pa-btn pa-btn-success" onclick="exportImage()">💾 导出 PNG</button>
+      <button class="pa-btn pa-btn-danger" onclick="clearCanvas()">🗑 清空</button>
+    </div>
+
+    <div class="pa-palette" id="paPalette"></div>
+
+    <div class="pa-canvas-wrap">
+      <div class="pa-canvas" id="paCanvas"></div>
+    </div>
+
+    <div>
+      <label style="font-size:12px;color:#aaa;">输出数据:</label>
+      <div class="pa-output" id="paOutput">点击格子开始绘画...</div>
+    </div>
+  </div>
+
+  <script>
+    // 调色板
+    var PALETTE = [
+      '#f72585','#b5179e','#7209b7','#560bad','#480ca8',
+      '#3a0ca3','#3f37c9','#4361ee','#4895ef','#4cc9f0',
+      '#06d6a0','#1b9e3f','#f77f00','#e85d04','#dc2f02',
+      '#d00000','#ff006e','#ffbe0b','#fb5607','#8338ec',
+      '#3a86ff','#111111','#444444','#888888','#cccccc','#ffffff'
+    ];
+
+    var currentColor = '#f72585';
+    var gridSize = 16;
+    var canvasData = [];
+
+    function initPalette() {
+      var container = document.getElementById('paPalette');
+      container.innerHTML = '';
+      PALETTE.forEach(function (c) {
+        var sw = document.createElement('div');
+        sw.className = 'pa-swatch' + (c === currentColor ? ' active' : '');
+        sw.style.background = c;
+        sw.title = c;
+        sw.onclick = function () {
+          currentColor = c;
+          document.getElementById('paColor').value = c;
+          initPalette();
+        };
+        container.appendChild(sw);
+      });
+    }
+
+    function initCanvas() {
+      gridSize = parseInt(document.getElementById('paGridSize').value) || 16;
+      gridSize = Math.max(4, Math.min(48, gridSize));
+      canvasData = [];
+      for (var i = 0; i < gridSize; i++) {
+        canvasData[i] = [];
+        for (var j = 0; j < gridSize; j++) {
+          canvasData[i][j] = '';
+        }
+      }
+
+      var canvas = document.getElementById('paCanvas');
+      canvas.style.gridTemplateColumns = 'repeat(' + gridSize + ', 20px)';
+      canvas.innerHTML = '';
+
+      for (var y = 0; y < gridSize; y++) {
+        for (var x = 0; x < gridSize; x++) {
+          var cell = document.createElement('div');
+          cell.className = 'pa-cell';
+          cell.dataset.x = x;
+          cell.dataset.y = y;
+          cell.onmousedown = function (e) { paintCell(e); };
+          cell.onmouseover = function (e) {
+            if (e.buttons === 1) paintCell(e);
+          };
+          canvas.appendChild(cell);
+        }
+      }
+      updateOutput();
+    }
+
+    function paintCell(e) {
+      var x = parseInt(e.target.dataset.x);
+      var y = parseInt(e.target.dataset.y);
+      var color = document.getElementById('paColor').value;
+      currentColor = color;
+      canvasData[y][x] = color;
+      e.target.style.background = color;
+      updateOutput();
+    }
+
+    function clearCanvas() {
+      for (var y = 0; y < gridSize; y++) {
+        for (var x = 0; x < gridSize; x++) {
+          canvasData[y][x] = '';
+        }
+      }
+      var cells = document.querySelectorAll('.pa-cell');
+      cells.forEach(function (c) { c.style.background = ''; });
+      updateOutput();
+    }
+
+    function updateOutput() {
+      var lines = [];
+      for (var y = 0; y < gridSize; y++) {
+        var row = [];
+        for (var x = 0; x < gridSize; x++) {
+          row.push(canvasData[y][x] || '____');
+        }
+        lines.push(row.join(' '));
+      }
+      document.getElementById('paOutput').textContent = lines.join('\n');
+    }
+
+    function exportImage() {
+      var canvas = document.createElement('canvas');
+      canvas.width = gridSize * 20;
+      canvas.height = gridSize * 20;
+      var ctx = canvas.getContext('2d');
+      for (var y = 0; y < gridSize; y++) {
+        for (var x = 0; x < gridSize; x++) {
+          if (canvasData[y][x]) {
+            ctx.fillStyle = canvasData[y][x];
+            ctx.fillRect(x * 20, y * 20, 20, 20);
+          }
+        }
+      }
+      var link = document.createElement('a');
+      link.download = 'pixel-art-' + Date.now() + '.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    // 初始化
+    document.getElementById('paColor').addEventListener('change', function () {
+      currentColor = this.value;
+      initPalette();
+    });
+
+    initPalette();
+    initCanvas();
+    console.log('[PixelArt] 像素画工具已就绪!');
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!--
+  HTML 插件 · iframe 模式演示
+  规范：无边框、无标题、直接铺满 main-content。
+  标题由主页顶栏 .topbar-page-title 显示（取自 plugins.json 的 title），
+  因此本文件不需要、也不应该再写一遍页面标题/导航栏。
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+    background: var(--bg, #1a1a1a); color: var(--text, #e8e8e8);
+    padding: 24px; min-height: 100vh;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h2 { font-size: 18px; margin-bottom: 4px; color: var(--accent, #3b8526); }
+  p.sub { font-size: 12px; color: var(--text-muted, #888); margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .card {
+    background: var(--panel, #252525); border: 1px solid var(--border, #3a3a3a);
+    border-radius: 10px; padding: 16px; transition: .2s;
+  }
+  .card:hover { border-color: var(--accent, #3b8526); transform: translateY(-2px); }
+  .card .ico { font-size: 24px; color: var(--accent, #3b8526); }
+  .card b { display: block; margin: 8px 0 3px; font-size: 13px; }
+  .card small { font-size: 11px; color: var(--text-muted, #888); }
+  .tip {
+    margin-top: 20px; padding: 12px 16px; background: var(--accent-dim, rgba(59,133,38,.12));
+    border: 1px solid rgba(59,133,38,.3); border-radius: 8px; font-size: 12px; line-height: 1.7;
+  }
+  .tip code { background: var(--panel-2, #2a2a2a); padding: 1px 6px; border-radius: 3px; font-family: monospace; }
+</style>
+
+<div class="wrap">
+  <h2><i class="fas fa-window-restore"></i> HTML 插件 · iframe 模式</h2>
+  <p class="sub">此内容以裸 &lt;iframe&gt; 直接铺满 main-content —— 无卡片、无边框、无标题栏</p>
+
+  <div class="grid">
+    <div class="card"><div class="ico"><i class="fas fa-cube"></i></div><b>直接显示</b><small>无框，铺满整块区域</small></div>
+    <div class="card"><div class="ico"><i class="fas fa-expand"></i></div><b>自适应</b><small>继承视口高度</small></div>
+    <div class="card"><div class="ico"><i class="fas fa-paint-brush"></i></div><b>可自定义</b><small>独立 CSS 作用域</small></div>
+    <div class="card"><div class="ico"><i class="fas fa-shield-alt"></i></div><b>沙箱隔离</b><small>sandbox 安全属性</small></div>
+  </div>
+
+  <div class="tip">
+    <strong>规范要点：</strong><br>
+    ① 本文件<strong>不需要写标题和导航栏</strong> —— 标题「HTML · iframe（无框全屏）」已写在顶栏，由 <code>plugins.json</code> 的 <code>title</code> 字段驱动。<br>
+    ② 若要调用框架能力，可用 <code>window.parent.copyText()</code> / <code>window.parent.showToast()</code>。<br>
+    ③ CSS 变量（<code>--bg / --panel / --accent</code> 等）会随亮色/暗色主题自动变化，建议直接引用。
+  </div>
+</div>

@@ -1,0 +1,69 @@
+<!--
+  HTML 插件 · inline 模式演示
+  规范：
+    1. 内容直接注入 main-content，无卡片/边框包裹；
+    2. 若本文件含与顶栏重复的标题或导航栏，加载时会被自动剥离，避免与主页顶栏重叠。
+       触发剥离的条件（满足其一即移除）：
+         - 顶层 <h1>/<h2> 的 textContent 等于 plugins.json 中的 title
+         - 顶层 <header class="plugin-header"> / .page-header 内含重复标题
+         - 顶层 <nav class="plugin-nav"> 文本含「首页/返回/菜单」等（视为与顶栏功能重叠）
+       因此：推荐直接不写标题和导航栏（标题由顶栏显示），如需保留请改用不同于顶栏文案的标题。
+-->
+<style>
+  .demo-inline { padding: 4px 0; }
+  .demo-inline .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 12px; background: var(--panel, #252525); border-radius: 10px; margin-bottom: 16px;
+  }
+  .demo-inline .toolbar input {
+    flex: 1; min-width: 160px; height: 34px; padding: 0 10px;
+    background: var(--panel-2, #2a2a2a); border: 1px solid var(--border, #3a3a3a);
+    border-radius: 6px; color: var(--text, #eee); font-size: 12px;
+  }
+  .demo-inline .toolbar button {
+    padding: 7px 16px; border: none; border-radius: 6px; background: var(--accent, #3b8526);
+    color: #fff; cursor: pointer; font-size: 12px;
+  }
+  .demo-inline .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .demo-inline .item {
+    background: var(--panel, #252525); border: 1px solid var(--border, #3a3a3a);
+    border-radius: 10px; padding: 14px; transition: .2s;
+  }
+  .demo-inline .item:hover { border-color: var(--accent, #3b8526); transform: translateY(-2px); }
+  .demo-inline .item i { font-size: 22px; color: var(--accent, #3b8526); }
+  .demo-inline .item b { display: block; margin: 6px 0 2px; font-size: 13px; }
+  .demo-inline .item small { font-size: 11px; color: var(--text-muted, #888); }
+</style>
+
+<div class="demo-inline">
+  <!--
+    下面的 header 会被自动移除（标题与顶栏重复，满足剥离条件）。
+    验证方法：打开页面后查看 DOM，此 <header> 已被剥离。
+  -->
+  <header class="plugin-header">
+    <h1>HTML · inline（去重标题）</h1>
+    <nav class="plugin-nav"><a href="#home">首页</a> · <a href="#menu">菜单</a></nav>
+  </header>
+
+  <div class="toolbar">
+    <i class="fas fa-search" style="color:var(--accent);"></i>
+    <input type="text" placeholder="搜索（演示用，未实际过滤）...">
+    <button onclick="if(window.parent&&window.parent.copyText)window.parent.copyText('来自 inline 插件的文本')">
+      <i class="fas fa-magic"></i> 调用框架 API
+    </button>
+  </div>
+
+  <div class="grid">
+    <div class="item"><i class="fas fa-hammer"></i><b>合成</b><small>配方查询</small></div>
+    <div class="item"><i class="fas fa-magic"></i><b>附魔</b><small>属性模拟</small></div>
+    <div class="item"><i class="fas fa-flask"></i><b>酿造</b><small>药水配方</small></div>
+    <div class="item"><i class="fas fa-bolt"></i><b>红石</b><small>电路计算</small></div>
+    <div class="item"><i class="fas fa-seedling"></i><b>种子</b><small>地图种子</small></div>
+    <div class="item"><i class="fas fa-paint-brush"></i><b>像素画</b><small>转像素网格</small></div>
+  </div>
+</div>
+
+<script>
+  // inline 模式：脚本在主页面上下文中执行，可通过 window.parent 访问框架全局
+  console.log('[demo-inline] 脚本已在主页面上下文中执行（v0.9.9）');
+</script>

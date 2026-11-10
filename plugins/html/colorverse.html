@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorVerse - 颜色灵感网站</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --nav-h: 52px;
+            --accent-1: #f093fb;
+            --accent-2: #f5576c;
+            --accent-3: #a18cd1;
+            --accent-4: #fbc2eb;
+            --bg-dark: #0f0c29;
+            --text: #fff;
+            --text-dim: rgba(255,255,255,0.55);
+            --text-faint: rgba(255,255,255,0.35);
+            --card-bg: rgba(255,255,255,0.04);
+            --card-border: rgba(255,255,255,0.08);
+            --transition: all 0.35s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark), #302b63, #24243e);
+            min-height: 100vh;
+            color: var(--text);
+            overflow-x: hidden;
+            font-size: 13px;
+        }
+
+        /* ========== 导航栏 (PC) ========== */
+        .navbar {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            background: rgba(15, 12, 41, 0.88);
+            backdrop-filter: blur(20px);
+            padding: 0 36px;
+            height: var(--nav-h);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .navbar .logo {
+            font-size: 17px; font-weight: 800;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2), #fda085, #f6d365, var(--accent-3));
+            background-size: 300% 300%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: logoShine 4s ease infinite;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .navbar .logo i { font-size: 18px; -webkit-text-fill-color: var(--accent-1); }
+        @keyframes logoShine { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+
+        .nav-menu { display: flex; gap: 2px; }
+        .nav-menu a {
+            color: rgba(255,255,255,0.6); text-decoration: none;
+            padding: 6px 13px; font-size: 12px; font-weight: 500;
+            border-radius: 8px; transition: var(--transition);
+            display: flex; align-items: center; gap: 5px;
+        }
+        .nav-menu a i { font-size: 11px; }
+        .nav-menu a:hover, .nav-menu a.active { color: #fff; background: rgba(255,255,255,0.07); }
+        .nav-menu a.active {
+            background: linear-gradient(135deg, rgba(240,147,251,0.18), rgba(245,87,108,0.18));
+            box-shadow: inset 0 0 0 1px rgba(240,147,251,0.25);
+        }
+
+        /* ========== 汉堡按钮 ========== */
+        .hamburger {
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            width: 36px; height: 36px; cursor: pointer; border-radius: 8px;
+            transition: var(--transition); background: none; border: none; padding: 0;
+        }
+        .hamburger:hover { background: rgba(255,255,255,0.08); }
+        .hamburger span {
+            display: block; width: 20px; height: 2px; background: #fff;
+            border-radius: 2px; margin: 2.5px 0; transition: var(--transition); transform-origin: center;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* ========== 移动端菜单（下拉面板） ========== */
+        /*
+         * 三态：closed（默认） / opening / closing
+         * - closed：完全隐藏，无动画
+         * - opening：面板 + 菜单项依次淡入
+         * - closing：菜单项先反向淡出，面板最后上移 + 渐隐
+         */
+        .mobile-menu-overlay {
+            position: fixed; top: var(--nav-h); left: 8px; right: 8px;
+            z-index: 999;
+            /* 默认隐藏态 */
+            transform: translateY(-12px);
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+            /* 毛玻璃小面板 */
+            background: rgba(15, 12, 41, 0.94);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-top: none;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+            max-height: 50vh; overflow-y: auto;
+        }
+
+        /* ===== 打开态 ===== */
+        .mobile-menu-overlay.opening,
+        .mobile-menu-overlay.open {
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0);
+            opacity: 1;
+            transition: transform 0.34s cubic-bezier(0.22, 0.61, 0.36, 1),
+                        opacity  0.30s ease;
+        }
+        .mobile-menu-overlay.open {
+            /* 打开完成后保持，不再 transition（避免干扰子项） */
+            transition: none;
+        }
+
+        /* ===== 收起态 ===== */
+        .mobile-menu-overlay.closing {
+            visibility: visible;          /* 收起过程中仍可见 */
+            pointer-events: none;
+            transform: translateY(-12px); /* 最后上移 */
+            opacity: 0;
+            /* 面板本身慢一点收，给菜单项让出时间 */
+            transition: transform 0.30s cubic-bezier(0.4, 0, 1, 1) 0.18s,
+                        opacity  0.26s ease 0.18s,
+                        visibility 0s linear 0.50s;
+        }
+
+        /* ===== 菜单项基础 ===== */
+        .mobile-menu-overlay nav {
+            display: flex; flex-direction: column;
+            padding: 10px 14px 14px; gap: 3px;
+        }
+        .mobile-menu-overlay nav a {
+            color: rgba(255,255,255,0.72); text-decoration: none;
+            padding: 12px 16px; font-size: 14px; font-weight: 500;
+            border-radius: 10px;
+            display: flex; align-items: center; gap: 12px;
+            border: 1px solid transparent;
+            /* 默认隐藏位置（closed / closing 终点） */
+            opacity: 0; transform: translateY(-6px);
+        }
+
+        /* ===== 打开：菜单项依次淡入 ===== */
+        .mobile-menu-overlay.opening nav a,
+        .mobile-menu-overlay.open nav a {
+            opacity: 1; transform: translateY(0);
+            transition: opacity 0.28s ease, transform 0.28s ease,
+                        color 0.25s ease, background 0.25s ease,
+                        border-color 0.25s ease;
+        }
+        .mobile-menu-overlay.opening nav a:nth-child(1),
+        .mobile-menu-overlay.open nav a:nth-child(1) { transition-delay: 0.06s; }
+        .mobile-menu-overlay.opening nav a:nth-child(2),
+        .mobile-menu-overlay.open nav a:nth-child(2) { transition-delay: 0.10s; }
+        .mobile-menu-overlay.opening nav a:nth-child(3),
+        .mobile-menu-overlay.open nav a:nth-child(3) { transition-delay: 0.14s; }
+        .mobile-menu-overlay.opening nav a:nth-child(4),
+        .mobile-menu-overlay.open nav a:nth-child(4) { transition-delay: 0.18s; }
+        .mobile-menu-overlay.opening nav a:nth-child(5),
+        .mobile-menu-overlay.open nav a:nth-child(5) { transition-delay: 0.22s; }
+        .mobile-menu-overlay.opening nav a:nth-child(6),
+        .mobile-menu-overlay.open nav a:nth-child(6) { transition-delay: 0.26s; }
+
+        /* ===== 收起：菜单项先反向淡出（无 delay，快收） ===== */
+        .mobile-menu-overlay.closing nav a {
+            opacity: 0; transform: translateY(-6px);
+            transition: opacity 0.20s ease, transform 0.20s ease;
+        }
+        /* 反向：最后一项最先消失 */
+        .mobile-menu-overlay.closing nav a:nth-child(6) { transition-delay: 0.00s; }
+        .mobile-menu-overlay.closing nav a:nth-child(5) { transition-delay: 0.03s; }
+        .mobile-menu-overlay.closing nav a:nth-child(4) { transition-delay: 0.06s; }
+        .mobile-menu-overlay.closing nav a:nth-child(3) { transition-delay: 0.09s; }
+        .mobile-menu-overlay.closing nav a:nth-child(2) { transition-delay: 0.12s; }
+        .mobile-menu-overlay.closing nav a:nth-child(1) { transition-delay: 0.15s; }
+
+        .mobile-menu-overlay nav a i { font-size: 15px; width: 22px; text-align: center; }
+        .mobile-menu-overlay nav a:hover,
+        .mobile-menu-overlay nav a.active {
+            color: #fff; background: rgba(255,255,255,0.06);
+            border-color: rgba(240,147,251,0.2);
+        }
+        .mobile-menu-overlay nav a.active {
+            background: linear-gradient(135deg, rgba(240,147,251,0.15), rgba(245,87,108,0.15));
+        }
+
+        /* ========== 页面容器 ========== */
+        .page-container {
+            margin-top: var(--nav-h); padding: 28px 36px;
+            max-width: 1200px; margin-left: auto; margin-right: auto;
+            min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column;
+        }
+        .page { display: none; opacity: 0; transition: opacity 0.45s ease; flex: 1; }
+        .page.active { display: block; opacity: 1; }
+
+        /* ========== 通用标题 ========== */
+        .section-title {
+            text-align: center; font-size: 21px; font-weight: 800; margin-bottom: 6px;
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+        }
+        .section-title i { font-size: 19px; color: var(--accent-1); }
+        .section-subtitle { text-align: center; color: var(--text-dim); margin-bottom: 26px; font-size: 12px; }
+
+        /* ========== Hero ========== */
+        .hero { text-align: center; padding: 44px 16px 28px; }
+        .hero h1 { font-size: clamp(22px, 3.8vw, 36px); font-weight: 900; line-height: 1.25; margin-bottom: 12px; }
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--accent-3), var(--accent-4), #f6d365, var(--accent-1));
+            background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: logoShine 5s ease infinite;
+        }
+        .hero p { font-size: 12.5px; color: var(--text-dim); max-width: 460px; margin: 0 auto 22px; line-height: 1.7; }
+        .hero-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+        .btn {
+            padding: 9px 22px; border-radius: 50px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: none; transition: var(--transition);
+            text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn i { font-size: 11px; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #fff; box-shadow: 0 6px 20px rgba(245,87,108,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(245,87,108,0.45); }
+        .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.18); }
+        .btn-outline:hover { border-color: var(--accent-1); color: var(--accent-1); transform: translateY(-2px); }
+
+        /* ========== 调色板卡片 ========== */
+        .picker-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 18px; padding: 24px;
+            display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px;
+            align-items: start; backdrop-filter: blur(10px); margin-top: 16px;
+        }
+
+        /* ===== 左侧：2D 色卡拾取器 ===== */
+        .picker-left { display: flex; flex-direction: column; gap: 12px; min-width: 0; max-width: 100%; }
+
+        .picker-2d-area {
+            position: relative; width: 100%; height: 260px;
+            border-radius: 14px; overflow: hidden; cursor: crosshair;
+            border: 1px solid rgba(255,255,255,0.1);
+            /* 底色通过 JS 动态设置，见 update2DPicker */
+            background: #f00;
+        }
+        /*
+         * HSV 色卡 overlay (标准 Photoshop 风格):
+         *
+         * 三层叠加（从底到顶）：
+         *   1. 底色：当前色相纯色 (S=100, V=100) → JS 设置到 .picker-2d-area
+         *   2. 白色→透明（横）：左白洗淡饱和度 → S 从 0→100
+         *   3. 透明→黑色（纵）：底黑压暗明度 → V 从 100→0
+         *
+         * 效果验证：
+         *   左上 = 白(100%) + 黑(0%)   → 白色   ✓
+         *   右上 = 白(0%)   + 黑(0%)   → 纯色   ✓
+         *   左下 = 白(100%) + 黑(100%)  → 黑色   ✓ (白+黑在CSS中混合=黑)
+         *   右下 = 白(0%)   + 黑(100%)  → 纯黑   ✓
+         *   底部中间 = 白(50%) + 黑(100%) → 近黑 ✓
+         *
+         * 关键：sl-overlay 使用两个独立的 div 层，
+         * 避免 background 堆栈顺序导致的混合问题。
+         */
+        .picker-2d-area .sl-overlay-white {
+            position: absolute; inset: 0;
+            background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0));
+            z-index: 1;
+        }
+        .picker-2d-area .sl-overlay-black {
+            position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,1));
+            z-index: 2;
+        }
+        .picker-2d-area .picker-cursor {
+            position: absolute; width: 20px; height: 20px;
+            margin-left: -10px; margin-top: -10px;
+            border: 2.5px solid #fff; border-radius: 50%;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.3);
+            pointer-events: none; z-index: 10;
+        }
+        .picker-2d-area .picker-cursor::after {
+            content: ''; position: absolute; inset: -6px; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 50%;
+        }
+
+        .hue-strip {
+            position: relative; width: 100%; height: 36px;
+            border-radius: 10px; overflow: hidden; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+        }
+        .hue-strip .hue-cursor {
+            position: absolute; top: -2px; bottom: -2px;
+            width: 14px; border: 2.5px solid #fff; border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+            transform: translateX(-50%); pointer-events: none; z-index: 10;
+        }
+
+        /* ===== 右侧：小预览 + 控制 ===== */
+        .picker-right {
+            display: flex; flex-direction: column; gap: 14px;
+            min-width: 0; /* 允许在 grid 中缩小 */
+            max-width: 100%;
+            overflow: hidden; /* 防止子元素溢出 */
+        }
+
+        /* 小颜色预览 */
+        .color-preview {
+            display: flex; align-items: center; gap: 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 14px; padding: 14px;
+        }
+        .preview-swatch {
+            width: 64px; height: 64px; border-radius: 12px;
+            background: #F5576C; flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            transition: background 0.2s;
+        }
+        .preview-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .preview-info .preview-hex { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+        .preview-info .preview-rgb { font-size: 11px; color: var(--text-dim); }
+        .preview-info .preview-hsl { font-size: 10.5px; color: var(--text-faint); }
+
+        /* 控制区 */
+        .picker-controls { display: flex; flex-direction: column; gap: 16px; }
+
+        /* 滑块控件组：两行 —— 标签+数值框同行，滑块下一行 */
+        .control-group {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-rows: auto auto;
+            align-items: center;
+            column-gap: 8px;
+            row-gap: 0;
+            min-width: 0;
+            /* 上下留够 thumb(15px) 的呼吸空间 */
+            padding: 8px 0;
+        }
+        /* 第1行：标签（左）+ 数值框（右） */
+        .control-group label {
+            grid-column: 1; grid-row: 1;
+            display: flex; align-items: center; gap: 5px;
+            font-size: 10px; color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            /* 固定高度，不被 thumb 挤乱 */
+            height: 16px;
+            line-height: 16px;
+        }
+        .control-group label i { font-size: 9px; flex-shrink: 0; }
+        /* 第2行：滑块独占整行 */
+        .control-group input[type="range"] {
+            grid-column: 1 / -1; grid-row: 2;
+            width: 100%;
+            min-width: 0;
+            -webkit-appearance: none;
+            /* input 高度 = thumb 15px + 上下各2px 安全边距 = 19px */
+            height: 19px;
+            border-radius: 3px; outline: none;
+            margin: 0;
+            background: transparent; /* 透明，只靠 track 显色 */
+            padding: 0;
+        }
+        .control-group input[type="range"]::-webkit-slider-runnable-track {
+            height: 5px;
+            border-radius: 3px;
+            /* track 在 input 内垂直居中 */
+            margin-top: 5px;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 15px; height: 15px;
+            border-radius: 50%; cursor: pointer; border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            /* thumb 在 input 中垂直居中: (19-15)/2 = 2px */
+            margin-top: -7px;
+        }
+        /* 数值框：和标签同一行右侧 */
+        .slider-value {
+            grid-column: 2; grid-row: 1;
+            width: 46px; max-width: 46px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 5px; border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.07);
+            color: #fff; font-size: 10.5px; font-weight: 600;
+            text-align: center; outline: none;
+            -moz-appearance: textfield;
+            transition: border-color 0.2s, background 0.2s;
+            /* 和标签垂直居中对齐 */
+            align-self: center;
+        }
+        .slider-value:focus {
+            border-color: var(--accent-1);
+            background: rgba(255,255,255,0.12);
+        }
+        .slider-value::-webkit-inner-spin-button,
+        .slider-value::-webkit-outer-spin-button {
+            -webkit-appearance: none; margin: 0;
+        }
+
+        /* 滑块轨道 */
+        #redSlider::-webkit-slider-runnable-track { background: linear-gradient(90deg,#000,#f00); }
+        #redSlider::-webkit-slider-thumb { background: #ff4444; }
+        #greenSlider::-webkit-slider-runnable-track { background: linear-gradient(90deg,#000,#0f0); }
+        #greenSlider::-webkit-slider-thumb { background: #44ff44; }
+        #blueSlider::-webkit-slider-runnable-track { background: linear-gradient(90deg,#000,#00f); }
+        #blueSlider::-webkit-slider-thumb { background: #4444ff; }
+        #hueSlider::-webkit-slider-runnable-track { background: linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+        #hueSlider::-webkit-slider-thumb { background: #fff; }
+        #satSlider::-webkit-slider-runnable-track { background: linear-gradient(90deg,#808080,#f00); }
+        #satSlider::-webkit-slider-thumb { background: #ff6666; }
+        #lightSlider::-webkit-slider-runnable-track { background: linear-gradient(90deg,#000,#fff); }
+        #lightSlider::-webkit-slider-thumb { background: #aaa; }
+        #hueSlider2::-webkit-slider-runnable-track { background: linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+        #hueSlider2::-webkit-slider-thumb { background: #fff; }
+        #satSlider2::-webkit-slider-runnable-track { background: linear-gradient(90deg,#808080,#f00); }
+        #satSlider2::-webkit-slider-thumb { background: #ff6666; }
+        #valSlider2::-webkit-slider-runnable-track { background: linear-gradient(90deg,#000,#f00); }
+        #valSlider2::-webkit-slider-thumb { background: #ff7043; }
+
+        /* 模式 Tab */
+        .mode-tabs { display: flex; gap: 3px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 3px; }
+        .mode-tab {
+            flex: 1; padding: 6px 8px; border: none; border-radius: 8px;
+            background: transparent; color: var(--text-dim);
+            font-size: 10.5px; font-weight: 600; cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .mode-tab i { font-size: 9px; }
+        .mode-tab.active { background: rgba(240,147,251,0.2); color: #fff; }
+        .mode-tab:hover:not(.active) { color: rgba(255,255,255,0.8); }
+        .mode-panel { display: none; }
+        .mode-panel.active { display: block; }
+
+        /* HEX 输入 */
+        .hex-input-group { display: flex; gap: 8px; }
+        .hex-input-group input {
+            flex: 1; padding: 8px 12px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.07); color: #fff;
+            font-size: 12px; font-weight: 600; letter-spacing: 1px;
+            outline: none; transition: border-color 0.3s;
+        }
+        .hex-input-group input:focus { border-color: var(--accent-1); }
+        .copy-btn {
+            padding: 8px 14px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, var(--accent-3), var(--accent-4));
+            color: #302b63; font-weight: 700; font-size: 11px;
+            cursor: pointer; transition: var(--transition);
+            white-space: nowrap; display: flex; align-items: center; gap: 4px;
+        }
+        .copy-btn i { font-size: 10px; }
+        .copy-btn:hover { transform: scale(1.04); box-shadow: 0 4px 14px rgba(161,140,209,0.35); }
+
+        /* ========== 多格式颜色值 ========== */
+        .color-values {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            margin-top: 20px;
+        }
+        .color-value-item {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 9px 12px; cursor: pointer; transition: var(--transition);
+        }
+        .color-value-item:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+        .color-value-item .label {
+            font-size: 9px; color: var(--text-faint);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px;
+            display: flex; align-items: center; gap: 3px;
+        }
+        .color-value-item .label i { font-size: 8px; }
+        .color-value-item .val { font-size: 11.5px; font-weight: 600; word-break: break-all; }
+
+        /* ========== 预设色卡 ========== */
+        .preset-colors { margin-top: 20px; }
+        .preset-colors h4 {
+            font-size: 12px; color: var(--text-dim); margin-bottom: 10px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .preset-colors h4 i { font-size: 11px; color: var(--accent-1); }
+        .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 7px; }
+        .preset-swatch {
+            height: 38px; border-radius: 9px; cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.1); transition: var(--transition);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: rgba(255,255,255,0.6);
+        }
+        .preset-swatch:hover { transform: scale(1.12); border-color: rgba(255,255,255,0.4); z-index: 2; }
+        .preset-swatch.selected { border-color: #fff; box-shadow: 0 0 0 2px var(--accent-1); }
+
+        /* ========== 色卡库 ========== */
+        .palette-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-top: 16px; }
+        .palette-card {
+            border-radius: 16px; overflow: hidden; background: var(--card-bg);
+            border: 1px solid var(--card-border); transition: var(--transition); cursor: pointer;
+        }
+        .palette-card:hover { transform: translateY(-5px); box-shadow: 0 18px 45px rgba(0,0,0,0.3); }
+        .palette-colors { display: flex; height: 120px; }
+        .palette-color { flex: 1; transition: flex 0.4s; position: relative; }
+        .palette-card:hover .palette-color { flex: 1.15; }
+        .palette-color .hex-tooltip {
+            position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+            font-size: 9px; background: rgba(0,0,0,0.5); padding: 2px 6px;
+            border-radius: 4px; opacity: 0; transition: opacity 0.3s; white-space: nowrap; pointer-events: none;
+        }
+        .palette-card:hover .hex-tooltip { opacity: 1; }
+        .palette-info { padding: 12px 14px; }
+        .palette-info h3 { font-size: 12.5px; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
+        .palette-info h3 i { font-size: 10px; color: var(--accent-1); }
+        .palette-info p { font-size: 10.5px; color: var(--text-faint); }
+
+        /* ========== 渐变集 ========== */
+        .gradient-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; margin-top: 16px; }
+        .gradient-card {
+            height: 150px; border-radius: 16px; display: flex; align-items: flex-end; padding: 16px;
+            cursor: pointer; transition: var(--transition); position: relative; overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+        .gradient-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 14px 36px rgba(0,0,0,0.28); }
+        .gradient-card .gradient-name { font-size: 13px; font-weight: 700; z-index: 1; text-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 5px; }
+        .gradient-card .gradient-name i { font-size: 11px; }
+        .gradient-card .gradient-code {
+            position: absolute; top: 12px; right: 12px; font-size: 9.5px;
+            background: rgba(0,0,0,0.25); padding: 3px 9px; border-radius: 14px;
+            backdrop-filter: blur(5px); z-index: 1;
+        }
+
+        /* ========== 色彩理论 ========== */
+        .theory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-top: 16px; }
+        .theory-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 24px 20px; text-align: center; transition: var(--transition); }
+        .theory-card:hover { background: rgba(255,255,255,0.07); transform: translateY(-3px); }
+        .theory-icon { font-size: 28px; margin-bottom: 10px; color: var(--accent-1); }
+        .theory-card h3 { font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .theory-card h3 i { font-size: 12px; color: var(--accent-1); }
+        .theory-card p { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+        .theory-color-demo { display: flex; justify-content: center; gap: 5px; margin-top: 12px; }
+        .theory-color-demo span { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); }
+
+        /* ========== 趋势 ========== */
+        .trend-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 16px; }
+        .trend-card { border-radius: 16px; overflow: hidden; background: var(--card-bg); border: 1px solid var(--card-border); transition: var(--transition); }
+        .trend-card:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,0,0,0.28); }
+        .trend-colors { height: 100px; display: flex; }
+        .trend-colors div { flex: 1; }
+        .trend-info { padding: 14px 16px; }
+        .trend-info h3 { font-size: 12.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .trend-info h3 i { font-size: 10px; color: var(--accent-1); }
+        .trend-info p { font-size: 10.5px; color: var(--text-faint); line-height: 1.5; }
+
+        /* ========== 页脚 ========== */
+        .footer { padding: 24px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); margin-top: auto; }
+        .footer p { color: rgba(255,255,255,0.2); font-size: 10.5px; }
+        .footer .footer-logo {
+            font-size: 14px; font-weight: 800; margin-bottom: 6px;
+            background: linear-gradient(90deg, var(--accent-3), var(--accent-4));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .footer .footer-logo i { font-size: 15px; -webkit-text-fill-color: var(--accent-3); }
+
+        /* ========== Toast ========== */
+        .toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(70px);
+            background: linear-gradient(135deg, var(--accent-3), var(--accent-4));
+            color: #302b63; padding: 9px 22px; border-radius: 50px;
+            font-weight: 700; font-size: 11.5px; opacity: 0;
+            transition: var(--transition); z-index: 2000;
+            box-shadow: 0 8px 28px rgba(161,140,209,0.35);
+            display: flex; align-items: center; gap: 5px;
+        }
+        .toast i { font-size: 11px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ========== 动画 ========== */
+        @keyframes fadeInPage { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .page.active .section-title, .page.active .section-subtitle,
+        .page.active .picker-card, .page.active .color-values,
+        .page.active .palette-grid, .page.active .gradient-grid,
+        .page.active .theory-grid, .page.active .trend-container,
+        .page.active .hero { animation: fadeInPage 0.45s ease forwards; }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 820px) {
+            body { font-size: 12px; }
+            .navbar { padding: 0 14px; }
+            .navbar .logo { font-size: 15px; }
+            .nav-menu { display: none; }
+            .hamburger { display: flex; }
+            .page-container { padding: 20px 14px; }
+            .picker-card { grid-template-columns: 1fr; padding: 18px; gap: 18px; }
+            .picker-2d-area { height: 200px; }
+            .hero { padding: 28px 8px 18px; }
+            .section-title { font-size: 18px; }
+            .preset-grid { grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); }
+            .preset-swatch { height: 34px; }
+            .preview-swatch { width: 52px; height: 52px; }
+            /* 移动端：缩小间距和字号，数值框紧凑 */
+            .picker-controls { gap: 10px; }
+            .control-group { padding: 5px 0; }
+            .control-group label { height: 14px; line-height: 14px; font-size: 9px; }
+            .control-group input[type="range"] { height: 19px; }
+            .control-group input[type="range"]::-webkit-slider-runnable-track { height: 5px; margin-top: 5px; }
+            .control-group input[type="range"]::-webkit-slider-thumb { margin-top: -7px; }
+            .slider-value { width: 40px; max-width: 40px; height: 16px; font-size: 10px; padding: 0 2px; }
+        }
+        @media (min-width: 821px) and (max-width: 1100px) {
+            /* 中等屏幕：右栏可能太窄，改为上下布局 */
+            .picker-card { grid-template-columns: 1fr; gap: 18px; }
+        }
+        @media (min-width: 821px) {
+            .mobile-menu-overlay { display: none !important; }
+            .mobile-menu-overlay.opening,
+            .mobile-menu-overlay.open,
+            .mobile-menu-overlay.closing { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 导航栏 -->
+    <header class="navbar">
+        <div class="logo"><i class="fa-solid fa-palette"></i> ColorVerse</div>
+        <nav class="nav-menu" id="navMenu">
+            <a href="#" class="nav-link active" data-page="home"><i class="fa-solid fa-house"></i> 首页</a>
+            <a href="#" class="nav-link" data-page="picker"><i class="fa-solid fa-sliders"></i> 调色板</a>
+            <a href="#" class="nav-link" data-page="palettes"><i class="fa-solid fa-swatchbook"></i> 色卡库</a>
+            <a href="#" class="nav-link" data-page="gradients"><i class="fa-solid fa-blender"></i> 渐变集</a>
+            <a href="#" class="nav-link" data-page="theory"><i class="fa-solid fa-book-open"></i> 色彩理论</a>
+            <a href="#" class="nav-link" data-page="trends"><i class="fa-solid fa-fire"></i> 流行趋势</a>
+        </nav>
+        <button class="hamburger" id="hamburgerBtn" aria-label="菜单">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <!-- 移动端菜单 -->
+    <div class="mobile-menu-overlay" id="mobileMenu">
+        <nav>
+            <a href="#" class="nav-link active" data-page="home"><i class="fa-solid fa-house"></i> 首页</a>
+            <a href="#" class="nav-link" data-page="picker"><i class="fa-solid fa-sliders"></i> 调色板</a>
+            <a href="#" class="nav-link" data-page="palettes"><i class="fa-solid fa-swatchbook"></i> 色卡库</a>
+            <a href="#" class="nav-link" data-page="gradients"><i class="fa-solid fa-blender"></i> 渐变集</a>
+            <a href="#" class="nav-link" data-page="theory"><i class="fa-solid fa-book-open"></i> 色彩理论</a>
+            <a href="#" class="nav-link" data-page="trends"><i class="fa-solid fa-fire"></i> 流行趋势</a>
+        </nav>
+    </div>
+
+    <div class="page-container">
+
+        <!-- ===== 首页 ===== -->
+        <section class="page active" id="page-home">
+            <div class="hero">
+                <h1>探索 <span>无限色彩</span><br>激发设计灵感</h1>
+                <p>一个集颜色拾取、配色方案、渐变生成和色彩理论于一体的灵感平台，让每一种颜色都找到它的故事。</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="switchPage('picker')"><i class="fa-solid fa-sliders"></i> 开始调色</button>
+                    <button class="btn btn-outline" onclick="switchPage('palettes')"><i class="fa-solid fa-swatchbook"></i> 浏览色卡</button>
+                </div>
+            </div>
+            <div class="theory-grid" style="margin-top:34px;">
+                <div class="theory-card" onclick="switchPage('picker')" style="cursor:pointer;">
+                    <div class="theory-icon"><i class="fa-solid fa-sliders"></i></div>
+                    <h3><i class="fa-solid fa-sliders"></i> 交互调色</h3>
+                    <p>支持 RGB / HSL / HSV 多模式调色，可视化色卡拾取，一键复制。</p>
+                </div>
+                <div class="theory-card" onclick="switchPage('palettes')" style="cursor:pointer;">
+                    <div class="theory-icon"><i class="fa-solid fa-swatchbook"></i></div>
+                    <h3><i class="fa-solid fa-swatchbook"></i> 精选配色</h3>
+                    <p>12 组精心搭配的配色方案，涵盖各种风格场景，点击即复制。</p>
+                </div>
+                <div class="theory-card" onclick="switchPage('gradients')" style="cursor:pointer;">
+                    <div class="theory-icon"><i class="fa-solid fa-blender"></i></div>
+                    <h3><i class="fa-solid fa-blender"></i> 唯美渐变</h3>
+                    <p>12 款高品质渐变背景，点击卡片直接复制 CSS 渐变代码。</p>
+                </div>
+                <div class="theory-card" onclick="switchPage('theory')" style="cursor:pointer;">
+                    <div class="theory-icon"><i class="fa-solid fa-book-open"></i></div>
+                    <h3><i class="fa-solid fa-book-open"></i> 色彩理论</h3>
+                    <p>掌握三原色、互补色、类似色等核心原理，让设计更有说服力。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 调色板 ===== -->
+        <section class="page" id="page-picker">
+            <h2 class="section-title"><i class="fa-solid fa-sliders"></i> 交互式颜色拾取器</h2>
+            <p class="section-subtitle">在色卡上点击或拖拽选取颜色，支持 RGB / HSL / HSV 三种模式</p>
+
+            <div class="picker-card">
+                <!-- 左侧：2D 色卡拾取器 -->
+                <div class="picker-left">
+                    <div class="picker-2d-area" id="picker2D">
+                        <div class="sl-overlay-white"></div>
+                        <div class="sl-overlay-black"></div>
+                        <div class="picker-cursor" id="pickerCursor"></div>
+                    </div>
+                    <div class="hue-strip" id="hueStrip">
+                        <div class="hue-cursor" id="hueCursor"></div>
+                    </div>
+                </div>
+
+                <!-- 右侧：小预览 + 滑块控制 -->
+                <div class="picker-right">
+                    <!-- 小颜色预览 -->
+                    <div class="color-preview">
+                        <div class="preview-swatch" id="previewSwatch"></div>
+                        <div class="preview-info">
+                            <span class="preview-hex" id="previewHex">#F5576C</span>
+                            <span class="preview-rgb" id="previewRgb">RGB(245, 87, 108)</span>
+                            <span class="preview-hsl" id="previewHsl">HSL(353, 89%, 65%)</span>
+                        </div>
+                    </div>
+
+                    <!-- 模式切换 -->
+                    <div class="picker-controls">
+                        <div class="mode-tabs">
+                            <button class="mode-tab active" data-mode="rgb"><i class="fa-solid fa-cube"></i> RGB</button>
+                            <button class="mode-tab" data-mode="hsl"><i class="fa-solid fa-circle-half-stroke"></i> HSL</button>
+                            <button class="mode-tab" data-mode="hsv"><i class="fa-solid fa-fill-drip"></i> HSV</button>
+                        </div>
+
+                        <!-- RGB 面板 -->
+                        <div class="mode-panel active" id="panel-rgb">
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-circle" style="color:#ff4444"></i> 红色 R</label>
+                                <input type="range" id="redSlider" min="0" max="255" value="245">
+                                <input type="number" class="slider-value" id="redValue" min="0" max="255" value="245">
+                            </div>
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-circle" style="color:#44ff44"></i> 绿色 G</label>
+                                <input type="range" id="greenSlider" min="0" max="255" value="87">
+                                <input type="number" class="slider-value" id="greenValue" min="0" max="255" value="87">
+                            </div>
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-circle" style="color:#4444ff"></i> 蓝色 B</label>
+                                <input type="range" id="blueSlider" min="0" max="255" value="108">
+                                <input type="number" class="slider-value" id="blueValue" min="0" max="255" value="108">
+                            </div>
+                        </div>
+
+                        <!-- HSL 面板 -->
+                        <div class="mode-panel" id="panel-hsl">
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-asterisk" style="color:#f093fb"></i> 色相 H</label>
+                                <input type="range" id="hueSlider" min="0" max="360" value="353">
+                                <input type="number" class="slider-value" id="hueValue" min="0" max="360" value="353">
+                            </div>
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-percent" style="color:#ff6666"></i> 饱和度 S</label>
+                                <input type="range" id="satSlider" min="0" max="100" value="89">
+                                <input type="number" class="slider-value" id="satValue" min="0" max="100" value="89">
+                            </div>
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-sun" style="color:#aaa"></i> 亮度 L</label>
+                                <input type="range" id="lightSlider" min="0" max="100" value="65">
+                                <input type="number" class="slider-value" id="lightValue" min="0" max="100" value="65">
+                            </div>
+                        </div>
+
+                        <!-- HSV 面板 -->
+                        <div class="mode-panel" id="panel-hsv">
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-asterisk" style="color:#f093fb"></i> 色相 H</label>
+                                <input type="range" id="hueSlider2" min="0" max="360" value="353">
+                                <input type="number" class="slider-value" id="hueValue2" min="0" max="360" value="353">
+                            </div>
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-percent" style="color:#ff6666"></i> 饱和度 S</label>
+                                <input type="range" id="satSlider2" min="0" max="100" value="65">
+                                <input type="number" class="slider-value" id="satValue2" min="0" max="100" value="65">
+                            </div>
+                            <div class="control-group">
+                                <label><i class="fa-solid fa-circle-half-stroke" style="color:#ff7043"></i> 明度 V</label>
+                                <input type="range" id="valSlider2" min="0" max="100" value="96">
+                                <input type="number" class="slider-value" id="valValue2" min="0" max="100" value="96">
+                            </div>
+                        </div>
+
+                        <!-- HEX 输入 -->
+                        <div class="control-group">
+                            <label><i class="fa-solid fa-hashtag"></i> HEX 颜色值</label>
+                            <div class="hex-input-group">
+                                <input type="text" id="hexInput" value="#F5576C" maxlength="7">
+                                <button class="copy-btn" onclick="copyColor()"><i class="fa-regular fa-copy"></i> 复制</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预设色卡 -->
+            <div class="preset-colors">
+                <h4><i class="fa-solid fa-th-large"></i> 常用色卡 — 点击快速选取</h4>
+                <div class="preset-grid" id="presetGrid"></div>
+            </div>
+
+            <!-- 多格式颜色值 -->
+            <div class="color-values">
+                <div class="color-value-item" onclick="copyText(this.querySelector('.val').textContent)">
+                    <div class="label"><i class="fa-solid fa-code"></i> HEX</div>
+                    <div class="val" id="outHex">#F5576C</div>
+                </div>
+                <div class="color-value-item" onclick="copyText(this.querySelector('.val').textContent)">
+                    <div class="label"><i class="fa-solid fa-cube"></i> RGB</div>
+                    <div class="val" id="outRgb">rgb(245, 87, 108)</div>
+                </div>
+                <div class="color-value-item" onclick="copyText(this.querySelector('.val').textContent)">
+                    <div class="label"><i class="fa-solid fa-circle-half-stroke"></i> HSL</div>
+                    <div class="val" id="outHsl">hsl(353, 89%, 65%)</div>
+                </div>
+                <div class="color-value-item" onclick="copyText(this.querySelector('.val').textContent)">
+                    <div class="label"><i class="fa-solid fa-fill-drip"></i> HSV</div>
+                    <div class="val" id="outHsv">hsv(353, 65%, 96%)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 色卡库 ===== -->
+        <section class="page" id="page-palettes">
+            <h2 class="section-title"><i class="fa-solid fa-swatchbook"></i> 精选配色方案</h2>
+            <p class="section-subtitle">精心挑选的配色组合，点击色块即可复制 HEX 值</p>
+            <div class="palette-grid" id="paletteGrid"></div>
+        </section>
+
+        <!-- ===== 渐变集 ===== -->
+        <section class="page" id="page-gradients">
+            <h2 class="section-title"><i class="fa-solid fa-blender"></i> 唯美渐变集合</h2>
+            <p class="section-subtitle">点击卡片复制惊艳的渐变背景 CSS 代码</p>
+            <div class="gradient-grid" id="gradientGrid"></div>
+        </section>
+
+        <!-- ===== 色彩理论 ===== -->
+        <section class="page" id="page-theory">
+            <h2 class="section-title"><i class="fa-solid fa-book-open"></i> 色彩理论基础</h2>
+            <p class="section-subtitle">了解色彩搭配的核心原理，让设计更有说服力</p>
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <div class="theory-icon"><i class="fa-solid fa-circle-half-stroke"></i></div>
+                    <h3><i class="fa-solid fa-circle-half-stroke"></i> 三原色</h3>
+                    <p>红、黄、蓝是色彩的基础，所有其他颜色都可以通过它们的混合获得。</p>
+                    <div class="theory-color-demo">
+                        <span style="background:#FF3B3B"></span>
+                        <span style="background:#FFD93D"></span>
+                        <span style="background:#3B82F6"></span>
+                    </div>
+                </div>
+                <div class="theory-card">
+                    <div class="theory-icon"><i class="fa-solid fa-bullseye"></i></div>
+                    <h3><i class="fa-solid fa-bullseye"></i> 互补色</h3>
+                    <p>色环上相对的颜色形成强烈对比，适合需要视觉冲击力的设计。</p>
+                    <div class="theory-color-demo">
+                        <span style="background:#FF3B3B"></span>
+                        <span style="background:#3BFF62"></span>
+                    </div>
+                </div>
+                <div class="theory-card">
+                    <div class="theory-icon"><i class="fa-solid fa-water"></i></div>
+                    <h3><i class="fa-solid fa-water"></i> 类似色</h3>
+                    <p>色环上相邻的颜色和谐统一，适合营造舒适平和的视觉体验。</p>
+                    <div class="theory-color-demo">
+                        <span style="background:#3B82F6"></span>
+                        <span style="background:#7C3AED"></span>
+                        <span style="background:#A855F7"></span>
+                    </div>
+                </div>
+                <div class="theory-card">
+                    <div class="theory-icon"><i class="fa-solid fa-gem"></i></div>
+                    <h3><i class="fa-solid fa-gem"></i> 三角配色</h3>
+                    <p>色环上等距的三个颜色形成均衡而富有活力的配色方案。</p>
+                    <div class="theory-color-demo">
+                        <span style="background:#FF3B3B"></span>
+                        <span style="background:#3BFF62"></span>
+                        <span style="background:#3B82F6"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 流行趋势 ===== -->
+        <section class="page" id="page-trends">
+            <h2 class="section-title"><i class="fa-solid fa-fire"></i> 2026 色彩趋势</h2>
+            <p class="section-subtitle">紧跟年度流行色，让你的设计始终走在时尚前沿</p>
+            <div class="trend-container" id="trendGrid"></div>
+        </section>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <div class="footer-logo"><i class="fa-solid fa-palette"></i> ColorVerse</div>
+            <p>&copy; 2026 ColorVerse &middot; 让每一种颜色都有故事 &middot; 用 <i class="fa-solid fa-heart" style="color:#f5576c;font-size:9px;"></i> 和 HTML/CSS/JS 制作</p>
+        </footer>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"><i class="fa-solid fa-check"></i> <span id="toastMsg">已复制！</span></div>
+
+    <script>
+    // ==================== 颜色转换工具 ====================
+    function rgbToHex(r, g, b) {
+        return '#' + [r,g,b].map(x => { const h = parseInt(x).toString(16); return h.length===1?'0'+h:h; }).join('').toUpperCase();
+    }
+    function hexToRgb(hex) {
+        const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return r ? {r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)} : null;
+    }
+    function rgbToHsl(r, g, b) {
+        r/=255; g/=255; b/=255;
+        const max = Math.max(r,g,b), min = Math.min(r,g,b), l = (max+min)/2;
+        let h, s;
+        if (max===min) { h=s=0; }
+        else {
+            const d = max-min;
+            s = l>0.5 ? d/(2-max-min) : d/(max+min);
+            switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}
+            h*=60;
+        }
+        return {h:Math.round(h),s:Math.round(s*100),l:Math.round(l*100)};
+    }
+    function hslToRgb(h, s, l) {
+        s/=100; l/=100;
+        const k = n => (n+h/30)%12;
+        const a = s*Math.min(l,1-l);
+        const f = n => l - a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+        return {r:Math.round(f(0)*255),g:Math.round(f(8)*255),b:Math.round(f(4)*255)};
+    }
+    function rgbToHsv(r, g, b) {
+        r/=255; g/=255; b/=255;
+        const max=Math.max(r,g,b),min=Math.min(r,g,b),v=max;
+        const d=max-min;
+        const s = max===0?0:d/max;
+        let h;
+        if(max===min) h=0;
+        else{ switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;} h*=60; }
+        h = Math.round(h);
+        // 关键：接近 360 时保留为 360，防止跳回 0
+        if (h === 0 && max !== min) h = 360;
+        return {h:h,s:Math.round(s*100),v:Math.round(v*100)};
+    }
+    function hsvToRgb(h, s, v) {
+        s/=100; v/=100;
+        const c = v*s, x = c*(1-Math.abs((h/60)%2-1)), m = v-c;
+        let r,g,b;
+        if(h<60){r=c;g=x;b=0;}else if(h<120){r=x;g=c;b=0;}else if(h<180){r=0;g=c;b=x;}else if(h<240){r=0;g=x;b=c;}else if(h<300){r=x;g=0;b=c;}else{r=c;g=0;b=x;}
+        return {r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((b+m)*255)};
+    }
+
+    // ==================== 状态 ====================
+    let currentRgb = {r:245, g:87, b:108};
+
+    // ==================== 核心更新 ====================
+    let preserveH = null; // 保存用户主动设置的色相，防止 360→0 跳变
+    function updateAll(color, source) {
+        const {r,g,b} = color;
+        currentRgb = {r,g,b};
+        const hex = rgbToHex(r,g,b);
+        const hsl = rgbToHsl(r,g,b);
+        let hsv = rgbToHsv(r,g,b);
+        // 如果有保留的 H（来自滑块/色相条拖拽），用它覆盖
+        if (preserveH !== null) {
+            hsv.h = preserveH;
+            // 同步 hsl.h
+            hsl.h = preserveH;
+            preserveH = null; // 一次性使用
+        }
+
+        // 小预览
+        document.getElementById('previewSwatch').style.background = hex;
+        document.getElementById('previewHex').textContent = hex;
+        document.getElementById('previewRgb').textContent = `RGB(${r}, ${g}, ${b})`;
+        document.getElementById('previewHsl').textContent = `HSL(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+
+        // 底部四格
+        document.getElementById('outHex').textContent = hex;
+        document.getElementById('outRgb').textContent = `rgb(${r}, ${g}, ${b})`;
+        document.getElementById('outHsl').textContent = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+        document.getElementById('outHsv').textContent = `hsv(${hsv.h}, ${hsv.s}%, ${hsv.v}%)`;
+
+        // HEX 输入框
+        if (source !== 'hex') {
+            const hexInput = document.getElementById('hexInput');
+            if (hexInput.value.toUpperCase() !== hex) hexInput.value = hex;
+        }
+
+        // 滑块（值比较防抖）
+        setSlider('redSlider', r);
+        setSlider('greenSlider', g);
+        setSlider('blueSlider', b);
+        setSlider('hueSlider', hsl.h);
+        setSlider('satSlider', hsl.s);
+        setSlider('lightSlider', hsl.l);
+        setSlider('hueSlider2', hsv.h);
+        setSlider('satSlider2', hsv.s);
+        setSlider('valSlider2', hsv.v);
+
+        // 2D 色卡 (HSV 空间：X=饱和度, Y=明度)
+        // 非拖拽来源：用实际 hsv.s；拖拽中：保持 dragS 不变
+        if (!dragging2D) dragS = hsv.s;
+        update2DPicker(hsl.h, hsl.s, hsl.l, hsv.h, hsv.s, hsv.v);
+
+        // 预设选中
+        updatePresetSelection(hex);
+    }
+
+    function setSlider(id, val) {
+        const el = document.getElementById(id);
+        const nv = Math.round(val);
+        if (+el.value !== nv) el.value = nv;
+        // 同步对应的数值输入框
+        const map = {redSlider:'redValue',greenSlider:'greenValue',blueSlider:'blueValue',
+                     hueSlider:'hueValue',satSlider:'satValue',lightSlider:'lightValue',
+                     hueSlider2:'hueValue2',satSlider2:'satValue2',valSlider2:'valValue2'};
+        const vid = map[id];
+        if (vid) {
+            const vi = document.getElementById(vid);
+            if (vi && +vi.value !== nv) vi.value = nv;
+        }
+    }
+
+    // ==================== 2D 色卡 ====================
+    const picker2D = document.getElementById('picker2D');
+    const pickerCursor = document.getElementById('pickerCursor');
+    const hueStrip = document.getElementById('hueStrip');
+    const hueCursor = document.getElementById('hueCursor');
+
+    function update2DPicker(hslH, hslS, hslL, hsvH, hsvS, hsvV) {
+        const w = picker2D.offsetWidth || 400;
+        const h = picker2D.offsetHeight || 260;
+        // 始终优先用 dragS（拖拽中的真实鼠标位置）
+        // 只有非拖拽来源（预设色卡、初始化）才用 hsvS
+        const useS = (dragS > 0) ? dragS : (hsvS || 0);
+        // X = 饱和度 S (0-100): 左=0, 右=100
+        // Y = 明度 V (0-100): 顶=100, 底=0
+        let sx = (useS / 100) * w;
+        let sy = ((100 - hsvV) / 100) * h;
+        sx = Math.max(0, Math.min(w, sx));
+        sy = Math.max(0, Math.min(h, sy));
+        pickerCursor.style.left = sx + 'px';
+        pickerCursor.style.top  = sy + 'px';
+
+        // 色相条（横向）
+        const hw = hueStrip.offsetWidth || 400;
+        hueCursor.style.left = ((hsvH / 360) * hw) + 'px';
+
+        // 2D 区域背景 = 当前色相的纯色 (S=100, V=100)
+        const pure = hsvToRgb(hsvH, 100, 100);
+        picker2D.style.background = rgbToHex(pure.r, pure.g, pure.b);
+    }
+
+    // 2D 区域拖拽
+    let dragging2D = false;
+    let dragS = 100; // 拖拽中记住饱和度，防止 V→0 时 S 被吞
+    function handle2DMove(e) {
+        if (!dragging2D) return;
+        e.preventDefault();
+        const w = picker2D.offsetWidth;
+        const h = picker2D.offsetHeight;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = picker2D.getBoundingClientRect();
+        // X → 饱和度: 左=0%, 右=100%（直接用鼠标位置，不经过 RGB→HSV 转换）
+        let s = ((cx - rect.left) / rect.width) * 100;
+        s = Math.max(0, Math.min(100, s));
+        // Y → 明度: 顶=100%, 底=0%
+        let v = ((rect.bottom - cy) / rect.height) * 100;
+        v = Math.max(0, Math.min(100, v));
+        // 始终记住鼠标位置的饱和度
+        dragS = s;
+        // 即时更新 cursor（用鼠标原始位置，不依赖 updateAll 回写）
+        pickerCursor.style.left = ((s / 100) * w) + 'px';
+        pickerCursor.style.top  = ((100 - v) / 100) * h + 'px';
+        const hueVal = +document.getElementById('hueSlider2').value;
+        updateAll(hsvToRgb(hueVal, Math.round(s), Math.round(v)), 'hsv');
+    }
+    picker2D.addEventListener('mousedown', e => {
+        dragging2D = true;
+        handle2DMove(e); // 第一次也走完整计算
+    });
+    document.addEventListener('mousemove', handle2DMove);
+    document.addEventListener('mouseup', () => {
+        if (dragging2D) {
+            dragging2D = false;
+            // 拖拽结束后，把最终 S 同步到 dragS
+            const sv = +document.getElementById('satSlider2').value;
+            dragS = sv;
+        }
+    });
+    picker2D.addEventListener('touchstart', e => {
+        dragging2D = true;
+        handle2DMove(e);
+    }, {passive:false});
+    document.addEventListener('touchmove', handle2DMove, {passive:false});
+    document.addEventListener('touchend', () => {
+        dragging2D = false;
+        dragS = +document.getElementById('satSlider2').value;
+    });
+    picker2D.addEventListener('mousedown', e => { dragging2D = true; handle2DMove(e); });
+    document.addEventListener('mousemove', handle2DMove);
+    document.addEventListener('mouseup', () => dragging2D = false);
+    picker2D.addEventListener('touchstart', e => { dragging2D = true; handle2DMove(e); }, {passive:false});
+    document.addEventListener('touchmove', handle2DMove, {passive:false});
+    document.addEventListener('touchend', () => dragging2D = false);
+
+    // 色相条拖拽
+    let draggingHue = false;
+    function handleHueMove(e) {
+        if (!draggingHue) return;
+        e.preventDefault();
+        const rect = hueStrip.getBoundingClientRect();
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        let x = (cx - rect.left) / rect.width;
+        x = Math.max(0, Math.min(1, x));
+        let h = Math.round(x * 360);
+        // 当 x 接近 1 时，强制 H=360 而不是 0
+        if (x > 0.997) h = 360;
+        // 即时更新 cursor
+        const hw = hueStrip.offsetWidth;
+        hueCursor.style.left = (x * hw) + 'px';
+        const s = +document.getElementById('satSlider2').value;
+        const v = +document.getElementById('valSlider2').value;
+        preserveH = h; // 防止 rgb→hsv 转换把 360 变 0
+        updateAll(hsvToRgb(h, s, v), 'hsv');
+    }
+    hueStrip.addEventListener('mousedown', e => { draggingHue = true; handleHueMove(e); });
+    document.addEventListener('mousemove', handleHueMove);
+    document.addEventListener('mouseup', () => draggingHue = false);
+    hueStrip.addEventListener('touchstart', e => { draggingHue = true; handleHueMove(e); }, {passive:false});
+    document.addEventListener('touchmove', handleHueMove, {passive:false});
+    document.addEventListener('touchend', () => draggingHue = false);
+
+    // ==================== 预设色卡 ====================
+    // 按色相环顺序排列：红→橙→黄→绿→青→蓝→紫→粉→灰→棕→黑白
+    const presetColors = [
+        // 🔴 红色系
+        '#FF0000','#F5576C','#DC143C','#C71585','#8B0000',
+        // 🟠 橙色系
+        '#FF4500','#FF6347','#FF7F50','#FF8C00','#FFA500',
+        // 🟡 黄色系
+        '#FFD700','#FFFF00','#F5AF19','#F6D365','#F0E68C',
+        // 🟢 绿色系
+        '#32CD32','#00FF00','#3CB371','#2E8B57','#008000',
+        // 🌊 青色系
+        '#00CED1','#00FFFF','#40E0D0','#48D1CC','#20B2AA',
+        // 🔵 蓝色系
+        '#1E90FF','#4169E1','#0000FF','#0000CD','#00008B',
+        // 🟣 紫色系
+        '#8A2BE2','#9370DB','#9932CC','#8B008B','#4B0082',
+        // 🩷 粉色系
+        '#FF1493','#FF69B4','#FFB6C1','#DB7093','#F093FB',
+        // 🟤 棕色系
+        '#A0522D','#8B4513','#D2691E','#CD853F','#F4A460',
+        // ⚪ 灰色系
+        '#FFFFFF','#D3D3D3','#A9A9A9','#696969','#000000',
+        // ✨ 渐变常用点缀色
+        '#A18CD1','#43E97B','#38F9D7','#667EEA','#764BA2'
+    ];
+
+    // 按色相排序（灰色和纯黑白保持原位逻辑，通过 HSL 的 H 排序）
+    function sortByHue(a, b) {
+        const ra = hexToRgb(a), rb = hexToRgb(b);
+        const ha = rgbToHsl(ra.r, ra.g, ra.b);
+        const hb = rgbToHsl(rb.r, rb.g, rb.b);
+        // 灰度色（饱和度极低）放最后
+        const sa = ha.s, sb = hb.s;
+        if (sa < 8 && sb >= 8) return 1;
+        if (sb < 8 && sa >= 8) return -1;
+        if (sa < 8 && sb < 8) return 0; // 灰阶保持原序
+        return ha.h - hb.h;
+    }
+    const sortedPresets = [...presetColors].sort(sortByHue);
+
+    const presetGrid = document.getElementById('presetGrid');
+    sortedPresets.forEach(hex => {
+        const swatch = document.createElement('div');
+        swatch.className = 'preset-swatch';
+        swatch.style.background = hex;
+        swatch.title = hex;
+        swatch.dataset.hex = hex.toUpperCase();
+        const rgb = hexToRgb(hex);
+        const br = (rgb.r*299+rgb.g*587+rgb.b*114)/1000;
+        swatch.style.color = br>128?'#333':'#fff';
+        swatch.innerHTML = '<i class="fa-solid fa-plus" style="opacity:0.5;font-size:10px;"></i>';
+        swatch.addEventListener('click', () => {
+            const c = hexToRgb(hex);
+            if (c) updateAll(c, 'preset');
+        });
+        presetGrid.appendChild(swatch);
+    });
+
+    function updatePresetSelection(hex) {
+        document.querySelectorAll('.preset-swatch').forEach(s => {
+            s.classList.toggle('selected', s.dataset.hex === hex.toUpperCase());
+        });
+    }
+
+    // ==================== 滑块事件 ====================
+    const $ = id => document.getElementById(id);
+
+    // 绑定滑块 + 数值框双向同步
+    function bindSlider(sliderId, valueId, min, max, onChange) {
+        const slider = $(sliderId);
+        const valInput = $(valueId);
+        // 滑块 → 数值框 + 更新颜色
+        slider.addEventListener('input', e => {
+            const v = +e.target.value;
+            if (+valInput.value !== v) valInput.value = v;
+            onChange(v);
+        });
+        // 数值框 → 滑块 + 更新颜色（回车或失焦时确认）
+        valInput.addEventListener('input', e => {
+            // 实时限制范围
+            let v = +e.target.value;
+            if (isNaN(v)) return;
+            v = Math.max(min, Math.min(max, v));
+        });
+        function applyVal() {
+            let v = +valInput.value;
+            if (isNaN(v)) { valInput.value = slider.value; return; }
+            v = Math.max(min, Math.min(max, Math.round(v)));
+            valInput.value = v;
+            if (+slider.value !== v) {
+                slider.value = v;
+                onChange(v);
+            }
+        }
+        valInput.addEventListener('change', applyVal);
+        valInput.addEventListener('blur', applyVal);
+        valInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); valInput.blur(); } });
+    }
+
+    // RGB
+    bindSlider('redSlider',  'redValue',   0, 255, v => updateAll({r:v,g:+$('greenSlider').value,b:+$('blueSlider').value},'rgb'));
+    bindSlider('greenSlider','greenValue', 0, 255, v => updateAll({r:+$('redSlider').value,g:v,b:+$('blueSlider').value},'rgb'));
+    bindSlider('blueSlider', 'blueValue',  0, 255, v => updateAll({r:+$('redSlider').value,g:+$('greenSlider').value,b:v},'rgb'));
+    // HSL
+    bindSlider('hueSlider',  'hueValue',   0, 360, v => { preserveH = v; updateAll(hslToRgb(v,+$('satSlider').value,+$('lightSlider').value),'hsl'); });
+    bindSlider('satSlider',  'satValue',   0, 100, v => updateAll(hslToRgb(+$('hueSlider').value,v,+$('lightSlider').value),'hsl'));
+    bindSlider('lightSlider','lightValue', 0, 100, v => updateAll(hslToRgb(+$('hueSlider').value,+$('satSlider').value,v),'hsl'));
+    // HSV
+    bindSlider('hueSlider2', 'hueValue2',  0, 360, v => { preserveH = v; updateAll(hsvToRgb(v,+$('satSlider2').value,+$('valSlider2').value),'hsv'); });
+    bindSlider('satSlider2', 'satValue2',  0, 100, v => updateAll(hsvToRgb(+$('hueSlider2').value,v,+$('valSlider2').value),'hsv'));
+    bindSlider('valSlider2', 'valValue2', 0, 100, v => updateAll(hsvToRgb(+$('hueSlider2').value,+$('satSlider2').value,v),'hsv'));
+
+    // HEX 输入
+    $('hexInput').addEventListener('change', function() {
+        const rgb = hexToRgb(this.value);
+        if (rgb) updateAll(rgb, 'hex');
+    });
+
+    // ==================== 模式 Tab ====================
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('panel-' + this.dataset.mode).classList.add('active');
+        });
+    });
+
+    // ==================== 复制 ====================
+    function copyColor() {
+        const v = $('hexInput').value;
+        navigator.clipboard.writeText(v).then(() => showToast('颜色 ' + v + ' 已复制！'));
+    }
+    function copyText(text) {
+        navigator.clipboard.writeText(text).then(() => showToast(text + ' 已复制！'));
+    }
+    function showToast(msg) {
+        const t = $('toast');
+        $('toastMsg').textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ==================== 分页 ====================
+    function switchPage(pageId) {
+        closeMenu();
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === pageId));
+        document.querySelectorAll('.page').forEach(p => {
+            if (p.id === 'page-' + pageId) {
+                p.style.display = 'block';
+                requestAnimationFrame(() => p.classList.add('active'));
+            } else {
+                p.classList.remove('active');
+                setTimeout(() => { if(!p.classList.contains('active')) p.style.display='none'; }, 300);
+            }
+        });
+        window.scrollTo({top:0, behavior:'smooth'});
+        if (pageId === 'picker') {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                const hsl = rgbToHsl(currentRgb.r, currentRgb.g, currentRgb.b);
+                const hsv = rgbToHsv(currentRgb.r, currentRgb.g, currentRgb.b);
+                update2DPicker(hsl.h, hsl.s, hsl.l, hsv.h, hsv.s, hsv.v);
+            }));
+        }
+    }
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) { e.preventDefault(); switchPage(this.dataset.page); });
+    });
+
+    // ==================== 汉堡菜单 ====================
+    const hamburgerBtn = $('hamburgerBtn');
+    const mobileMenu = $('mobileMenu');
+    let menuAnimating = false;   // 防止动画期间重复点击
+
+    function openMenu() {
+        if (menuAnimating) return;
+        menuAnimating = true;
+        // 清掉 closing/closed 残留，加 opening
+        mobileMenu.classList.remove('closing');
+        mobileMenu.classList.add('opening');
+        hamburgerBtn.classList.add('open');
+        // opening 动画结束后，切换为稳定的 open 态
+        mobileMenu.addEventListener('transitionend', function te() {
+            if (mobileMenu.classList.contains('opening')) {
+                mobileMenu.classList.remove('opening');
+                mobileMenu.classList.add('open');
+            }
+            mobileMenu.removeEventListener('transitionend', te);
+            menuAnimating = false;
+        }, { once: true });
+    }
+
+    function closeMenu() {
+        if (menuAnimating) return;
+        if (!mobileMenu.classList.contains('open') &&
+            !mobileMenu.classList.contains('opening')) return;
+        menuAnimating = true;
+        // 从 open/opening 进入 closing
+        mobileMenu.classList.remove('open', 'opening');
+        mobileMenu.classList.add('closing');
+        hamburgerBtn.classList.remove('open');
+        // closing 动画结束后，清掉 closing，回到 closed
+        mobileMenu.addEventListener('transitionend', function te() {
+            if (mobileMenu.classList.contains('closing')) {
+                mobileMenu.classList.remove('closing');
+            }
+            mobileMenu.removeEventListener('transitionend', te);
+            menuAnimating = false;
+        }, { once: true });
+        // 兜底：万一 transitionend 没触发（如 display:none）
+        setTimeout(() => {
+            mobileMenu.classList.remove('closing');
+            menuAnimating = false;
+        }, 700);
+    }
+
+    function toggleMobileMenu() {
+        if (mobileMenu.classList.contains('open') ||
+            mobileMenu.classList.contains('opening')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    }
+    hamburgerBtn.addEventListener('click', toggleMobileMenu);
+    mobileMenu.addEventListener('click', e => { if (e.target === mobileMenu) closeMenu(); });
+    document.addEventListener('keydown', e => { if(e.key==='Escape') closeMenu(); });
+
+    // ==================== 色卡库 ====================
+    const palettes = [
+        { name:'日落余晖', desc:'温暖而富有激情', icon:'fa-sun', colors:['#FF6B6B','#FFA07A','#FFD93D','#FF8C42','#E94560'] },
+        { name:'深海秘境', desc:'宁静而深邃', icon:'fa-water', colors:['#0F3460','#16528E','#1A5F7A','#2E8BC0','#89CFF0'] },
+        { name:'森林物语', desc:'自然与生机', icon:'fa-tree', colors:['#2D6A4F','#40916C','#52B788','#74C69D','#95D5B2'] },
+        { name:'紫罗兰梦', desc:'优雅而神秘', icon:'fa-moon', colors:['#3C1874','#6C2EB7','#9B59B6','#C39BD3','#D7BDE2'] },
+        { name:'奶油甜心', desc:'温柔又甜蜜', icon:'fa-heart', colors:['#FFE0B2','#FFCCBC','#F8BBD0','#E1BEE7','#D1C4E9'] },
+        { name:'极简灰调', desc:'高级感十足', icon:'fa-cube', colors:['#212121','#424242','#616161','#9E9E9E','#E0E0E0'] },
+        { name:'热带风暴', desc:'活力四射', icon:'fa-bolt', colors:['#FF006E','#FB5607','#FFBE0B','#8338EC','#3A86FF'] },
+        { name:'薄荷清晨', desc:'清新怡人', icon:'fa-leaf', colors:['#A8E6CF','#88D8B0','#B5EAD7','#C7F9CC','#E2F0CB'] },
+        { name:'琥珀黄昏', desc:'复古与质感', icon:'fa-flask', colors:['#7C2D12','#9A3412','#C2410C','#EA580C','#F97316'] },
+        { name:'冰川蓝调', desc:'冷静与专业', icon:'fa-snowflake', colors:['#0C4A6E','#075985','#0369A1','#0284C7','#38BDF8'] },
+        { name:'樱花粉嫩', desc:'浪漫少女心', icon:'fa-cherry-blossom', colors:['#FFD1DC','#FFB7C5','#FF9EBD','#FF85A1','#FF6B9D'] },
+        { name:'赛博朋克', desc:'未来科技感', icon:'fa-robot', colors:['#FF006E','#00F5FF','#7B2FF7','#FCE205','#FF2A2A'] }
+    ];
+    const paletteGrid = $('paletteGrid');
+    palettes.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'palette-card';
+        card.innerHTML = `<div class="palette-colors">${p.colors.map(c=>`<div class="palette-color" style="background:${c}" title="${c}" onclick="copyText('${c}')"><span class="hex-tooltip">${c}</span></div>`).join('')}</div><div class="palette-info"><h3><i class="fa-solid ${p.icon}"></i> ${p.name}</h3><p>${p.desc}</p></div>`;
+        paletteGrid.appendChild(card);
+    });
+
+    // ==================== 渐变 ====================
+    const gradients = [
+        { name:'紫粉梦幻', icon:'fa-wand-magic-sparkles', code:'linear-gradient(135deg, #a18cd1, #fbc2eb)' },
+        { name:'日落熔金', icon:'fa-sun', code:'linear-gradient(135deg, #f093fb, #f5576c)' },
+        { name:'海洋之心', icon:'fa-water', code:'linear-gradient(135deg, #667eea, #764ba2)' },
+        { name:'薄荷冰沙', icon:'fa-ice-cream', code:'linear-gradient(135deg, #a8edea, #fed6e3)' },
+        { name:'橙光初现', icon:'fa-fire', code:'linear-gradient(135deg, #f6d365, #fda085)' },
+        { name:'深空星云', icon:'fa-stars', code:'linear-gradient(135deg, #0f0c29, #302b63, #24243e)' },
+        { name:'极光绿意', icon:'fa-tree', code:'linear-gradient(135deg, #56ab2f, #a8e063)' },
+        { name:'火焰凤凰', icon:'fa-dragon', code:'linear-gradient(135deg, #f12711, #f5af19)' },
+        { name:'玫瑰晨露', icon:'fa-rose', code:'linear-gradient(135deg, #ff9a9e, #fad0c4)' },
+        { name:'碧波荡漾', icon:'fa-wave-square', code:'linear-gradient(135deg, #43e97b, #38f9d7)' },
+        { name:'暗夜紫晶', icon:'fa-moon', code:'linear-gradient(135deg, #1a1a2e, #6c2eb7)' },
+        { name:'桃粉奶油', icon:'fa-cloud', code:'linear-gradient(135deg, #ffecd2, #fcb69f)' }
+    ];
+    const gradientGrid = $('gradientGrid');
+    gradients.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'gradient-card';
+        card.style.background = g.code;
+        card.innerHTML = `<span class="gradient-code">${g.code}</span><span class="gradient-name"><i class="fa-solid ${g.icon}"></i> ${g.name}</span>`;
+        card.addEventListener('click', () => navigator.clipboard.writeText(g.code).then(() => showToast('渐变代码已复制！')));
+        gradientGrid.appendChild(card);
+    });
+
+    // ==================== 趋势 ====================
+    const trends = [
+        { name:'数字薰衣草', desc:'2026年度代表色，融合数字科技的紫调', icon:'fa-spa', colors:['#967BB6','#B8A9C9','#D4C5E2','#E8D5F5'] },
+        { name:'生态绿', desc:'呼应可持续发展的自然色调', icon:'fa-leaf', colors:['#2D5016','#4A7C2E','#6B9B3A','#A8C256'] },
+        { name:'暖阳珊瑚', desc:'温暖包容的橙粉色调', icon:'fa-sun', colors:['#E85D3A','#F17B4A','#F5A623','#F7D046'] },
+        { name:'星空蓝', desc:'深邃宇宙般的蓝色系', icon:'fa-star', colors:['#1B2838','#2C3E5D','#4A6FA5','#7BAED4'] },
+        { name:'陶瓷奶油', desc:'柔和的中性色调', icon:'fa-mug-hot', colors:['#F5F0E8','#E8DFD0','#D4C9B8','#BFB5A0'] },
+        { name:'热带朱红', desc:'大胆鲜明的红色调', icon:'fa-fire', colors:['#C41E3A','#DC143C','#E63946','#F07167'] }
+    ];
+    const trendGrid = $('trendGrid');
+    trends.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'trend-card';
+        card.innerHTML = `<div class="trend-colors">${t.colors.map(c=>`<div style="background:${c}"></div>`).join('')}</div><div class="trend-info"><h3><i class="fa-solid ${t.icon}"></i> ${t.name}</h3><p>${t.desc}</p></div>`;
+        trendGrid.appendChild(card);
+    });
+
+    // ==================== 初始化 ====================
+    requestAnimationFrame(() => requestAnimationFrame(() => updateAll(currentRgb, 'init')));
+    </script>
+</body>
+</html>

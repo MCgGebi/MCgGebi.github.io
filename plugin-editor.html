@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>插件编辑器 · DBP-HUB</title>
+
+<!-- 复用主页的 Font Awesome -->
+<link rel="stylesheet" href="./vendor/font-awesome.min.css">
+
+<!-- 复用主页的 CSS 变量和设计令牌 -->
+<link rel="stylesheet" href="./styles/main.css">
+
+<style>
+/* ========================================
+   插件编辑器 — 复用主页设计令牌
+   布局：左侧分类树（同侧边栏） + 右侧操作区（同主内容区）
+   ======================================== */
+
+/* ===== 编辑器顶栏（同 .topbar） ===== */
+.pe-topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--topbar-height);
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 16px;
+  z-index: 200;
+  flex-shrink: 0;
+  gap: 10px;
+}
+.pe-topbar-brand {
+  display: flex; align-items: center; gap: 8px;
+  cursor: default; padding: 4px 10px;
+  border-radius: 4px;
+  user-select: none; white-space: nowrap;
+}
+.pe-topbar-logo {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent), #2a6a1c);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #fff;
+}
+.pe-topbar-name { font-size: 15px; font-weight: 700; color: #fff; }
+.pe-topbar-version {
+  font-size: 10px; background: var(--purple); color: #fff;
+  padding: 2px 6px; border-radius: 3px; font-weight: 400;
+}
+.pe-topbar-spacer { flex: 1; }
+
+/* 顶栏按钮（已统一为右上角下拉菜单，保留基础样式备用） */
+.pe-tb-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px;
+  border-radius: 4px; border: 1px solid transparent;
+  background: transparent; color: var(--text-muted);
+  font-size: 12px; cursor: pointer;
+  transition: var(--transition);
+}
+.pe-tb-btn:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text); border-color: var(--border);
+}
+
+/* ===== 右上角下拉菜单（同主页 .dropdown-menu 风格） ===== */
+.pe-menu-wrap { position: relative; display: flex; align-items: center; }
+.pe-menu-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 4px;
+  background: transparent; color: var(--text-muted);
+  font-size: 15px; cursor: pointer;
+  transition: var(--transition);
+}
+.pe-menu-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text); border-color: var(--border);
+}
+.pe-menu-btn.active { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-dim); }
+
+.pe-dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 190px; padding: 6px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  z-index: 60;
+  /* 内容超出屏幕高度时可滚动 */
+  max-height: calc(100vh - 60px);
+  max-height: calc(100dvh - 60px);
+  overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* 默认收起 */
+  opacity: 0; transform: translateY(-8px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.pe-dropdown::-webkit-scrollbar { width: 6px; }
+.pe-dropdown::-webkit-scrollbar-track { background: transparent; }
+.pe-dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.pe-dropdown::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+.pe-dropdown { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.pe-dropdown-group { position: sticky; top: -6px; z-index: 1; background: var(--panel-2); }
+.pe-dropdown.show {
+  opacity: 1; transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.pe-dropdown-group {
+  padding: 6px 10px 4px;
+  font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--text-muted); opacity: 0.75;
+}
+.pe-dropdown-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 5px;
+  font-size: 13px; color: var(--text); text-decoration: none;
+  transition: var(--transition);
+}
+.pe-dropdown-item i { width: 14px; text-align: center; font-size: 12px; color: var(--text-muted); }
+.pe-dropdown-item:hover { background: rgba(255,255,255,0.07); }
+.pe-dropdown-item:hover i { color: var(--accent); }
+.pe-dropdown-item.danger { color: var(--danger); }
+.pe-dropdown-item.danger i { color: var(--danger); }
+.pe-dropdown-item.danger:hover { background: rgba(192,57,43,0.15); }
+.pe-dropdown-divider { height: 1px; margin: 5px 4px; background: var(--border); }
+
+/* ===== 主区域布局（同 .sidebar + .main-content） ===== */
+.pe-layout {
+  display: flex;
+  margin-top: var(--topbar-height);
+  min-height: calc(100dvh - var(--topbar-height));
+}
+
+/* ===== 左侧分类树面板（同 .sidebar） ===== */
+.pe-sidebar {
+  width: var(--sidebar-width);
+  background: #1e1e1e;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+.pe-sidebar-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.pe-sidebar-header i {
+  font-size: 14px; color: var(--accent);
+}
+.pe-sidebar-header span {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* 搜索框（同 .sidebar-search） */
+.pe-search {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.pe-search input {
+  width: 100%; height: 34px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 10px 0 32px;
+  color: var(--text); font-size: 12px;
+  outline: none; transition: var(--transition);
+}
+.pe-search input:focus { border-color: var(--accent); background: #2a2a2a; }
+.pe-search input::placeholder { color: var(--text-muted); font-style: italic; }
+.pe-search .search-icon {
+  position: absolute; left: 24px; top: 50%; margin-top: -6px;
+  color: var(--text-muted); font-size: 12px; pointer-events: none;
+}
+
+/* 树区域（同 .sidebar-nav） */
+.pe-tree-scroll {
+  flex: 1; overflow-y: auto; padding: 6px 0;
+}
+
+/* 树节点（同 .nav-item 风格） */
+.pe-tree, .pe-tree ul {
+  list-style: none; padding: 0; margin: 0;
+}
+.pe-tree ul {
+  padding-left: 18px;
+  border-left: 1px dashed var(--border);
+  margin-left: 16px;
+}
+.pe-tree li { margin: 1px 0; }
+
+.pe-tree-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  color: var(--text-muted); font-size: 12px;
+  cursor: pointer; user-select: none;
+  border-left: 3px solid transparent;
+  transition: var(--transition);
+}
+.pe-tree-item:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+}
+.pe-tree-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 500;
+}
+.pe-tree-item.dragging { opacity: 0.35; }
+/* 拖到空白处 = 移到根级别 */
+.pe-tree-root-drop { outline: 2px dashed var(--accent); outline-offset: -2px; background: var(--accent-dim); }
+.pe-tree-item.drop-inside { position: relative; }
+.pe-tree-item.drop-inside::after {
+  content: '放进此文件夹';
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  font-size: 9px; color: var(--accent); background: var(--panel-2);
+  padding: 1px 5px; border-radius: 8px; pointer-events: none;
+}
+.pe-tree-item.drop-above { border-top: 2px solid var(--accent); }
+.pe-tree-item.drop-below { border-bottom: 2px solid var(--accent); }
+.pe-tree-item.drop-inside { background: var(--accent-dim); outline: 1px dashed var(--accent); }
+
+/* 展开箭头（同 .card-arrow 动画） */
+.pe-toggle {
+  width: 14px; text-align: center;
+  font-size: 10px; color: #666;
+  cursor: pointer; transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.pe-toggle.open { transform: rotate(90deg); color: var(--accent); }
+.pe-toggle.empty { visibility: hidden; }
+
+/* 图标 */
+.pe-tree-icon {
+  width: 18px; text-align: center;
+  font-size: 12px; flex-shrink: 0;
+}
+.pe-tree-icon.folder { color: var(--warn); }
+.pe-tree-icon.plugin-js { color: var(--accent); }
+.pe-tree-icon.plugin-html { color: var(--blue); }
+.pe-tree-icon.plugin-md { color: var(--purple); }
+
+.pe-tree-label {
+  flex: 1; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 徽章（复用 .nav-badge） */
+.pe-tree-badge {
+  font-size: 9px; padding: 1px 6px; border-radius: 10px;
+  font-weight: 600; flex-shrink: 0;
+}
+.pe-tree-badge.hot { background: var(--danger); color: #fff; }
+.pe-tree-badge.new { background: var(--color-diamond); color: #0a2a33; }
+.pe-tree-badge.html { background: var(--blue); color: #fff; }
+.pe-tree-badge.md { background: var(--purple); color: #fff; }
+.pe-tree-badge.url { background: var(--warn); color: #1a1a1a; }
+.pe-tree-badge.version {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted); font-family: 'Consolas', monospace;
+}
+
+/* 悬浮操作按钮 */
+.pe-tree-actions {
+  display: none; gap: 2px; flex-shrink: 0;
+}
+.pe-tree-item:hover .pe-tree-actions { display: flex; }
+.pe-tree-actions button {
+  width: 22px; height: 22px; border: none; border-radius: 3px;
+  cursor: pointer; background: transparent; color: var(--text-muted);
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.pe-tree-actions button:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.pe-tree-actions button.danger:hover { background: var(--danger); color: #fff; }
+
+/* 侧边栏底部工具栏 */
+.pe-sidebar-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+.pe-sidebar-footer button {
+  padding: 4px 10px; border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--panel); color: var(--text-secondary);
+  font-size: 11px; cursor: pointer;
+  transition: var(--transition);
+}
+.pe-sidebar-footer button:hover {
+  background: var(--accent-dim); border-color: var(--accent); color: var(--text);
+}
+
+/* ===== 右侧操作区（同 .main-content） ===== */
+.pe-main {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 20px; padding-bottom: 100px;
+  transition: margin-left 0.25s ease;
+}
+
+/* 空状态（同 .empty-state） */
+.pe-empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 50vh; color: var(--text-muted); gap: 14px;
+}
+.pe-empty i { font-size: 48px; opacity: 0.25; }
+.pe-empty p { font-size: 14px; }
+.pe-empty .btn {
+  margin-top: 8px;
+}
+
+/* ===== 详情卡片（同 .card + .section-title） ===== */
+.pe-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pe-card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+}
+.pe-card-header i { color: var(--accent); font-size: 14px; }
+.pe-card-header h3 { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+.pe-card-header .pe-card-sub {
+  font-size: 11px; color: var(--text-muted);
+}
+.pe-card-body {
+  padding: 16px;
+}
+
+/* 信息网格（同 .stats-row 风格） */
+.pe-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px; margin-bottom: 14px;
+}
+.pe-info-cell {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  position: relative; overflow: hidden;
+}
+.pe-info-cell::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: linear-gradient(90deg, var(--accent), transparent);
+}
+.pe-info-cell .pe-info-label {
+  font-size: 10px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.pe-info-cell .pe-info-value {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.pe-info-cell .pe-info-value .tag {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600;
+}
+
+/* 操作按钮组（同 .btn 风格） */
+.pe-btn-group {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+/* JSON 代码块（同主页等宽字体风格） */
+.pe-code {
+  background: #1e1e1e;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 11px; line-height: 1.6;
+  color: #d4d4d4;
+  max-height: 320px; overflow: auto;
+  white-space: pre-wrap; word-break: break-all;
+}
+.pe-code .j-key { color: #9cdcfe; }
+.pe-code .j-str { color: #ce9178; }
+.pe-code .j-num { color: #b5cea8; }
+.pe-code .j-bool { color: #569cd6; }
+
+/* 子项列表 */
+.pe-child-list {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.pe-child-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 4px;
+  font-size: 12px; color: var(--text-secondary);
+  transition: var(--transition);
+}
+.pe-child-item:hover { background: rgba(255,255,255,0.04); }
+.pe-child-item i { width: 16px; text-align: center; font-size: 11px; }
+.pe-child-item .child-path {
+  margin-left: auto; font-size: 10px; color: var(--text-muted);
+  font-family: 'Consolas', monospace;
+}
+
+/* ===== 模态框（同 .modal-overlay） ===== */
+.pe-modal-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+  backdrop-filter: blur(2px);
+}
+.pe-modal-overlay.show { opacity: 1; pointer-events: auto; }
+.pe-modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 400px; max-width: 560px; width: 90%;
+  max-height: 85vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  transform: scale(0.95) translateY(12px);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease;
+}
+.pe-modal-overlay.show .pe-modal { transform: scale(1) translateY(0); opacity: 1; }
+.pe-modal-overlay.closing .pe-modal { transform: scale(0.95) translateY(8px); opacity: 0; }
+.pe-modal-overlay.closing { opacity: 0; }
+
+.pe-modal-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.pe-modal-header h3 { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; }
+.pe-modal-close {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 18px; cursor: pointer; padding: 0 4px;
+  transition: var(--transition);
+}
+.pe-modal-close:hover { color: var(--text); }
+.pe-modal-body {
+  padding: 16px 18px; overflow-y: auto; flex: 1;
+}
+.pe-modal-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+
+/* ===== 表单（同主页 .form-group） ===== */
+.pe-form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pe-form-full { grid-column: 1 / -1; }
+.pe-form-group { display: flex; flex-direction: column; gap: 4px; }
+.pe-form-group label {
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pe-form-group input,
+.pe-form-group select,
+.pe-form-group textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--text); font-size: 12px;
+  outline: none; transition: var(--transition);
+}
+.pe-form-group input:focus,
+.pe-form-group select:focus,
+.pe-form-group textarea:focus {
+  border-color: var(--accent); background: #2a2a2a;
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+.pe-form-hint {
+  font-size: 10px; color: var(--text-muted); margin-top: 2px;
+}
+.pe-form-hint code {
+  background: var(--panel-2); padding: 1px 4px;
+  border-radius: 3px; font-size: 10px;
+  font-family: 'Consolas', monospace;
+}
+
+/* 图标预览 */
+.pe-icon-preview {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.pe-icon-preview i { font-size: 22px; color: var(--accent); min-width: 26px; text-align: center; }
+.pe-icon-preview span { font-size: 11px; color: var(--text-muted); font-family: 'Consolas', monospace; }
+
+/* 类型选择卡片 */
+.pe-type-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.pe-type-card {
+  padding: 14px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center; cursor: pointer;
+  background: var(--panel-2);
+  transition: var(--transition);
+  user-select: none;
+}
+.pe-type-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
+.pe-type-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+.pe-type-card.link i { color: var(--warn); }
+.pe-type-card.link.selected { border-color: var(--warn); }
+.pe-type-card i { font-size: 20px; display: block; margin-bottom: 6px; }
+.pe-type-card .tc-label { font-size: 11px; font-weight: 600; color: var(--text); }
+.pe-type-card .tc-desc { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+.pe-type-card.js i { color: var(--accent); }
+.pe-type-card.html i { color: var(--blue); }
+.pe-type-card.md i { color: var(--purple); }
+
+/* Checkbox */
+.pe-checkbox {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; font-size: 12px; color: var(--text-secondary);
+}
+.pe-checkbox input { accent-color: var(--accent); width: 14px; height: 14px; }
+
+/* ===== Toast 通知 ===== */
+.pe-toast-container {
+  position: fixed; bottom: 20px; right: 20px;
+  z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pe-toast {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  font-size: 12px; color: var(--text);
+  animation: peToastIn 0.3s ease;
+}
+.pe-toast.success { border-left: 3px solid var(--accent); }
+.pe-toast.error { border-left: 3px solid var(--danger); }
+.pe-toast.info { border-left: 3px solid var(--blue); }
+.pe-toast i { font-size: 14px; }
+.pe-toast.success i { color: var(--accent); }
+.pe-toast.error i { color: var(--danger); }
+.pe-toast.info i { color: var(--blue); }
+.pe-toast.removing { animation: peToastOut 0.25s ease forwards; }
+
+@keyframes peToastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes peToastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(40px); }
+}
+
+/* ===== 移动端遮罩 ===== */
+.pe-mobile-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 140;
+}
+.pe-mobile-overlay.open { display: block; }
+
+/* ===== 移动端汉堡按钮 ===== */
+.pe-burger {
+  display: none;
+  width: 34px; height: 34px; border-radius: 4px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--text); font-size: 16px;
+  align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--transition);
+}
+.pe-burger:hover { background: rgba(255,255,255,0.06); border-color: var(--border); }
+
+/* ===== 动画 ===== */
+@keyframes peFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pe-fade-in { animation: peFadeUp 0.3s ease; }
+
+/* ========================================
+   响应式
+   ======================================== */
+@media (max-width: 900px) {
+  .pe-burger { display: flex; }
+  .pe-sidebar {
+    position: fixed; top: var(--topbar-height); left: 0; bottom: 0;
+    z-index: 150;
+    transform: translateX(-100%);
+  }
+  .pe-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .pe-main { padding: 14px; }
+  .pe-form-grid { grid-template-columns: 1fr; }
+  .pe-type-grid { grid-template-columns: 1fr; }
+  .pe-info-grid { grid-template-columns: repeat(2, 1fr); }
+  .pe-topbar-version { display: none; }
+}
+
+@media (max-width: 600px) {
+  .pe-info-grid { grid-template-columns: 1fr; }
+  .pe-modal { min-width: unset; width: 95%; }
+  .pe-toast-container { left: 10px; right: 10px; bottom: 10px; }
+  .pe-toast { font-size: 11px; padding: 8px 12px; }
+  .pe-dropdown { min-width: 168px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶栏 ===== -->
+<header class="pe-topbar">
+  <button class="pe-burger" id="peBurger" onclick="PeApp.toggleMobileSidebar()">
+    <i class="fas fa-bars"></i>
+  </button>
+  <div class="pe-topbar-brand">
+    <div class="pe-topbar-logo"><i class="fas fa-cube"></i></div>
+    <span class="pe-topbar-name">插件编辑器</span>
+    <span class="pe-topbar-version" id="peVersion">v0.9.20</span>
+  </div>
+  <div class="pe-topbar-spacer"></div>
+  <!-- 右上角下拉菜单（与主页 ⋮ 菜单一致） -->
+  <div class="pe-menu-wrap" id="peMenuWrap">
+    <button class="pe-menu-btn" id="peMenuBtn" onclick="PeApp.toggleMenu(event)"
+            title="更多操作" aria-haspopup="true" aria-expanded="false">
+      <i class="fas fa-ellipsis-vertical"></i>
+    </button>
+    <div class="pe-dropdown" id="peDropdown">
+      <div class="pe-dropdown-group">数据</div>
+      <a href="javascript:void(0)" class="pe-dropdown-item" onclick="PeApp.menuAction('import')">
+        <i class="fas fa-upload"></i><span>导入 JSON</span>
+      </a>
+      <a href="javascript:void(0)" class="pe-dropdown-item" onclick="PeApp.menuAction('export')">
+        <i class="fas fa-download"></i><span>导出 JSON</span>
+      </a>
+      <a href="javascript:void(0)" class="pe-dropdown-item" onclick="PeApp.menuAction('preview')">
+        <i class="fas fa-eye"></i><span>预览完整 JSON</span>
+      </a>
+      <div class="pe-dropdown-divider"></div>
+      <div class="pe-dropdown-group">视图</div>
+      <a href="javascript:void(0)" class="pe-dropdown-item" onclick="PeApp.menuAction('expand')">
+        <i class="fas fa-expand"></i><span>展开全部</span>
+      </a>
+      <a href="javascript:void(0)" class="pe-dropdown-item" onclick="PeApp.menuAction('collapse')">
+        <i class="fas fa-compress"></i><span>折叠全部</span>
+      </a>
+      <div class="pe-dropdown-divider"></div>
+      <div class="pe-dropdown-group">危险</div>
+      <a href="javascript:void(0)" class="pe-dropdown-item danger" onclick="PeApp.menuAction('reset')">
+        <i class="fas fa-trash"></i><span>重置数据</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- 移动端遮罩 -->
+<div class="pe-mobile-overlay" id="peMobileOverlay" onclick="PeApp.closeMobileSidebar()"></div>
+
+<!-- ===== 主区域 ===== -->
+<div class="pe-layout">
+
+  <!-- 左侧分类树 -->
+  <aside class="pe-sidebar" id="peSidebar">
+    <div class="pe-sidebar-header">
+      <i class="fas fa-sitemap"></i>
+      <span>插件分类树</span>
+    </div>
+    <div class="pe-search">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="peSearch" placeholder="搜索插件或文件夹..." oninput="PeApp.onSearch(this.value)">
+    </div>
+    <div class="pe-tree-scroll">
+      <ul class="pe-tree" id="peTree"></ul>
+    </div>
+    <div class="pe-sidebar-footer">
+      <button onclick="PeApp.expandAll()"><i class="fas fa-expand-arrows-alt"></i> 展开</button>
+      <button onclick="PeApp.collapseAll()"><i class="fas fa-compress-arrows-alt"></i> 折叠</button>
+      <button onclick="PeApp.showAddDialog()" style="margin-left:auto;color:var(--accent);border-color:var(--accent);">
+        <i class="fas fa-plus"></i> 添加
+      </button>
+    </div>
+  </aside>
+
+  <!-- 右侧操作区 -->
+  <main class="pe-main" id="peMain">
+    <!-- 空状态 -->
+    <div class="pe-empty" id="peEmpty">
+      <i class="fas fa-mouse-pointer"></i>
+      <p>从左侧选择一个插件或文件夹进行编辑</p>
+      <button class="btn btn-primary" onclick="PeApp.showAddDialog()">
+        <i class="fas fa-plus"></i> 添加新插件
+      </button>
+    </div>
+    <!-- 详情内容 -->
+    <div id="peContent" style="display:none;"></div>
+  </main>
+</div>
+
+<!-- ===== Toast 容器 ===== -->
+<div class="pe-toast-container" id="peToastContainer"></div>
+
+<!-- ===== 添加/编辑 模态框 ===== -->
+<div class="pe-modal-overlay" id="peModal">
+  <div class="pe-modal" style="max-width:560px;">
+    <div class="pe-modal-header">
+      <i class="fas fa-plus-circle" style="color:var(--accent);"></i>
+      <h3 id="peModalTitle">添加插件</h3>
+      <button class="pe-modal-close" onclick="PeApp.closeModal()">&times;</button>
+    </div>
+    <div class="pe-modal-body">
+      <!-- 类型选择 -->
+      <div class="pe-form-group" style="margin-bottom:14px;">
+        <label>插件类型</label>
+        <div class="pe-type-grid" id="peTypeGrid">
+          <div class="pe-type-card js selected" data-type="js" onclick="PeApp.selectType('js',this)">
+            <i class="fas fa-file-code"></i>
+            <div class="tc-label">JS 插件</div>
+            <div class="tc-desc">Vue 组件</div>
+          </div>
+          <div class="pe-type-card html" data-type="html" onclick="PeApp.selectType('html',this)">
+            <i class="fas fa-window-restore"></i>
+            <div class="tc-label">HTML 插件</div>
+            <div class="tc-desc">iframe / inline</div>
+          </div>
+          <div class="pe-type-card md" data-type="markdown" onclick="PeApp.selectType('markdown',this)">
+            <i class="fas fa-file-alt"></i>
+            <div class="tc-label">Markdown</div>
+            <div class="tc-desc">.md 文档</div>
+          </div>
+          <div class="pe-type-card link" data-type="link" onclick="PeApp.selectType('link',this)">
+            <i class="fas fa-link"></i>
+            <div class="tc-label">外链（url）</div>
+            <div class="tc-desc">直接跳转，不加载</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pe-form-grid">
+        <div class="pe-form-group pe-form-full">
+          <label>插件 ID（唯一标识）</label>
+          <input type="text" id="f_id" placeholder="如：my-tool" oninput="PeApp.onIdChange(this.value)">
+          <div class="pe-form-hint">只能用小写字母、数字、中划线。对应文件名 <code>js/pages/&lt;id&gt;.js</code></div>
+        </div>
+        <div class="pe-form-group">
+          <label>显示标题</label>
+          <input type="text" id="f_title" placeholder="如：我的工具">
+        </div>
+        <div class="pe-form-group">
+          <label>版本号</label>
+          <input type="text" id="f_version" placeholder="0.1.0" value="0.1.0">
+        </div>
+        <div class="pe-form-group">
+          <label>Font Awesome 图标</label>
+          <input type="text" id="f_icon" placeholder="fas fa-cube" value="fas fa-cube" oninput="PeApp.updateIconPreview()">
+          <div class="pe-icon-preview">
+            <i id="f_icon_preview" class="fas fa-cube"></i>
+            <span id="f_icon_text">fas fa-cube</span>
+          </div>
+        </div>
+        <div class="pe-form-group">
+          <label>路径（URL）</label>
+          <input type="text" id="f_path" placeholder="/my-tool">
+          <div class="pe-form-hint">自动根据 ID 生成</div>
+        </div>
+        <div class="pe-form-group">
+          <label>徽章文字</label>
+          <input type="text" id="f_badge" placeholder="HOT / NEW / HTML / MD">
+        </div>
+        <div class="pe-form-group">
+          <label>徽章样式</label>
+          <select id="f_badgeClass">
+            <option value="">无</option>
+            <option value="hot">hot（红色）</option>
+            <option value="new">new（绿色）</option>
+            <option value="html">html（蓝色）</option>
+            <option value="url">url（橙色，外链专用）</option>
+            <option value="md">md（紫色）</option>
+          </select>
+        </div>
+        <div class="pe-form-group pe-form-full" id="f_src_group">
+          <label>源文件路径</label>
+          <input type="text" id="f_src" placeholder="./js/pages/my-tool.js">
+          <div class="pe-form-hint">JS: <code>./js/pages/&lt;id&gt;.js</code> · HTML: <code>./plugins/html/&lt;id&gt;.html</code> · MD: <code>./plugins/markdown/&lt;id&gt;.md</code></div>
+        </div>
+        <div class="pe-form-group" id="f_render_group" style="display:none;">
+          <label>HTML 渲染模式</label>
+          <select id="f_renderMode">
+            <option value="iframe">iframe（隔离，推荐）</option>
+            <option value="inline">inline（继承样式）</option>
+          </select>
+        </div>
+        <div class="pe-form-group pe-form-full" id="f_url_group" style="display:none;">
+          <label>外链地址（url）*</label>
+          <input type="text" id="f_url" placeholder="https://zh.minecraft.wiki">
+          <div class="pe-form-hint">外链类型<strong>不需要源文件</strong>，点击菜单直接跳转此地址</div>
+        </div>
+        <div class="pe-form-group" id="f_target_group" style="display:none;">
+          <label>打开方式</label>
+          <select id="f_target">
+            <option value="_blank">新标签页（_blank）</option>
+            <option value="_self">当前页（_self）</option>
+          </select>
+        </div>
+        <div class="pe-form-group">
+          <label>排序权重（越小越靠前）</label>
+          <input type="number" id="f_order" placeholder="10" value="10">
+        </div>
+        <div class="pe-form-group pe-form-full">
+          <label>所属分类（父文件夹 ID）</label>
+          <select id="f_parent"></select>
+          <div class="pe-form-hint">选择此插件要放入哪个分类文件夹</div>
+        </div>
+        <div class="pe-form-group pe-form-full">
+          <label class="pe-checkbox">
+            <input type="checkbox" id="f_defaultExpanded"> 默认展开此分类（仅文件夹）
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="pe-modal-footer">
+      <button class="btn btn-outline" onclick="PeApp.closeModal()">取消</button>
+      <button class="btn btn-primary" id="peModalSave" onclick="PeApp.savePlugin()">
+        <i class="fas fa-save"></i> 保存
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 确认删除 模态框 ===== -->
+<div class="pe-modal-overlay" id="peConfirm">
+  <div class="pe-modal" style="max-width:420px;">
+    <div class="pe-modal-header">
+      <i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i>
+      <h3>确认删除</h3>
+      <button class="pe-modal-close" onclick="PeApp.closeConfirm()">&times;</button>
+    </div>
+    <div class="pe-modal-body">
+      <p id="peConfirmMsg" style="font-size:13px;color:var(--text-secondary);line-height:1.8;"></p>
+    </div>
+    <div class="pe-modal-footer">
+      <button class="btn btn-outline" onclick="PeApp.closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="peConfirmOk">
+        <i class="fas fa-trash"></i> 确认删除
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 导入 JSON 模态框 ===== -->
+<div class="pe-modal-overlay" id="peImport">
+  <div class="pe-modal" style="max-width:600px;">
+    <div class="pe-modal-header">
+      <i class="fas fa-upload" style="color:var(--blue);"></i>
+      <h3>导入 plugins.json</h3>
+      <button class="pe-modal-close" onclick="PeApp.closeImport()">&times;</button>
+    </div>
+    <div class="pe-modal-body">
+      <div class="pe-form-group">
+        <label>粘贴 plugins.json 内容</label>
+        <textarea id="f_import" placeholder='{"version":"0.9.20","categories":[...]}' style="min-height:200px;resize:vertical;"></textarea>
+        <div class="pe-form-hint">也可以直接粘贴从编辑器导出的 JSON 数据</div>
+      </div>
+    </div>
+    <div class="pe-modal-footer">
+      <button class="btn btn-outline" onclick="PeApp.closeImport()">取消</button>
+      <button class="btn btn-primary" onclick="PeApp.doImport()">
+        <i class="fas fa-check"></i> 导入
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 文件输出 模态框 ===== -->
+<div class="pe-modal-overlay" id="peOutput">
+  <div class="pe-modal" style="max-width:700px;max-height:85vh;">
+    <div class="pe-modal-header">
+      <i class="fas fa-code" style="color:var(--accent);"></i>
+      <h3 id="peOutputTitle">plugins.json</h3>
+      <button class="pe-modal-close" onclick="PeApp.closeOutput()">&times;</button>
+    </div>
+    <div class="pe-modal-body" style="flex:1;overflow:auto;">
+      <div class="pe-code" id="peOutputCode"></div>
+    </div>
+    <div class="pe-modal-footer">
+      <button class="btn btn-outline" onclick="PeApp.copyOutput()">
+        <i class="fas fa-copy"></i> 复制全部
+      </button>
+      <button class="btn btn-primary" onclick="PeApp.downloadOutput()">
+        <i class="fas fa-download"></i> 下载文件
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========================================
+   DBP-HUB · Plugin Editor
+   样式与主页统一（复用 main.css 设计令牌）
+   ======================================== */
+(function (global) {
+  'use strict';
+
+  var APP_VERSION = '0.9.20';
+  var STORAGE_KEY = 'dbp_hub_plugins_data';
+
+  // ---------- 状态 ----------
+  var state = {
+    categories: [],
+    selectedId: null,
+    editingId: null,
+    editingType: 'plugin',
+    pluginType: 'js',
+    expanded: {},
+    dragId: null,
+  };
+
+  var DEFAULT_DATA = null;
+
+  // ============================================
+  // 初始化
+  // ============================================
+  async function init() {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        var parsed = JSON.parse(saved);
+        state.categories = parsed.categories || [];
+        state.expanded = parsed.expanded || {};
+        console.log('[Editor] 从 localStorage 恢复数据');
+      } catch(e) {
+        console.warn('[Editor] localStorage 解析失败，加载默认数据');
+        await loadDefault();
+      }
+    } else {
+      await loadDefault();
+    }
+    renderTree();
+    updateVersion();
+    console.log('[Editor] 插件编辑器就绪 (v' + APP_VERSION + ')');
+  }
+
+  async function loadDefault() {
+    try {
+      var resp = await fetch('./js/plugins.json', { cache: 'no-cache' });
+      if (resp.ok) {
+        DEFAULT_DATA = await resp.json();
+        state.categories = JSON.parse(JSON.stringify(DEFAULT_DATA.categories));
+        if (state.categories.length > 0 && state.categories[0].id) {
+          state.expanded[state.categories[0].id] = true;
+        }
+        console.log('[Editor] 已加载 plugins.json 默认数据');
+      } else {
+        throw new Error('HTTP ' + resp.status);
+      }
+    } catch(e) {
+      console.warn('[Editor] 无法加载 plugins.json:', e.message);
+      state.categories = [];
+    }
+  }
+
+  function updateVersion() {
+    document.getElementById('peVersion').textContent = 'v' + APP_VERSION;
+  }
+
+  // ============================================
+  // 持久化
+  // ============================================
+  function saveToStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      categories: state.categories, expanded: state.expanded
+    }));
+  }
+
+  // ============================================
+  // 树渲染（同主页侧边栏风格）
+  // ============================================
+  function renderTree() {
+    var root = document.getElementById('peTree');
+    root.innerHTML = '';
+    var q = (document.getElementById('peSearch').value || '').toLowerCase().trim();
+    state.categories.forEach(function (cat, idx) {
+      if (q && !nodeMatches(cat, q)) return;
+      root.appendChild(renderTreeNode(cat, 0, q));
+    });
+    if (root.children.length === 0 && q) {
+      var li = document.createElement('li');
+      li.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:12px;text-align:center;"><i class="fas fa-search" style="margin-right:6px;"></i>无匹配结果</div>';
+      root.appendChild(li);
+    }
+    // ★ 空白处放置 = 移到根级别（拖出文件夹）
+    root.ondragover = function (e) {
+      if (!state.dragId) return;
+      e.preventDefault();
+      clearDropIndicators();
+      root.classList.add('pe-tree-root-drop');
+    };
+    root.ondragleave = function () { root.classList.remove('pe-tree-root-drop'); };
+    root.ondrop = function (e) {
+      if (!state.dragId) return;
+      e.preventDefault(); e.stopPropagation();
+      root.classList.remove('pe-tree-root-drop');
+      clearDropIndicators();
+      handleRootDrop();
+      state.dropPos = null;
+    };
+  }
+
+  function nodeMatches(node, q) {
+    if ((node.title && node.title.toLowerCase().indexOf(q) !== -1) ||
+        (node.id && node.id.toLowerCase().indexOf(q) !== -1) ||
+        (node.path && node.path.toLowerCase().indexOf(q) !== -1)) return true;
+    if (node.children) {
+      for (var i = 0; i < node.children.length; i++) {
+        if (nodeMatches(node.children[i], q)) return true;
+      }
+    }
+    return false;
+  }
+
+  function renderTreeNode(node, depth, q) {
+    var li = document.createElement('li');
+    li.dataset.id = node.id || '';
+    li.dataset.type = node.type || 'plugin';
+
+    var item = document.createElement('div');
+    item.className = 'pe-tree-item' + (state.selectedId === node.id ? ' active' : '');
+    item.draggable = true;
+    item.onclick = function(e) { e.stopPropagation(); PeApp.selectNode(node.id); };
+
+    // 拖拽（★ 三区定位：上/中(仅文件夹)/下 —— 支持同级排序与拖出文件夹）
+    item.ondragstart = function(e) {
+      state.dragId = node.id;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', node.id);
+    };
+    item.ondragend = function() {
+      item.classList.remove('dragging');
+      clearDropIndicators();
+      state.dragId = null;
+      state.dropPos = null;
+    };
+    item.ondragover = function(e) {
+      if (!state.dragId || state.dragId === node.id) return;
+      e.preventDefault();
+      e.stopPropagation();
+      clearDropIndicators();
+      var rect = item.getBoundingClientRect();
+      var ratio = (e.clientY - rect.top) / rect.height;
+      var isFolder = node.type === 'folder';
+      var canInside = isFolder && !isAncestor(findNode(state.dragId) || {}, node.id);
+      var pos;
+      if (isFolder) {
+        // 文件夹：上 28% = 放上面，下 28% = 放下面，中间 = 放进去
+        if (ratio < 0.28) pos = 'above';
+        else if (ratio > 0.72) pos = 'below';
+        else pos = canInside ? 'inside' : (ratio < 0.5 ? 'above' : 'below');
+      } else {
+        pos = ratio < 0.5 ? 'above' : 'below';
+      }
+      state.dropPos = pos;
+      item.classList.add(pos === 'inside' ? 'drop-inside' : (pos === 'above' ? 'drop-above' : 'drop-below'));
+    };
+    item.ondragleave = function() {
+      item.classList.remove('drop-above', 'drop-below', 'drop-inside');
+      if (state.dropPos) state.dropPos = null;
+    };
+    item.ondrop = function(e) {
+      e.preventDefault(); e.stopPropagation();
+      var pos = state.dropPos || 'inside';
+      clearDropIndicators();
+      handleDrop(node, pos);
+      state.dropPos = null;
+    };
+
+    // 展开箭头
+    if (node.type === 'folder') {
+      var toggle = document.createElement('i');
+      var isOpen = state.expanded[node.id];
+      toggle.className = 'pe-toggle fas ' + (isOpen ? 'fa-chevron-down open' : 'fa-chevron-right');
+      if (!node.children || node.children.length === 0) toggle.classList.add('empty');
+      toggle.onclick = function(e) { e.stopPropagation(); toggleFolder(node.id); };
+      item.appendChild(toggle);
+    } else {
+      var sp = document.createElement('span');
+      sp.className = 'pe-toggle empty'; sp.innerHTML = '&nbsp;';
+      item.appendChild(sp);
+    }
+
+    // 图标
+    var icon = document.createElement('i');
+    if (node.type === 'folder') {
+      icon.className = 'pe-tree-icon folder fas fa-folder';
+    } else {
+      var pt = node.pluginType || 'js';
+      var ic = pt === 'html' ? 'fa-window-restore' : (pt === 'markdown' ? 'fa-file-alt' : 'fa-cube');
+      icon.className = 'pe-tree-icon plugin-' + pt + ' fas ' + ic;
+    }
+    item.appendChild(icon);
+
+    // 标签
+    var label = document.createElement('span');
+    label.className = 'pe-tree-label';
+    label.textContent = node.title || node.id || '(未命名)';
+    item.appendChild(label);
+
+    // 徽章
+    if (node.badge) {
+      var b = document.createElement('span');
+      b.className = 'pe-tree-badge ' + (node.badgeClass || '');
+      b.textContent = node.badge;
+      item.appendChild(b);
+    }
+    if (node.type === 'plugin' && node.pluginType && node.pluginType !== 'js') {
+      var tb = document.createElement('span');
+      tb.className = 'pe-tree-badge ' + node.pluginType;
+      tb.textContent = node.pluginType === 'html' ? 'HTML' : 'MD';
+      item.appendChild(tb);
+    }
+    if (node.type === 'link' && !node.badge) {
+      var lb = document.createElement('span');
+      lb.className = 'pe-tree-badge url';
+      lb.textContent = 'URL';
+      item.appendChild(lb);
+    }
+    if (node.version && node.version !== '0.0.0') {
+      var vb = document.createElement('span');
+      vb.className = 'pe-tree-badge version';
+      vb.textContent = 'v' + node.version;
+      item.appendChild(vb);
+    }
+
+    // 操作按钮
+    var acts = document.createElement('div');
+    acts.className = 'pe-tree-actions';
+    var mkBtn = function(cls, ic, title, fn) {
+      var b = document.createElement('button');
+      b.className = cls; b.innerHTML = '<i class="fas ' + ic + '"></i>';
+      b.title = title; b.onclick = function(e) { e.stopPropagation(); fn(); };
+      return b;
+    };
+    acts.appendChild(mkBtn('', 'fa-pencil-alt', '编辑', function(){ PeApp.editNode(node.id); }));
+    acts.appendChild(mkBtn('', 'fa-plus', '添加子项', function(){ PeApp.addUnderNode(node.id); }));
+    acts.appendChild(mkBtn('danger', 'fa-trash', '删除', function(){ PeApp.confirmDelete(node.id); }));
+    item.appendChild(acts);
+
+    li.appendChild(item);
+
+    // 子节点
+    if (node.type === 'folder' && node.children && state.expanded[node.id]) {
+      var ul = document.createElement('ul');
+      node.children.forEach(function(child) {
+        if (q && !nodeMatches(child, q)) return;
+        ul.appendChild(renderTreeNode(child, depth + 1, q));
+      });
+      li.appendChild(ul);
+    }
+    return li;
+  }
+
+  function clearDropIndicators() {
+    document.querySelectorAll('.drop-above,.drop-below,.drop-inside').forEach(function(el) {
+      el.classList.remove('drop-above','drop-below','drop-inside');
+    });
+    var root = document.getElementById('peTree');
+    if (root) root.classList.remove('pe-tree-root-drop');
+  }
+
+  function toggleFolder(id) {
+    state.expanded[id] = !state.expanded[id];
+    renderTree();
+  }
+
+  // ============================================
+  // 拖拽排序 / 移动
+  // ============================================
+  function handleDrop(target, pos) {
+    var dragId = state.dragId;
+    if (!dragId || dragId === target.id) return;
+    var dragNode = findNode(dragId);
+    if (!dragNode) return;
+    // 不能把父级拖到自己的子级身上（否则移除父级会连带把目标一起删掉）
+    if (isAncestor(dragNode, target.id)) {
+      PeApp.toast('error', '无法移动到自己的子级');
+      return;
+    }
+
+    var name = dragNode.title || dragId;
+
+    // ① 放进文件夹内部
+    if (pos === 'inside' && target.type === 'folder') {
+      removeNode(dragId);
+      if (!target.children) target.children = [];
+      target.children.push(dragNode);
+      state.expanded[target.id] = true;
+      finishDrop('已移入「' + (target.title || target.id) + '」：' + name);
+      return;
+    }
+
+    // ② 放到目标的上/下（同级排序；若目标是根级项，就等于拖到根级别）
+    var parentBefore = findParent(target.id);
+    removeNode(dragId);
+    var p = findParent(target.id) || (parentBefore || null);
+    var arr = (p && p.children) ? p.children : state.categories;
+    var ti = arr.indexOf(target);
+    if (ti === -1) arr.push(dragNode);
+    else arr.splice(pos === 'below' ? ti + 1 : ti, 0, dragNode);
+    var where = p ? '「' + (p.title || p.id) + '」内' : '根级别';
+    finishDrop('已在' + where + '排序：' + name + (pos === 'above' ? '（上移）' : '（下移）'));
+  }
+
+  function finishDrop(msg) {
+    saveToStorage();
+    renderTree();
+    PeApp.toast('success', msg);
+  }
+
+  // ★ 拖到树空白区域 = 移到根级别末尾（方便把子项拖出文件夹）
+  function handleRootDrop() {
+    var dragId = state.dragId;
+    if (!dragId) return;
+    var dragNode = findNode(dragId);
+    if (!dragNode) return;
+    if (findParent(dragId) === null) { PeApp.toast('info', '已经在根级别了'); return; }
+    removeNode(dragId);
+    state.categories.push(dragNode);
+    finishDrop('已移到根级别：' + (dragNode.title || dragId));
+  }
+
+  function findNode(id) { return findIn(id, state.categories); }
+  function findIn(id, nodes) {
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === id) return nodes[i];
+      if (nodes[i].children) { var f = findIn(id, nodes[i].children); if (f) return f; }
+    }
+    return null;
+  }
+  function findParent(id, nodes) {
+    nodes = nodes || state.categories;
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].children) {
+        for (var j = 0; j < nodes[i].children.length; j++) {
+          if (nodes[i].children[j].id === id) return nodes[i];
+        }
+        var f = findParent(id, nodes[i].children);
+        if (f) return f;
+      }
+    }
+    return null;
+  }
+  function removeNode(id) { removeFrom(id, state.categories); }
+  function removeFrom(id, nodes) {
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === id) { nodes.splice(i, 1); return true; }
+      if (nodes[i].children && removeFrom(id, nodes[i].children)) return true;
+    }
+    return false;
+  }
+  function isAncestor(node, descId) {
+    if (!node.children) return false;
+    for (var i = 0; i < node.children.length; i++) {
+      if (node.children[i].id === descId) return true;
+      if (isAncestor(node.children[i], descId)) return true;
+    }
+    return false;
+  }
+
+  // ============================================
+  // 选中 / 渲染详情面板
+  // ============================================
+  function selectNode(id) {
+    state.selectedId = id;
+    renderTree();
+    var node = findNode(id);
+    if (node) renderEditPanel(node);
+    // 移动端自动关闭侧边栏
+    closeMobileSidebar();
+  }
+
+  function renderEditPanel(node) {
+    document.getElementById('peEmpty').style.display = 'none';
+    var c = document.getElementById('peContent');
+    c.style.display = 'block';
+    c.classList.remove('pe-fade-in');
+    void c.offsetWidth;
+    c.classList.add('pe-fade-in');
+
+    var isFolder = node.type === 'folder';
+    var pt = node.pluginType || 'js';
+    var iconClass = isFolder ? 'fa-folder'
+      : (node.type === 'link' ? 'fa-link'
+      : (pt==='html'?'fa-window-restore':pt==='markdown'?'fa-file-alt':'fa-cube'));
+
+    var html = '';
+
+    // ===== 头部信息卡片 =====
+    html += '<div class="pe-card">' +
+      '<div class="pe-card-header">' +
+        '<i class="fas ' + iconClass + '"></i>' +
+        '<h3>' + escapeHtml(node.title || node.id || '(未命名)') + '</h3>' +
+        '<span class="pe-card-sub">' +
+          (isFolder ? '文件夹' : '插件') +
+          (node.version ? ' · v' + escapeHtml(node.version) : '') +
+        '</span>' +
+      '</div>' +
+      '<div class="pe-card-body">';
+
+    // 操作按钮组
+    html += '<div class="pe-btn-group">' +
+      '<button class="btn btn-sm" onclick="PeApp.editNode(\'' + node.id + '\')"><i class="fas fa-pencil-alt"></i> 编辑信息</button>' +
+      '<button class="btn btn-sm" onclick="PeApp.duplicateNode(\'' + node.id + '\')"><i class="fas fa-copy"></i> 复制</button>' +
+      '<button class="btn btn-sm" onclick="PeApp.moveUp(\'' + node.id + '\')"><i class="fas fa-arrow-up"></i> 上移</button>' +
+      '<button class="btn btn-sm" onclick="PeApp.moveDown(\'' + node.id + '\')"><i class="fas fa-arrow-down"></i> 下移</button>' +
+      '<button class="btn btn-sm btn-danger" onclick="PeApp.confirmDelete(\'' + node.id + '\')"><i class="fas fa-trash"></i> 删除</button>' +
+    '</div>';
+
+    if (isFolder) {
+      html += renderFolderDetails(node);
+    } else {
+      html += renderPluginDetails(node);
+    }
+    html += '</div></div>';
+
+    // ===== JSON 数据卡片 =====
+    html += '<div class="pe-card">' +
+      '<div class="pe-card-header">' +
+        '<i class="fas fa-code" style="color:var(--blue);"></i>' +
+        '<h3>JSON 数据</h3>' +
+        '<span class="pe-card-sub">可复制后手动修改</span>' +
+      '</div>' +
+      '<div class="pe-card-body">' +
+        '<div class="pe-code">' + syntaxHighlight(JSON.stringify(node, null, 2)) + '</div>' +
+        '<div class="pe-btn-group" style="margin-top:10px;margin-bottom:0;">' +
+          '<button class="btn btn-sm" onclick="PeApp.copyNodeJson(\'' + node.id + '\')"><i class="fas fa-copy"></i> 复制 JSON</button>' +
+        '</div>' +
+      '</div></div>';
+
+    c.innerHTML = html;
+  }
+
+  function renderFolderDetails(node) {
+    var pCount = countPlugins(node);
+    var fCount = countFolders(node);
+    var total = (node.children || []).length;
+
+    var childrenHtml = '';
+    (node.children || []).forEach(function(child) {
+      var ic = child.type === 'folder' ? 'fa-folder' :
+        (child.type === 'link' ? 'fa-link' :
+        (child.pluginType === 'html' ? 'fa-window-restore' :
+         child.pluginType === 'markdown' ? 'fa-file-alt' : 'fa-cube'));
+      childrenHtml += '<div class="pe-child-item">' +
+        '<i class="fas ' + ic + '" style="color:var(--text-muted);"></i>' +
+        '<span>' + escapeHtml(child.title || child.id) + '</span>' +
+        '<span class="child-path">' + escapeHtml(child.type === 'link' ? (child.url || '') : (child.path || '')) + '</span>' +
+      '</div>';
+    });
+
+    return '<div class="pe-info-grid">' +
+      '<div class="pe-info-cell"><div class="pe-info-label">插件数</div><div class="pe-info-value" style="color:var(--accent);font-size:20px;">' + pCount + '</div></div>' +
+      '<div class="pe-info-cell"><div class="pe-info-label">子文件夹</div><div class="pe-info-value" style="color:var(--warn);font-size:20px;">' + fCount + '</div></div>' +
+      '<div class="pe-info-cell"><div class="pe-info-label">总子项</div><div class="pe-info-value" style="color:var(--blue);font-size:20px;">' + total + '</div></div>' +
+      (node.defaultExpanded !== undefined ? '<div class="pe-info-cell"><div class="pe-info-label">默认展开</div><div class="pe-info-value">' + (node.defaultExpanded ? '<i class="fas fa-check" style="color:var(--accent);"></i> 是' : '<i class="fas fa-times" style="color:var(--text-muted);"></i> 否') + '</div></div>' : '') +
+    '</div>' +
+    '<div class="pe-form-group"><label>子项列表</label>' +
+      '<div style="background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);padding:8px;max-height:200px;overflow:auto;">' +
+        (childrenHtml || '<span style="color:var(--text-muted);font-size:12px;">空文件夹</span>') +
+      '</div></div>';
+  }
+
+  function renderPluginDetails(node) {
+    // ★ 外链节点：显示 url / target，不显示源文件与版本
+    if (node.type === 'link') {
+      return '<div class="pe-info-grid">' +
+        '<div class="pe-info-cell"><div class="pe-info-label">类型</div><div class="pe-info-value"><span class="tag" style="background:var(--warn);color:#1a1a1a;">URL</span></div></div>' +
+        '<div class="pe-info-cell"><div class="pe-info-label">ID</div><div class="pe-info-value" style="font-size:12px;font-family:monospace;">' + escapeHtml(node.id || '') + '</div></div>' +
+        '<div class="pe-info-cell"><div class="pe-info-label">打开方式</div><div class="pe-info-value" style="font-size:12px;">' + escapeHtml(node.target || '_blank') + '</div></div>' +
+        '<div class="pe-info-cell"><div class="pe-info-label">徽章</div><div class="pe-info-value">' + (node.badge ? '<span class="pe-tree-badge ' + escapeHtml(node.badgeClass || '') + '">' + escapeHtml(node.badge) + '</span>' : '<span style="color:var(--text-muted);font-size:11px;">无</span>') + '</div></div>' +
+      '</div>' +
+      '<div class="pe-info-grid">' +
+        '<div class="pe-info-cell"><div class="pe-info-label">图标</div><div class="pe-info-value"><i class="' + escapeHtml(node.icon || 'fas fa-external-link-alt') + '"></i> ' + escapeHtml(node.icon || 'fas fa-external-link-alt') + '</div></div>' +
+        '<div class="pe-info-cell" style="grid-column:1/-1;"><div class="pe-info-label">外链地址</div><div class="pe-info-value" style="font-size:11px;font-family:monospace;word-break:break-all;">' +
+          '<a href="' + escapeHtml(node.url || '#') + '" target="_blank" rel="noopener" style="color:var(--warn);">' + escapeHtml(node.url || '(未设置)') + '</a></div></div>' +
+      '</div>' +
+      '<div style="margin-top:10px;padding:8px 10px;background:var(--panel-2);border-left:3px solid var(--warn);border-radius:4px;font-size:11px;color:var(--text-muted);">' +
+        '<i class="fas fa-info-circle"></i> 外链类型不加载任何文件、不建路由，点击菜单直接跳转此地址。</div>';
+    }
+
+    var pt = node.pluginType || 'js';
+    var src = node.src || getDefaultSrc(node.id, pt);
+    var renderMode = node.renderMode || 'iframe';
+    var typeLabel = pt === 'js' ? 'JS' : pt === 'html' ? 'HTML' : 'MD';
+    var typeColor = pt === 'js' ? 'var(--accent)' : pt === 'html' ? 'var(--blue)' : 'var(--purple)';
+
+    return '<div class="pe-info-grid">' +
+      '<div class="pe-info-cell"><div class="pe-info-label">类型</div><div class="pe-info-value"><span class="tag" style="background:' + typeColor + ';color:#fff;">' + typeLabel + '</span></div></div>' +
+      '<div class="pe-info-cell"><div class="pe-info-label">ID</div><div class="pe-info-value" style="font-size:12px;font-family:monospace;">' + escapeHtml(node.id || '') + '</div></div>' +
+      '<div class="pe-info-cell"><div class="pe-info-label">路径</div><div class="pe-info-value" style="font-size:12px;font-family:monospace;">' + escapeHtml(node.path || '') + '</div></div>' +
+      '<div class="pe-info-cell"><div class="pe-info-label">版本</div><div class="pe-info-value">v' + escapeHtml(node.version || '0.0.0') + '</div></div>' +
+    '</div>' +
+    '<div class="pe-info-grid">' +
+      '<div class="pe-info-cell"><div class="pe-info-label">图标</div><div class="pe-info-value"><i class="' + escapeHtml(node.icon || 'fas fa-cube') + '"></i> ' + escapeHtml(node.icon || 'fas fa-cube') + '</div></div>' +
+      '<div class="pe-info-cell"><div class="pe-info-label">徽章</div><div class="pe-info-value">' + (node.badge ? '<span class="pe-tree-badge ' + escapeHtml(node.badgeClass || '') + '">' + escapeHtml(node.badge) + '</span>' : '<span style="color:var(--text-muted);font-size:11px;">无</span>') + '</div></div>' +
+      (pt === 'html' ? '<div class="pe-info-cell"><div class="pe-info-label">渲染模式</div><div class="pe-info-value">' + escapeHtml(renderMode) + '</div></div>' : '') +
+      '<div class="pe-info-cell" style="grid-column:1/-1;"><div class="pe-info-label">源文件</div><div class="pe-info-value" style="font-size:11px;font-family:monospace;word-break:break-all;">' + escapeHtml(src) + '</div></div>' +
+    '</div>';
+  }
+
+  // ============================================
+  // 添加 / 编辑 模态框
+  // ============================================
+  function showAddDialog(parentId) {
+    state.editingId = null;
+    state.editingType = 'plugin';
+    state.pluginType = 'js';
+
+    document.getElementById('peModalTitle').textContent = parentId ? '添加子项' : '添加插件';
+    document.getElementById('peModalSave').innerHTML = '<i class="fas fa-plus"></i> 添加';
+
+    document.getElementById('f_id').value = '';
+    document.getElementById('f_title').value = '';
+    document.getElementById('f_version').value = '0.1.0';
+    document.getElementById('f_icon').value = 'fas fa-cube';
+    document.getElementById('f_path').value = '';
+    document.getElementById('f_badge').value = '';
+    document.getElementById('f_badgeClass').value = '';
+    document.getElementById('f_src').value = '';
+    document.getElementById('f_renderMode').value = 'iframe';
+    document.getElementById('f_order').value = '10';
+    document.getElementById('f_defaultExpanded').checked = false;
+
+    populateParentSelect(parentId || '');
+    selectType('js', document.querySelector('.pe-type-card.js'));
+    updateIconPreview();
+
+    openModal('peModal');
+  }
+
+  function editNode(id) {
+    var node = findNode(id);
+    if (!node) return;
+    state.editingId = id;
+    state.editingType = node.type || 'plugin';
+    state.pluginType = node.pluginType || 'js';
+
+    document.getElementById('peModalTitle').textContent = '编辑: ' + (node.title || id);
+    document.getElementById('peModalSave').innerHTML = '<i class="fas fa-save"></i> 保存';
+
+    document.getElementById('f_id').value = node.id || '';
+    document.getElementById('f_title').value = node.title || '';
+    document.getElementById('f_version').value = node.version || '0.1.0';
+    document.getElementById('f_icon').value = node.icon || 'fas fa-cube';
+    document.getElementById('f_path').value = node.path || '';
+    document.getElementById('f_badge').value = node.badge || '';
+    document.getElementById('f_badgeClass').value = node.badgeClass || '';
+    document.getElementById('f_src').value = node.src || getDefaultSrc(node.id, node.pluginType || 'js');
+    document.getElementById('f_renderMode').value = node.renderMode || 'iframe';
+    document.getElementById('f_url').value = node.url || '';
+    document.getElementById('f_target').value = node.target || '_blank';
+    document.getElementById('f_order').value = node.order || '';
+    document.getElementById('f_defaultExpanded').checked = !!node.defaultExpanded;
+
+    populateParentSelect(findParent(id) ? findParent(id).id : '');
+    // ★ 外链节点：选中 link 类型卡片（而不是 js）
+    var editType = (node.type === 'link') ? 'link' : (node.pluginType || 'js');
+    selectType(editType, document.querySelector('.pe-type-card.' + editType));
+    updateIconPreview();
+
+    openModal('peModal');
+  }
+
+  function populateParentSelect(currentParentId) {
+    var sel = document.getElementById('f_parent');
+    sel.innerHTML = '<option value="">— 根级别（无父级）—</option>';
+    getAllFolders(state.categories).forEach(function(f) {
+      if (f.id === state.editingId) return;
+      var opt = document.createElement('option');
+      opt.value = f.id;
+      opt.textContent = '  '.repeat(getFolderDepth(f.id)) + '📁 ' + (f.title || f.id);
+      if (f.id === currentParentId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function getAllFolders(nodes) {
+    var r = [];
+    (nodes || []).forEach(function(n) {
+      if (n.type === 'folder') { r.push(n); if (n.children) r = r.concat(getAllFolders(n.children)); }
+    });
+    return r;
+  }
+  function getFolderDepth(id) {
+    var d = 0; var p = findParent(id);
+    while (p) { d++; p = findParent(p.id); } return d;
+  }
+
+  function selectType(type, el) {
+    state.pluginType = type;
+    document.querySelectorAll('.pe-type-card').forEach(function(c) { c.classList.remove('selected'); });
+    (el || document.querySelector('.pe-type-card.' + type)).classList.add('selected');
+
+    var rg = document.getElementById('f_render_group');
+    var sg = document.getElementById('f_src_group');
+    var si = document.getElementById('f_src');
+    var ug = document.getElementById('f_url_group');
+    var tg = document.getElementById('f_target_group');
+    var idVal = document.getElementById('f_id').value || 'new-plugin';
+
+    if (type === 'link') {
+      // ★ 外链：隐藏源文件/渲染模式，显示 url 与打开方式
+      rg.style.display = 'none'; sg.style.display = 'none';
+      ug.style.display = ''; tg.style.display = '';
+    } else {
+      ug.style.display = 'none'; tg.style.display = 'none';
+      if (type === 'html') {
+        rg.style.display = ''; sg.style.display = '';
+        if (!si.value || si.value.indexOf('pages/') !== -1 || si.value.indexOf('markdown/') !== -1)
+          si.value = './plugins/html/' + idVal + '.html';
+      } else if (type === 'markdown') {
+        rg.style.display = 'none'; sg.style.display = '';
+        if (!si.value || si.value.indexOf('pages/') !== -1 || si.value.indexOf('html/') !== -1)
+          si.value = './plugins/markdown/' + idVal + '.md';
+      } else {
+        rg.style.display = 'none'; sg.style.display = '';
+        if (!si.value || si.value.indexOf('html/') !== -1 || si.value.indexOf('markdown/') !== -1)
+          si.value = './js/pages/' + idVal + '.js';
+      }
+    }
+  }
+
+  function onIdChange(val) {
+    var pi = document.getElementById('f_path');
+    if (!pi.value || pi.value === '/' || pi.value === '/undefined') pi.value = '/' + val;
+    var si = document.getElementById('f_src');
+    if (state.pluginType === 'js' && (si.value === '' || si.value.indexOf(val) === -1))
+      si.value = './js/pages/' + val + '.js';
+    else if (state.pluginType === 'html' && (si.value === '' || si.value.indexOf(val) === -1))
+      si.value = './plugins/html/' + val + '.html';
+    else if (state.pluginType === 'markdown' && (si.value === '' || si.value.indexOf(val) === -1))
+      si.value = './plugins/markdown/' + val + '.md';
+  }
+
+  function updateIconPreview() {
+    var v = document.getElementById('f_icon').value || 'fas fa-cube';
+    document.getElementById('f_icon_preview').className = v;
+    document.getElementById('f_icon_text').textContent = v;
+  }
+
+  // ============================================
+  // 保存
+  // ============================================
+  function savePlugin() {
+    var id = document.getElementById('f_id').value.trim();
+    var title = document.getElementById('f_title').value.trim();
+    var version = document.getElementById('f_version').value.trim() || '0.1.0';
+    var icon = document.getElementById('f_icon').value.trim() || 'fas fa-cube';
+    var path = document.getElementById('f_path').value.trim() || '/' + id;
+    var badge = document.getElementById('f_badge').value.trim();
+    var badgeClass = document.getElementById('f_badgeClass').value;
+    var src = document.getElementById('f_src').value.trim();
+    var renderMode = document.getElementById('f_renderMode').value;
+    var order = parseInt(document.getElementById('f_order').value) || 10;
+    var defaultExpanded = document.getElementById('f_defaultExpanded').checked;
+    var parentId = document.getElementById('f_parent').value;
+    var type = state.pluginType;
+    var urlEl = document.getElementById('f_url');
+    var url = urlEl ? urlEl.value.trim() : '';
+    var targetEl = document.getElementById('f_target');
+    var target = targetEl ? targetEl.value : '_blank';
+
+    if (!id) { toast('error', '插件 ID 不能为空'); return; }
+    if (!/^[a-z0-9-]+$/.test(id)) { toast('error', 'ID 只能含小写字母、数字、中划线'); return; }
+    if (type === 'link' && !url) { toast('error', '外链类型必须填写 url'); return; }
+
+    var existing = findNode(id);
+    if (existing && existing.id !== state.editingId) {
+      toast('error', 'ID "' + id + '" 已存在'); return;
+    }
+
+    var isEdit = !!state.editingId;
+    var node;
+
+    if (isEdit) {
+      node = findNode(state.editingId);
+      if (!node) { toast('error', '找不到要编辑的节点'); return; }
+      if (state.editingId !== id) {
+        var parent = findParent(state.editingId);
+        var arr = parent ? parent.children : state.categories;
+        var idx = arr.indexOf(node);
+        arr.splice(idx, 1);
+        node.id = id;
+        insertNode(node, parentId);
+      }
+      node.title = title || id; node.version = version; node.icon = icon;
+      node.path = path; node.badge = badge; node.badgeClass = badgeClass;
+      node.order = order;
+      if (node.type === 'folder') node.defaultExpanded = defaultExpanded;
+
+      if (type === 'link') {
+        // ★ 外链：type=link，无 src/path，只存 url + target
+        node.type = 'link';
+        node.url = url;
+        node.target = target;
+        delete node.src; delete node.path; delete node.renderMode; delete node.pluginType;
+        if (!node.badge) { node.badge = 'URL'; node.badgeClass = 'url'; }
+      } else {
+        node.type = 'plugin';
+        node.src = src;
+        delete node.url; delete node.target;
+        if (type === 'html') node.renderMode = renderMode; else delete node.renderMode;
+        if (type === 'html' || type === 'markdown') node.pluginType = type;
+        else delete node.pluginType;
+      }
+    } else {
+      if (type === 'link') {
+        // ★ 新建外链
+        node = { id: id, type: 'link', title: title || id, icon: icon, url: url, target: target, order: order };
+        node.badge = badge || 'URL';
+        node.badgeClass = badgeClass || 'url';
+      } else {
+        node = { id: id, type: 'plugin', title: title || id, version: version, icon: icon, path: path };
+        if (badge) node.badge = badge;
+        if (badgeClass) node.badgeClass = badgeClass;
+        node.src = src;
+        if (type === 'html') { node.pluginType = 'html'; node.renderMode = renderMode; }
+        else if (type === 'markdown') { node.pluginType = 'markdown'; }
+        else { node.pluginType = 'js'; }
+      }
+      node.order = order;
+      insertNode(node, parentId);
+    }
+
+    sortRecursive(state.categories);
+    saveToStorage(); renderTree();
+    state.selectedId = id;
+    renderEditPanel(node);
+    closeModal();
+    toast('success', isEdit ? '已更新: ' + (title || id) : '已添加: ' + (title || id));
+  }
+
+  function insertNode(node, parentId) {
+    if (!parentId) { state.categories.push(node); return; }
+    var p = findNode(parentId);
+    if (p && p.type === 'folder') {
+      if (!p.children) p.children = [];
+      p.children.push(node);
+      state.expanded[parentId] = true;
+    } else {
+      state.categories.push(node);
+    }
+  }
+
+  function sortRecursive(nodes) {
+    (nodes || []).forEach(function(n) {
+      if (n.children && n.children.length > 1) {
+        n.children.sort(function(a, b) {
+          var oa = a.order || 9999, ob = b.order || 9999;
+          if (oa !== ob) return oa - ob;
+          if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+          return (a.title || a.id).localeCompare(b.title || b.id);
+        });
+      }
+      if (n.children) sortRecursive(n.children);
+    });
+  }
+
+  // ============================================
+  // 删除
+  // ============================================
+  var deleteTargetId = null;
+  function confirmDelete(id) {
+    deleteTargetId = id;
+    var node = findNode(id);
+    var name = node ? (node.title || id) : id;
+    var count = node && node.type === 'folder' ? countPlugins(node) : 0;
+    var msg = '确定要删除 <strong>"' + escapeHtml(name) + '"</strong> 吗？';
+    if (count > 0) msg += '<br><span style="color:var(--danger);font-size:12px;">⚠ 此文件夹包含 ' + count + ' 个插件，删除后不可恢复！</span>';
+    document.getElementById('peConfirmMsg').innerHTML = msg;
+    openModal('peConfirm');
+  }
+  function doDelete() {
+    if (!deleteTargetId) return;
+    var node = findNode(deleteTargetId);
+    var name = node ? (node.title || deleteTargetId) : deleteTargetId;
+    removeNode(deleteTargetId);
+    delete state.expanded[deleteTargetId];
+    if (state.selectedId === deleteTargetId) {
+      state.selectedId = null;
+      document.getElementById('peEmpty').style.display = '';
+      document.getElementById('peContent').style.display = 'none';
+    }
+    saveToStorage(); renderTree(); closeConfirm();
+    toast('success', '已删除: ' + name);
+  }
+
+  // ============================================
+  // 移动 / 复制
+  // ============================================
+  function moveUp(id) {
+    var p = findParent(id); var arr = p ? p.children : state.categories;
+    var idx = arr.findIndex(function(n){ return n.id===id; });
+    if (idx > 0) {
+      arr.splice(idx, 1); arr.splice(idx-1, 0, findNode(id));
+      var o1 = arr[idx].order||10, o2 = arr[idx-1].order||10;
+      arr[idx].order = o2; arr[idx-1].order = o1;
+      saveToStorage(); renderTree(); toast('info', '已上移');
+    }
+  }
+  function moveDown(id) {
+    var p = findParent(id); var arr = p ? p.children : state.categories;
+    var idx = arr.findIndex(function(n){ return n.id===id; });
+    if (idx !== -1 && idx < arr.length-1) {
+      arr.splice(idx, 1); arr.splice(idx+1, 0, findNode(id));
+      var o1 = arr[idx].order||10, o2 = arr[idx+1].order||10;
+      arr[idx].order = o2; arr[idx+1].order = o1;
+      saveToStorage(); renderTree(); toast('info', '已下移');
+    }
+  }
+  function duplicateNode(id) {
+    var node = findNode(id); if (!node) return;
+    var copy = JSON.parse(JSON.stringify(node));
+    copy.id = copy.id + '-copy';
+    copy.title = (copy.title || copy.id) + ' (副本)';
+    if (copy.path) copy.path = copy.path + '-copy';
+    var p = findParent(id); var arr = p ? p.children : state.categories;
+    var idx = arr.indexOf(node); arr.splice(idx+1, 0, copy);
+    saveToStorage(); renderTree();
+    toast('success', '已复制: ' + (node.title || id));
+  }
+  function addUnderNode(id) {
+    var node = findNode(id);
+    if (!node) { showAddDialog(); return; }
+    showAddDialog(node.type === 'folder' ? id : (findParent(id) ? findParent(id).id : ''));
+  }
+
+  // ============================================
+  // 展开 / 折叠 / 搜索
+  // ============================================
+  function expandAll() {
+    getAllFolders(state.categories).forEach(function(f) { state.expanded[f.id] = true; });
+    renderTree();
+  }
+  function collapseAll() { state.expanded = {}; renderTree(); }
+  function onSearch(q) { renderTree(); }
+
+  // ============================================
+  // 导出 / 导入 / 预览
+  // ============================================
+  function exportJson() {
+    var data = { version: APP_VERSION, categories: state.categories };
+    var json = JSON.stringify(data, null, 2);
+    document.getElementById('peOutputTitle').textContent = 'plugins.json — 导出';
+    document.getElementById('peOutputCode').innerHTML = syntaxHighlight(json);
+    window.__pe_export = json; window.__pe_export_name = 'plugins.json';
+    openModal('peOutput');
+  }
+  function previewAll() {
+    var data = { version: APP_VERSION, categories: state.categories };
+    var json = JSON.stringify(data, null, 2);
+    document.getElementById('peOutputTitle').textContent = '完整 plugins.json 预览';
+    document.getElementById('peOutputCode').innerHTML = syntaxHighlight(json);
+    window.__pe_export = json; window.__pe_export_name = 'plugins.json';
+    openModal('peOutput');
+  }
+  function copyOutput() {
+    var text = window.__pe_export || '';
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(function(){ toast('success','已复制'); });
+    else {
+      var ta = document.createElement('textarea'); ta.value = text;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta); toast('success','已复制');
+    }
+  }
+  function downloadOutput() {
+    var blob = new Blob([window.__pe_export || ''], { type:'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = window.__pe_export_name || 'plugins.json';
+    a.click(); URL.revokeObjectURL(url); toast('success','文件已下载');
+  }
+  function copyNodeJson(id) {
+    var node = findNode(id); if (!node) return;
+    var json = JSON.stringify(node, null, 2);
+    if (navigator.clipboard) navigator.clipboard.writeText(json).then(function(){ toast('success','节点 JSON 已复制'); });
+  }
+
+  function importJson() {
+    document.getElementById('f_import').value = '';
+    openModal('peImport');
+  }
+  function doImport() {
+    var text = document.getElementById('f_import').value.trim();
+    if (!text) { toast('error', '请输入 JSON 内容'); return; }
+    try {
+      var data = JSON.parse(text);
+      if (!data.categories || !Array.isArray(data.categories)) throw new Error('缺少 categories 数组');
+      state.categories = data.categories;
+      if (data.version) APP_VERSION = data.version;
+      saveToStorage(); renderTree(); closeImport();
+      toast('success', '已导入 ' + countAll(state.categories) + ' 个插件');
+    } catch(e) { toast('error', 'JSON 解析失败: ' + e.message); }
+  }
+
+  // ============================================
+  // 重置
+  // ============================================
+  function resetAll() {
+    if (!confirm('确定要重置所有数据吗？\n这将清除本地修改并重新加载 plugins.json')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state.selectedId = null; state.expanded = {};
+    loadDefault().then(function() {
+      renderTree();
+      document.getElementById('peEmpty').style.display = '';
+      document.getElementById('peContent').style.display = 'none';
+      toast('success', '已重置为默认数据');
+    });
+  }
+
+  // ============================================
+  // 右上角下拉菜单
+  // ============================================
+  function toggleMenu(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    var dd = document.getElementById('peDropdown');
+    var btn = document.getElementById('peMenuBtn');
+    var open = dd.classList.toggle('show');
+    btn.classList.toggle('active', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function closeMenu() {
+    var dd = document.getElementById('peDropdown');
+    var btn = document.getElementById('peMenuBtn');
+    if (!dd) return;
+    dd.classList.remove('show');
+    if (btn) { btn.classList.remove('active'); btn.setAttribute('aria-expanded', 'false'); }
+  }
+  // 菜单项统一入口：先关菜单再执行（避免遮住弹窗）
+  function menuAction(action) {
+    closeMenu();
+    switch (action) {
+      case 'import': importJson(); break;
+      case 'export': exportJson(); break;
+      case 'preview': previewAll(); break;
+      case 'expand': expandAll(); break;
+      case 'collapse': collapseAll(); break;
+      case 'reset': resetAll(); break;
+      default: break;
+    }
+  }
+
+  // ============================================
+  // 移动端侧边栏
+  // ============================================
+  function toggleMobileSidebar() {
+    document.getElementById('peSidebar').classList.toggle('mobile-open');
+    document.getElementById('peMobileOverlay').classList.toggle('open');
+  }
+  function closeMobileSidebar() {
+    document.getElementById('peSidebar').classList.remove('mobile-open');
+    document.getElementById('peMobileOverlay').classList.remove('open');
+  }
+
+  // ============================================
+  // 模态框通用
+  // ============================================
+  function openModal(id) {
+    var el = document.getElementById(id);
+    el.classList.add('show');
+    el.classList.remove('closing');
+  }
+  function closeModal(id) {
+    var el = document.getElementById(id || 'peModal');
+    el.classList.add('closing');
+    el.classList.remove('show');
+    setTimeout(function(){ el.classList.remove('closing'); }, 250);
+  }
+
+  // ============================================
+  // Toast
+  // ============================================
+  function toast(type, msg) {
+    var c = document.getElementById('peToastContainer');
+    var el = document.createElement('div');
+    el.className = 'pe-toast ' + type;
+    var ic = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+    el.innerHTML = '<i class="fas ' + ic + '"></i><span>' + escapeHtml(msg) + '</span>';
+    c.appendChild(el);
+    setTimeout(function() { el.classList.add('removing'); setTimeout(function(){ el.remove(); }, 250); }, 3000);
+  }
+
+  // ============================================
+  // 工具函数
+  // ============================================
+  function countPlugins(node) {
+    var c = 0; (node.children||[]).forEach(function(x) { if(x.type==='plugin'||x.type==='link')c++; else if(x.type==='folder')c+=countPlugins(x); }); return c;
+  }
+  function countFolders(node) {
+    var c = 0; (node.children||[]).forEach(function(x) { if(x.type==='folder'){c++;c+=countFolders(x);} }); return c;
+  }
+  function countAll(nodes) {
+    var c = 0; (nodes||[]).forEach(function(n) { if(n.type==='plugin'||n.type==='link')c++; if(n.children)c+=countAll(n.children); }); return c;
+  }
+  function getDefaultSrc(id, type) {
+    if (type==='html') return './plugins/html/'+id+'.html';
+    if (type==='markdown') return './plugins/markdown/'+id+'.md';
+    return './js/pages/'+id+'.js';
+  }
+  function escapeHtml(s) {
+    if (s == null) return '';
+    var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+  }
+  function syntaxHighlight(json) {
+    json = escapeHtml(json);
+    return json.replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(m) {
+      var cls = 'j-num';
+      if (/^"/.test(m)) { cls = /:$/.test(m) ? 'j-key' : 'j-str'; }
+      else if (/true|false|null/.test(m)) cls = 'j-bool';
+      return '<span class="' + cls + '">' + m + '</span>';
+    });
+  }
+
+  // ============================================
+  // 全局暴露
+  // ============================================
+  global.PeApp = {
+    init: init,
+    selectNode: selectNode, toggleFolder: toggleFolder,
+    expandAll: expandAll, collapseAll: collapseAll, onSearch: onSearch,
+    showAddDialog: showAddDialog, editNode: editNode, savePlugin: savePlugin,
+    selectType: selectType, onIdChange: onIdChange, updateIconPreview: updateIconPreview,
+    confirmDelete: confirmDelete, doDelete: doDelete, closeConfirm: function(){ closeModal('peConfirm'); deleteTargetId=null; },
+    moveUp: moveUp, moveDown: moveDown, duplicateNode: duplicateNode, addUnderNode: addUnderNode,
+    exportJson: exportJson, previewAll: previewAll, copyOutput: copyOutput, downloadOutput: downloadOutput,
+    copyNodeJson: copyNodeJson,
+    importJson: importJson, doImport: doImport, closeImport: function(){ closeModal('peImport'); },
+    closeOutput: function(){ closeModal('peOutput'); },
+    closeModal: function(){ closeModal('peModal'); },
+    resetAll: resetAll, toast: toast,
+    toggleMobileSidebar: toggleMobileSidebar, closeMobileSidebar: closeMobileSidebar,
+    toggleMenu: toggleMenu, closeMenu: closeMenu, menuAction: menuAction,
+  };
+
+  document.getElementById('peConfirmOk').onclick = doDelete;
+
+  // ESC 关闭（含右上角下拉菜单）
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal('peModal'); closeModal('peConfirm'); closeModal('peImport'); closeModal('peOutput');
+      closeMenu();
+    }
+  });
+
+  // 点击空白处关闭下拉菜单
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('peMenuWrap');
+    if (wrap && !wrap.contains(e.target)) closeMenu();
+  });
+
+  // 启动
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+})(window);
+</script>
+</body>
+</html>
