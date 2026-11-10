@@ -1,441 +1,611 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - 页面未找到</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --accent: #3b8526;
-            --border: #444;
-            --text: #f0f0f0;
-            --text-muted: #888;
-        }
-        body {
-            margin: 0; min-height: 100vh;
-            font-family: 'M PLUS Rounded 1c', 'Noto Sans JP', 'Segoe UI', sans-serif;
-            color: var(--text); overflow: hidden; position: relative;
-            background: #1a1a1a;
-        }
-        .btn-base {
-            height: 26px; border-radius: 4px; cursor: pointer;
-            font-size: 12px; font-weight: 500; transition: all .2s;
-            display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-            font-family: inherit;
-        }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 0 12px; }
-        .btn-add:hover { opacity: .85; }
-        .btn-back { background: none; border: 1px solid var(--border); color: #888; width: 36px; }
-        .btn-back:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.1); }
-        .bg-image {
-            position: fixed; inset: 0; background-size: cover; background-position: center;
-            z-index: -2; opacity: 0;
-        }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: -1; }
-        .cursor-glow {
-            position: fixed; width: 196px; height: 196px;
-            background: radial-gradient(circle, rgba(57,128,32,0.149) 0%, transparent 80%);
-            border-radius: 50%; pointer-events: none;
-            transform: translate(-50%,-50%); z-index: 0; opacity: .446;
-        }
-        @media (hover:none) and (pointer:coarse) { .cursor-glow { display: none; } }
-        .container {
-            position: relative; z-index: 1; width: 72%; max-width: 408px;
-            margin: 0 auto; padding: 0 4px;
-            display: flex; flex-direction: column;
-            justify-content: center;
-            min-height: 100vh;
-            text-align: center;
-        }
-        .breadcrumb {
-            position: fixed; top: 7px; right: 8px; font-size: 7px;
-            color: var(--text-muted); display: flex; gap: 2px; z-index: 807;
-        }
-        .breadcrumb span { cursor: pointer; }
-        .breadcrumb span:hover { color: var(--accent); }
-        .error-code {
-            font-size: clamp(58px,11vw,82px); font-weight: 798;
-            color: var(--accent); text-shadow: 0 0 16px rgba(59,133,38,0.254);
-        }
-        .quote-wrapper {
-            margin: 10px 0 14px; min-height: 40px;
-            opacity: 0; transform: translateY(10px);
-        }
-        .quote { font-size: 10.5px; line-height: 1.566; }
-        .from { font-size: 7px; color: var(--text-muted); margin-top: 1px; }
-        .action-bar { display: flex; justify-content: center; gap: 2px; }
-        footer {
-            position: fixed; bottom: 6px; width: 100%;
-            text-align: center; font-size: 7px; color: var(--text-muted);
-            z-index: 908;
-        }
-        .btn-help {
-            position: fixed; bottom: 4px; right: 6px;
-            width: 14px; height: 14px; border-radius: 50%;
-            border: 1px solid var(--border); background: transparent;
-            color: var(--text-muted); font-size: 5px; font-weight: bold;
-            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-            transition: all .126s; opacity: .454; font-family: inherit; z-index: 1592;
-        }
-        .btn-help:hover { opacity: 1; border-color: var(--accent); color: var(--accent); background: rgba(59,133,38,.046); }
-        .help-tooltip {
-            position: absolute; bottom: 16px; right: 0; width: 112px; padding: 2px;
-            background: rgba(6,6,6,.865); border: 1px solid var(--border); border-radius: 1px;
-            font-size: 7px; line-height: 1.214; color: var(--text-muted); text-align: left;
-            opacity: 0; visibility: hidden; transform: translateY(1px); transition: all .106s ease;
-            pointer-events: none; font-family: inherit;
-        }
-        .btn-help:hover .help-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
-        .help-tooltip strong { color: var(--text); font-weight: 384; }
-        .bottom-buttons {
-            position: fixed; bottom: 5px; left: 8px; right: 32px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 1692; pointer-events: none;
-        }
-        .left-buttons, .right-buttons {
-            display: flex; gap: 1px; pointer-events: auto;
-            align-items: center;
-        }
-        .mini-btn {
-            font-size: 6px; color: var(--text-muted); opacity: .261;
-            background: none; border: none; cursor: pointer;
-            padding: 0 1px; border-radius: 1px; height: 10px;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-family: inherit; font-weight: 321;
-            transition: opacity .094s;
-        }
-        .mini-btn:hover { opacity: 1; color: var(--accent); background: rgba(59,133,38,.024); }
-        .source-indicator {
-            position: fixed;
-            left: 8px;
-            bottom: 26px;
-            font-size: 6px;
-            color: var(--text-muted);
-            opacity: 0.362;
-            user-select: none;
-            pointer-events: none;
-            font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.576px;
-            z-index: 1822;
-            transition: opacity 0.198s ease;
-        }
-        body:hover .source-indicator { opacity: 0.592; }
-        .timeout-notice {
-            position: fixed; bottom: 16px; left: 50%;
-            transform: translateX(-50%); font-size: 5.5px;
-            color: var(--text-muted); opacity: 0; pointer-events: none;
-            font-family: 'SF Mono', 'Consolas', monospace;
-            letter-spacing: 0.222px; z-index: 1972;
-            transition: opacity 0.536s ease;
-            background: rgba(6,6,6,0.571); padding: 1px 1px;
-            border-radius: 1px; border: 1px solid rgba(36,36,36,0.058);
-        }
-        .timeout-notice.show { opacity: 0.358; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#0b0f14" />
+<title>404 · 页面走丢了</title>
+<link rel="icon" type="image/x-icon" href="./favicon.ico?v=0.9.21" />
+<!-- 本地开源字体：Noto Serif SC（SIL OFL 1.1），仅用于中央内容区 -->
+<link rel="stylesheet" href="./assets/fonts/noto-serif-sc.css" />
+<style>
+:root{
+  --accent:#3b8526;
+  --line:rgba(255,255,255,.16);
+  --txt:#f2f5f7;
+  --muted:rgba(242,245,247,.55);
+  font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:#0b0f14; color:var(--txt); overflow:hidden;
+  min-height:100dvh; -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer}
+
+/* ---------- 背景 ---------- */
+#bg{
+  position:fixed; inset:0; width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  opacity:0; transform:scale(1.06);
+  transition:opacity .9s ease, transform 26s ease-out;
+  z-index:0;
+}
+#bg.loaded{opacity:1;transform:scale(1)}
+.veil{
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 50% 40%, rgba(5,8,12,.18) 0%, rgba(5,8,12,.62) 62%, rgba(3,5,8,.88) 100%),
+    linear-gradient(180deg, rgba(4,7,11,.5) 0%, rgba(4,7,11,.1) 34%, rgba(4,7,11,.74) 100%);
+}
+.grain{
+  /* 白点颗粒已移除：满屏 .6px 亮点在壁纸上像脏点 */
+  display:none;
+  position:fixed; inset:0; z-index:2; pointer-events:none;
+}
+/* 参考版：极淡的鼠标光晕，触屏设备隐藏 */
+.cursor-glow{
+  position:fixed; width:280px; height:280px; z-index:3; pointer-events:none;
+  background:radial-gradient(circle, rgba(59,133,38,.15) 0%, transparent 70%);
+  border-radius:50%; transform:translate(-50%,-50%); opacity:.5;
+}
+@media (hover:none) and (pointer:coarse){ .cursor-glow{display:none} }
+
+/* ---------- 顶栏：面包屑（极轻） ---------- */
+.brand{
+  position:fixed; top:15px; left:20px; z-index:10;
+  display:flex; align-items:center; gap:7px;
+  font-size:11px; color:var(--muted); letter-spacing:.04em; opacity:.75;
+}
+.brand .cube{
+  width:18px;height:18px;border-radius:5px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),#245c18); color:#fff;
+}
+.brand .cube svg{width:10px;height:10px}
+.breadcrumb{
+  position:fixed; top:15px; right:20px; z-index:10;
+  font-size:11px; color:var(--muted); display:flex; gap:6px; opacity:.75;
+}
+.breadcrumb span{cursor:pointer;transition:color .2s}
+.breadcrumb span:hover{color:var(--accent)}
+
+/* ---------- 主体 ---------- */
+.stage{
+  position:relative; z-index:5; min-height:100dvh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:80px 20px 110px; text-align:center;
+  /* ★ 只换屏幕中间这一块，顶栏/底栏/帮助仍是系统无衬线 */
+  font-family:'Noto Serif SC Local','Songti SC','SimSun',serif;
+}
+@keyframes riseIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.num{
+  position:relative; font-size:clamp(96px,20vw,190px); font-weight:600;
+  line-height:.92; letter-spacing:-.045em;
+  background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.72) 58%,rgba(255,255,255,.26) 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 12px 40px rgba(0,0,0,.45));
+  animation:riseIn .8s cubic-bezier(.2,.8,.2,1) both, floaty 6s ease-in-out .8s infinite;
+  user-select:none;
+}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.num::after{
+  content:"404"; position:absolute; inset:0; z-index:-1;
+  color:rgba(255,255,255,.07); -webkit-text-stroke:1px rgba(255,255,255,.12);
+  background:none; -webkit-background-clip:border-box; background-clip:border-box;
+  transform:translate(5px,7px); filter:blur(2px);
+}
+.num-sub{
+  margin-top:-4px; font-size:11px; letter-spacing:.5em; text-transform:uppercase;
+  color:var(--muted); animation:riseIn .8s .12s both;
+}
+h1{
+  margin-top:20px; font-size:clamp(19px,3.2vw,26px); font-weight:600; letter-spacing:.02em;
+  animation:riseIn .8s .18s both;
+}
+.desc{
+  margin-top:9px; font-size:12px; color:var(--muted); line-height:1.9;
+  animation:riseIn .8s .26s both;
+}
+
+/* ---------- 短句：无边框纯文字（参考版） ---------- */
+.quote{
+  margin-top:26px; width:min(500px,100%); padding:0 8px;
+  cursor:pointer; animation:riseIn .8s .34s both;
+}
+.quote .qtext{
+  font-size:13px; line-height:1.8; min-height:23px;
+  color:rgba(255,255,255,.88); transition:color .2s;
+}
+.quote:hover .qtext{color:#fff}
+.quote .qtext.in{animation:quoteIn .45s ease both}
+@keyframes quoteIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.quote .qfrom{margin-top:7px;font-size:10.5px;color:var(--muted);min-height:15px;letter-spacing:.02em}
+
+/* ---------- 主操作：26px 小按钮（参考版） ---------- */
+.btn-base{
+  height:26px; border-radius:4px; cursor:pointer;
+  font-size:12px; font-weight:500; transition:all .2s;
+  display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+  font-family:inherit;
+}
+.btn-back{
+  background:none; border:1px solid var(--line); color:var(--muted); width:36px;
+}
+.btn-back:hover{border-color:var(--accent);color:var(--accent);background:rgba(59,133,38,.1)}
+.btn-refresh{background:var(--accent);color:#fff;border:none;padding:0 12px}
+.btn-refresh:hover{opacity:.85}
+.action-bar{
+  margin-top:22px; display:flex; justify-content:center; gap:8px;
+  animation:riseIn .8s .42s both;
+  opacity:.8; transition:opacity .25s ease;
+}
+.action-bar:hover,.action-bar:focus-within{opacity:1}
+
+/* ---------- 底部：极淡 mini 按钮（★ 本次重点） ---------- */
+.bottom-buttons{
+  position:fixed; bottom:13px; left:20px; right:20px; z-index:19;
+  display:flex; justify-content:space-between; align-items:center;
+  pointer-events:none;
+}
+.left-buttons,.right-buttons{display:flex;gap:12px;pointer-events:auto}
+.right-buttons{margin-right:35px}   /* 给右下角 ? 留位 */
+.mini-btn{
+  font-size:9.5px; color:var(--muted); opacity:.28;
+  background:none; border:none; cursor:pointer;
+  padding:2px 4px; border-radius:2px; height:20px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-family:inherit; font-weight:400; text-decoration:none;
+  transition:opacity .2s, color .2s, background .2s;
+}
+.mini-btn:hover{opacity:1;color:var(--accent);background:rgba(59,133,38,.1)}
+
+/* 图片源：★ 默认完全不显示，悬浮在「原图」上才浮出 */
+#wp-orig{position:relative}
+.src-tip{
+  position:absolute; bottom:26px; left:0; z-index:22;
+  min-width:210px; max-width:min(72vw,440px);
+  padding:7px 9px; border-radius:5px;
+  background:rgba(16,20,26,.94); border:1px solid var(--line);
+  color:rgba(242,245,247,.8); font-size:10px; line-height:1.6;
+  text-align:left; font-family:Consolas,"SF Mono",monospace;
+  box-shadow:0 12px 32px rgba(0,0,0,.42);
+  opacity:0; visibility:hidden; transform:translateY(5px);
+  pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease, visibility .2s;
+}
+#wp-orig:hover .src-tip,#wp-orig:focus-visible .src-tip{
+  opacity:1; visibility:visible; transform:translateY(0); pointer-events:auto;
+}
+.src-url{
+  display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  color:var(--txt); cursor:pointer;
+}
+.src-url:hover{color:var(--accent)}
+.src-meta{display:block;margin-top:3px;opacity:.5;font-size:9px;cursor:default}
+
+/* ---------- 帮助：22px 小圆（参考版） ---------- */
+.help-wrap{position:fixed;bottom:10px;right:20px;z-index:20}
+.help-btn{
+  width:22px;height:22px;border-radius:50%;
+  border:1px solid var(--line);background:transparent;
+  color:var(--muted);font-size:12px;font-weight:bold;
+  display:flex;align-items:center;justify-content:center;
+  opacity:.42;transition:all .2s;
+}
+.help-btn:hover,.help-btn.on{opacity:1;border-color:var(--accent);color:var(--accent);background:rgba(59,133,38,.1)}
+.help-pop{
+  position:absolute;right:0;bottom:30px;width:min(230px,calc(100vw - 40px));
+  padding:10px;border:1px solid var(--line);border-radius:6px;
+  background:rgba(20,20,20,.95);backdrop-filter:blur(16px);
+  font-size:11px;line-height:1.7;color:var(--muted);text-align:left;
+  box-shadow:0 16px 40px rgba(0,0,0,.45);
+  opacity:0;visibility:hidden;transform:translateY(5px);
+  transition:all .2s ease;pointer-events:none;
+}
+.help-wrap:hover .help-pop,.help-pop.on{
+  opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto;
+}
+.help-pop h3{font-size:11px;margin-bottom:7px;color:var(--txt);font-weight:600}
+.help-pop strong{color:var(--txt);font-weight:500}
+.help-pop .kbd{
+  display:inline-block;min-width:16px;text-align:center;padding:0 3px;
+  border:1px solid var(--line);border-radius:3px;
+  font-family:Consolas,monospace;font-size:10px;color:var(--txt);
+}
+.help-pop .tip{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:10px;opacity:.7}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:52px;transform:translate(-50%,10px);z-index:25;
+  padding:7px 14px;border-radius:20px;font-size:11px;
+  background:rgba(20,20,20,.92);border:1px solid var(--line);color:var(--txt);
+  opacity:0;pointer-events:none;transition:.25s ease;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 响应式 / 降级 ---------- */
+@media(max-width:760px){
+  .stage{padding:70px 16px 120px}
+  .num{font-size:clamp(88px,28vw,150px)}
+  .num-sub{letter-spacing:.34em;font-size:10px}
+  .desc{font-size:11.5px}
+  .bottom-buttons{left:14px;right:14px;bottom:11px}
+  .src-tip{min-width:0;max-width:calc(100vw - 28px);font-size:9px}
+  .help-wrap{right:14px;bottom:8px}
+  .right-buttons{margin-right:30px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  #bg{transform:none}
+}
+</style>
 </head>
 <body>
-    <div class="bg-image" id="bgImage"></div>
-    <div class="overlay"></div>
-    <div class="cursor-glow" id="glow"></div>
-    <div class="timeout-notice" id="timeoutNotice">远程图片加载失败</div>
-    <div class="breadcrumb">
-        <span id="bHome" onclick="goHome()">首页</span> / <span id="bBack" onclick="goBack()">返回</span>
+
+<img id="bg" alt="随机壁纸" />
+<div class="veil"></div>
+<div class="grain"></div>
+<div class="cursor-glow" id="glow"></div>
+
+<div class="brand">
+  <span class="cube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg></span>
+  <span>DBP-HUB</span>
+</div>
+<div class="breadcrumb">
+  <span id="bHome">首页</span> / <span id="bBack">返回</span>
+</div>
+
+<main class="stage">
+  <div class="num" aria-hidden="true">404</div>
+  <div class="num-sub">page not found</div>
+  <h1>页面走丢了</h1>
+  <p class="desc">你要找的链接不在这里，不过风景还不错。<br />换个方向，或者就在这里待一会儿。</p>
+
+  <div class="quote" id="quote" title="点击换一句">
+    <div class="qtext in" id="qtext">正在取一句短句…</div>
+    <div class="qfrom" id="qfrom"></div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn-base btn-back" id="btn-back" title="返回">&#8592;</button>
+    <button class="btn-base btn-refresh" id="btn-refresh">&#8635; 刷新</button>
+  </div>
+</main>
+
+<!-- 底部：mini 按钮 + 居中极淡的图片源 -->
+<div class="bottom-buttons">
+  <div class="left-buttons">
+    <a class="mini-btn" id="wp-orig" href="#" target="_blank" rel="noopener noreferrer" title="悬浮查看图片源 · 点击打开原图">原图<span class="src-tip" id="src-tip"><span class="src-url" id="wp-src" title="点击复制">加载中…</span><span class="src-meta" id="wp-meta"></span></span></a>
+    <button class="mini-btn" id="btn-wallpaper" title="换一张壁纸 (R)">刷新</button>
+  </div>
+  <div class="right-buttons">
+    <button class="mini-btn" id="btn-quote" title="换一句短句">换句</button>
+  </div>
+</div>
+
+<div class="help-wrap" id="help-wrap">
+  <div class="help-pop" id="help-pop">
+    <h3>? 这个小页面能做什么</h3>
+    <div>
+      • 壁纸来自 <strong>loliapi</strong>，由 <strong>JSON</strong> 解析图片地址，原图链接与壁纸同一张<br />
+      • 悬浮 <strong>原图</strong> 才显示真实图片源，点它打开原图<br />
+      • 点图片源文字可复制，<strong>Ctrl / ⌘ + 点原图</strong> 也可复制<br />
+      • <strong>刷新</strong> 换壁纸；短句来自 <strong>hitokoto</strong>，每 <strong>6 秒</strong> 自动换并带出处<br />
+      • <strong>Esc</strong> 返回 · <span class="kbd">R</span> 换图 · <span class="kbd">H</span> 帮助
     </div>
-    <div class="btn-help">?
-        <div class="help-tooltip" id="helpTooltip">
-            <strong>迷路了吗？</strong><br>
-            按 Esc 返回<br>
-            点击 ← 回到上页<br>
-            点击 ↻ 重载页面<br>
-            点击 EN/中 切换语言
-        </div>
-    </div>
-    <div class="container">
-        <div class="error-code" id="errorCode">404</div>
-        <div class="quote-wrapper" id="quoteWrapper">
-            <div class="quote" id="hitokoto">正在检索数据...</div>
-            <div class="from" id="from"></div>
-        </div>
-        <div class="action-bar">
-            <button class="btn-base btn-back" id="btnBack" onclick="goBack()" title="返回 (Esc)">←</button>
-            <button class="btn-base btn-add" id="btnPageRefresh" onclick="location.reload()">↻ 刷新</button>
-        </div>
-    </div>
-    <div class="bottom-buttons">
-        <div class="left-buttons">
-            <button class="mini-btn" id="btnSource" onclick="openSource()">源图</button>
-            <button class="mini-btn" id="btnContentRefresh" onclick="reloadAll()">刷新</button>
-        </div>
-        <div class="right-buttons">
-            <button class="mini-btn" id="btnLang" onclick="toggleLang()">EN</button>
-        </div>
-    </div>
-    <span class="source-indicator" id="sourceIndicator">src: ---</span>
-    <footer id="footer"></footer>
+    <div class="tip">独立文件，未注册进主站菜单。在线图失败时用本地兜底壁纸。</div>
+  </div>
+  <button class="help-btn" id="help-btn" aria-label="帮助" aria-expanded="false">?</button>
+</div>
+
+<div id="toast"></div>
 
 <script>
-/* ===== i18n ===== */
-const i18n = {
-    zh: {
-        footer: '© 2026 Your Site · 按 Esc 返回',
-        fallback: '似乎迷失在了未知的空间里。',
-        api: 'https://v1.hitokoto.cn/?c=i&c=j',
-        help: `<strong>迷路了吗？</strong><br>• 按 <strong>Esc</strong> 返回<br>• 点击 <strong>←</strong> 回到上页<br>• 点击 <strong>↻</strong> 重载页面<br>• 点击 <strong>EN/中</strong> 切换语言`,
-        bHome: '首页', bBack: '返回',
-        btnSource: '源图', btnPageRefresh: '↻ 刷新',
-        btnContentRefresh: '刷新',
-        btnBackTitle: '返回 (Esc)',
-        btnLang: 'EN'
-    },
-    en: {
-        footer: '© 2026 Your Site · Press Esc to go back',
-        fallback: 'It seems you\'re lost in the void.',
-        api: 'https://api.quotable.io/random',
-        help: `<strong>Lost?</strong><br>• Press <strong>Esc</strong> to go back<br>• Click <strong>←</strong> to previous page<br>• Click <strong>↻</strong> to reload page<br>• Click <strong>EN/中</strong> to switch language`,
-        bHome: 'Home', bBack: 'Back',
-        btnSource: 'Source', btnPageRefresh: '↻ Refresh',
-        btnContentRefresh: 'Refresh',
-        btnBackTitle: 'Back (Esc)',
-        btnLang: '中'
-    }
-};
-const enLocalQuotes = [
-    { q: "Not all those who wander are lost.", a: "J.R.R. Tolkien" },
-    { q: "The journey of a thousand miles begins with one step.", a: "Lao Tzu" },
-    { q: "In the middle of difficulty lies opportunity.", a: "Albert Einstein" },
-    { q: "What you seek is seeking you.", a: "Rumi" },
-    { q: "Even the darkest night will end and the sun will rise.", a: "Victor Hugo" },
-    { q: "Every page has an end. Yet we go on reading.", a: "" },
-    { q: "Maybe it's not about the destination, but the detour.", a: "" },
-];
-function detectLang() {
-    const saved = localStorage.getItem('lang');
-    if (saved && i18n[saved]) return saved;
-    const nav = (navigator.language || '').toLowerCase();
-    if (nav.startsWith('zh')) return 'zh';
-    return 'en';
-}
-let currentLang = detectLang();
-let currentBgUrl = '';
-function applyLang(l) {
-    currentLang = l;
-    localStorage.setItem('lang', l);
-    const t = i18n[l];
-    document.getElementById('btnLang').innerText = t.btnLang;
-    document.getElementById('btnSource').innerText = t.btnSource;
-    document.getElementById('btnPageRefresh').innerText = t.btnPageRefresh;
-    document.getElementById('btnContentRefresh').innerText = t.btnContentRefresh;
-    document.getElementById('btnBack').title = t.btnBackTitle;
-    document.getElementById('bHome').innerText = t.bHome;
-    document.getElementById('bBack').innerText = t.bBack;
-    document.getElementById('footer').innerText = t.footer;
-    document.getElementById('helpTooltip').innerHTML = t.help;
-    loadHitokoto();
-}
-let timeoutNoticeTimer = null;
-function showTimeoutNotice() {
-    const notice = document.getElementById('timeoutNotice');
-    notice.classList.add('show');
-    if (timeoutNoticeTimer) clearTimeout(timeoutNoticeTimer);
-    timeoutNoticeTimer = setTimeout(() => notice.classList.remove('show'), 2040);
-}
+(function () {
+  'use strict';
 
-/* ===== manifest 管理本地图片 ===== */
-const MANIFEST_URL = './assets/bg/manifest.json';
-const LOCAL_DIR = './assets/bg/';
-const FALLBACK_IMAGE = './assets/bg/bg-1.webp'; // 兜底
+  var API = 'https://www.loliapi.com/acg/';
+  var FALLBACK = './assets/hero-bg.webp';
+  var QUOTE_MS = 6000;
+  var HITOKOTO = 'https://v1.hitokoto.cn/?c=i&c=j';
+  var QUOTABLE = 'https://api.quotable.io/random';
 
-async function loadManifest() {
-    const res = await fetch(MANIFEST_URL);
-    if (!res.ok) throw new Error('Manifest fetch failed');
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid manifest');
-    return data;
-}
+  var bg = document.getElementById('bg');
+  var srcEl = document.getElementById('wp-src');
+  var metaEl = document.getElementById('wp-meta');
+  var origEl = document.getElementById('wp-orig');
+  var tipEl = document.getElementById('src-tip');
+  var qtext = document.getElementById('qtext');
+  var qfrom = document.getElementById('qfrom');
+  var toast = document.getElementById('toast');
+  var glow = document.getElementById('glow');
 
-async function getRandomLocalFromManifest() {
-    const files = await loadManifest();
-    const chosen = files[Math.floor(Math.random() * files.length)];
-    return LOCAL_DIR + chosen;
-}
+  // 主题色与主页保持一致（若用户自定义过）
+  try {
+    var c = localStorage.getItem('dbp-accent');
+    if (c && /^#[0-9a-fA-F]{6}$/.test(c)) document.documentElement.style.setProperty('--accent', c);
+  } catch (e) {}
 
-/* ===== 预加载图片（返回 Promise<boolean>） ===== */
-function preloadImage(url) {
-    return new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
-    });
-}
+  // ★ 壁纸改为「JSON 取真实图片 URL」：
+  //   ?type=json 解析 imgurl → 直接作为 <img> 的 src，「原图」链接与显示严格同一 URL。
+  //   JSON 失败 / 无 imgurl / 图片 404 → 重新请求 JSON 换一张，不复用坏链接。
+  //   最多额外重试 3 次（共 4 次在线尝试），全失败才用本地兜底图，全程静默。
+  var WALLPAPER_MAX_RETRY = 3;
+  var RETRY_DELAY = 260;
+  var state = { realUrl: API, local: false, retry: 0, token: 0, timer: null };
 
-/* ===== 远程源 ===== */
-const REMOTE_SOURCE = {
-    name: 'loliapi',
-    label: 'loliapi.acg',
-    url: () => `https://www.loliapi.com/acg/?type=json&t=${Date.now()}`,
-    parse: (d) => d.imgurl || d.url || null
-};
+  function say(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(say._t);
+    say._t = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+  }
 
-function updateSourceIndicator(label) {
-    document.getElementById('sourceIndicator').textContent = `src: ${label}`;
-}
+  /* ---------- 壁纸 ---------- */
+  function stopWallpaperRetry() {
+    if (state.timer) { clearTimeout(state.timer); state.timer = null; }
+  }
 
-/* ===== JS 通用淡出淡入 ===== */
-function fadeOut(el, duration = 644) {
-    return new Promise(resolve => {
-        const startTime = performance.now();
-        const startOpacity = parseFloat(getComputedStyle(el).opacity) || 1;
-        function step(now) {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = progress * progress;
-            const opacity = startOpacity * (1 - eased);
-            const translateY = 10 * eased;
-            el.style.opacity = opacity;
-            el.style.transform = `translateY(${translateY}px)`;
-            if (progress < 1) requestAnimationFrame(step);
-            else { el.style.opacity = '0'; el.style.transform = 'translateY(10px)'; resolve(); }
-        }
-        requestAnimationFrame(step);
-    });
-}
+  function onWallpaperLoad() {
+    // 成功即停掉待重试，并清零计数（下次换图从 0 开始）
+    stopWallpaperRetry();
+    state.retry = 0;
+    bg.classList.add('loaded');
+    var w = bg.naturalWidth || 0, h = bg.naturalHeight || 0;
+    metaEl.textContent = (w && h) ? (w + '×' + h) : '';
+  }
 
-function fadeIn(el, duration = 732) {
-    return new Promise(resolve => {
-        const startTime = performance.now();
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(10px)';
-        function step(now) {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - (1 - progress) * (1 - progress);
-            const opacity = eased;
-            const translateY = 10 * (1 - eased);
-            el.style.opacity = opacity;
-            el.style.transform = `translateY(${translateY}px)`;
-            if (progress < 1) requestAnimationFrame(step);
-            else { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; resolve(); }
-        }
-        requestAnimationFrame(step);
-    });
-}
-
-/* ===== 背景图切换（带预加载验证） ===== */
-async function setBackgroundImage(url, label) {
-    // 预加载验证
-    const ok = await preloadImage(url);
-    if (!ok) {
-        // 如果图片加载失败，使用纯色背景
-        url = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3Crect fill="%231a1a1a" width="1" height="1"/%3E%3C/svg%3E';
-        label = 'load failed';
-    }
-    const bg = document.getElementById('bgImage');
-    const currentOpacity = parseFloat(getComputedStyle(bg).opacity);
-    if (currentOpacity > 0.026) await fadeOut(bg, 676);
-    bg.style.backgroundImage = `url(${url})`;
-    currentBgUrl = url;
-    updateSourceIndicator(label);
-    await fadeIn(bg, 748);
-}
-
-/* ===== 核心加载逻辑 ===== */
-async function loadBackground() {
-    // 1. 先尝试加载 fallback 图片（预加载验证）
-    await setBackgroundImage(FALLBACK_IMAGE, 'local:fallback');
-
-    // 2. 决定是否使用远程
-    const useRemote = Math.random() < 0.5;
-
-    if (useRemote) {
-        try {
-            const res = await fetch(REMOTE_SOURCE.url());
-            const d = await res.json();
-            const imgUrl = REMOTE_SOURCE.parse(d);
-            if (imgUrl) {
-                await setBackgroundImage(imgUrl, REMOTE_SOURCE.label);
-                return;
-            }
-        } catch {}
-        showTimeoutNotice();
-        try {
-            const localUrl = await getRandomLocalFromManifest();
-            await setBackgroundImage(localUrl, 'local:manifest');
-        } catch {}
+  /* 统一重试点：JSON 取不到、图片 URL 404，都回到「重新拿一份 JSON」 */
+  function retryWallpaper(token) {
+    if (token !== state.token || state.local) return;
+    if (state.retry < WALLPAPER_MAX_RETRY) {
+      state.retry += 1;
+      stopWallpaperRetry();
+      state.timer = setTimeout(function () {
+        state.timer = null;
+        attemptWallpaper(token, state.retry);
+      }, RETRY_DELAY);
     } else {
-        try {
-            const localUrl = await getRandomLocalFromManifest();
-            await setBackgroundImage(localUrl, 'local:manifest');
-        } catch {}
+      applyBg(FALLBACK, FALLBACK, true);   // 兜底图自身的 error 不再触发重试
     }
-}
+  }
 
-/* ===== 一言 ===== */
-async function loadHitokoto() {
-    const w = document.getElementById('quoteWrapper'),
-          q = document.getElementById('hitokoto'),
-          f = document.getElementById('from');
-    const currentOpacity = parseFloat(getComputedStyle(w).opacity);
-    if (currentOpacity > 0.038) await fadeOut(w, 554);
-    try {
-        if (currentLang === 'zh') {
-            const res = await fetch(i18n.zh.api);
-            const d = await res.json();
-            q.innerText = d.hitokoto;
-            f.innerText = d.from ? `—— ${d.from}` : '';
-        } else {
-            const res = await fetchWithTimeout(i18n.en.api, 2940);
-            const d = await res.json();
-            q.innerText = d.content || i18n.en.fallback;
-            f.innerText = d.author ? `— ${d.author}` : '';
-        }
-    } catch {
-        if (currentLang === 'en') {
-            const pick = enLocalQuotes[Math.floor(Math.random() * enLocalQuotes.length)];
-            q.innerText = pick.q;
-            f.innerText = pick.a ? `— ${pick.a}` : '';
-        } else {
-            q.innerText = i18n.zh.fallback;
-            f.innerText = '';
-        }
+  function onWallpaperError() {
+    // ★ 全程静默：不弹提示、不报错。图片 404 → 重新取 JSON 换一张
+    if (state.local) { bg.classList.add('loaded'); metaEl.textContent = ''; return; }
+    retryWallpaper(state.token);
+  }
+
+  function applyBg(src, realUrl, fromLocal, meta) {
+    state.realUrl = realUrl || src;
+    state.local = !!fromLocal;
+    bg.classList.remove('loaded');
+    bg.onload = onWallpaperLoad;
+    bg.onerror = onWallpaperError;
+    bg.src = src;
+
+    metaEl.textContent = meta || '';
+    srcEl.textContent = state.realUrl;
+    srcEl.title = state.realUrl + '（点击复制）';
+    origEl.href = state.realUrl;
+    origEl.title = '悬浮查看图片源 · 点击打开原图（Ctrl / ⌘ + 点击复制）';
+  }
+
+  /* 官方 ?type=json 返回 {site,imgurl,width,height}，兼容 url/pic/img 等字段与纯文本 */
+  function parseSource(txt) {
+    var data = txt, t = String(txt == null ? '' : txt).trim();
+    if (!t) throw new Error('空响应');
+    try { data = JSON.parse(t); } catch (e) { data = t; }
+    var d = (data && typeof data === 'object' && data.data && typeof data.data === 'object') ? data.data : data;
+    var u = '';
+    if (typeof d === 'string') u = d.trim();
+    else if (d && typeof d === 'object') {
+      u = d.imgurl || d.imgUrl || d.imgURL || d.url || d.pic || d.img || d.image || d.src || '';
+      if (typeof u !== 'string') u = ''; else u = u.trim();
     }
-    await fadeIn(w, 652);
-}
+    if (!/^https?:\/\//i.test(u)) throw new Error('无有效 imgurl');
+    var meta = (d && typeof d === 'object' && d.width && d.height) ? (d.width + '×' + d.height) : '';
+    return { img: u, meta: meta };
+  }
 
-function fetchWithTimeout(url, ms = 2470) {
-    return Promise.race([fetch(url), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
-}
+  function fetchSource(token, retry, mode) {
+    var url = API + '?type=' + mode + '&_=' + Date.now() + '_' + retry + '_' + Math.floor(Math.random() * 1e6);
+    return fetch(url, { cache: 'no-store' }).then(function (res) {
+      if (!res.ok) throw new Error(mode + ' HTTP ' + res.status);
+      return res.text();
+    }).then(function (txt) {
+      if (token !== state.token) return null;
+      return parseSource(txt);
+    });
+  }
 
-function reloadAll() { loadBackground(); loadHitokoto(); }
-function openSource() { if(currentBgUrl && !currentBgUrl.startsWith(LOCAL_DIR) && !currentBgUrl.startsWith('data:')) window.open(currentBgUrl, '_blank', 'noopener'); }
-function goHome() { location.href='/'; }
-function goBack() { document.referrer ? history.back() : location.href='/'; }
-function toggleLang() { applyLang(currentLang==='zh'?'en':'zh'); }
-document.addEventListener('keydown', e => { if(e.key==='Escape') goBack(); });
-document.addEventListener('mousemove', e => {
-    document.getElementById('glow').style.left = e.clientX+'px';
-    document.getElementById('glow').style.top = e.clientY+'px';
-});
+  function attemptWallpaper(token, retry) {
+    if (token !== state.token) return;   // 已被换图作废
+    if (typeof window.fetch !== 'function') { retryWallpaper(token); return; }
+    // 主：JSON 拿 imgurl；失败退到 ?type=url 纯文本；都不行才重新取一份
+    fetchSource(token, retry, 'json').then(function (r) {
+      if (token !== state.token || !r) return;
+      applyBg(r.img, r.img, false, r.meta);   // ★ 显示源 = 原图链接，严格一致
+    }).catch(function () {
+      if (token !== state.token) return;
+      fetchSource(token, retry, 'url').then(function (r2) {
+        if (token !== state.token || !r2) return;
+        applyBg(r2.img, r2.img, false, r2.meta);
+      }).catch(function () {
+        if (token !== state.token) return;
+        retryWallpaper(token);
+      });
+    });
+  }
 
-/* ===== 404 浮动动画 ===== */
-(function() {
-    const errorEl = document.getElementById('errorCode');
-    let startTime = performance.now();
-    function floatLoop(time) {
-        const elapsed = time - startTime;
-        const y = Math.sin(elapsed / 614) * 7;
-        errorEl.style.transform = `translateY(${y}px)`;
-        requestAnimationFrame(floatLoop);
+  function loadWallpaper(bust) {
+    stopWallpaperRetry();
+    var token = (state.token += 1);
+    state.retry = 0;
+    state.local = false;
+    attemptWallpaper(token, 0);
+  }
+
+  function refreshWallpaper() { loadWallpaper(true); }
+
+  /* ---------- 短句：外部一言 API（hitokoto），带出处，无进度条 ---------- */
+  // 网络全挂时的本地兜底池（仍带出处）
+  var QUOTES = [
+    ['这里什么都没有，但星空还在。','佚名'],
+    ['走错路的时候，顺便看看风景吧。','佚名'],
+    ['404 不是终点，只是还没找到入口。','佚名'],
+    ['有些页面，只存在于想象里。','佚名'],
+    ['别急，回头的路一直都在。','佚名'],
+    ['迷路，也是一种抵达。','佚名'],
+    ['风会把你带到该去的地方。','佚名'],
+    ['今天也要好好吃饭，好好睡觉。','佚名'],
+    ['世界很大，不差这一页。','佚名'],
+    ['你找的东西，也许正在找你。','鲁米'],
+    ['慢一点，也没关系。','佚名'],
+    ['所有的相遇都是久别重逢，除了这一页。','佚名'],
+    ['刷新一下，说不定就有惊喜。','佚名'],
+    ['愿你所念皆如愿，所行皆化坦途。','佚名'],
+    ['此处空白，留给你自己填写。','佚名'],
+    ['月亮不迷路，因为它不赶时间。','佚名'],
+    ['保持好奇，路会自己出现。','佚名'],
+    ['海边的风，替我说了句抱歉。','佚名'],
+    ['这一秒的晚霞，只为你亮着。','佚名'],
+    ['往前走吧，别在这里久留。','佚名'],
+    ['Not all those who wander are lost.','J.R.R. Tolkien'],
+    ['Every page has an end. Yet we go on reading.','佚名'],
+    ['行到水穷处，坐看云起时。','王维《终南别业》'],
+    ['山重水复疑无路，柳暗花明又一村。','陆游《游山西村》']
+  ];
+  var lastQuote = -1, quoteTicker = null, quoteSeq = 0;
+
+  function scheduleQuote() {
+    clearTimeout(quoteTicker);
+    quoteTicker = setTimeout(nextQuote, QUOTE_MS);
+  }
+
+  // 统一渲染：正文 + 出处（作者 · 《作品》）
+  function renderQuote(text, source, author) {
+    qtext.textContent = text;
+    var parts = [];
+    if (author) parts.push(author);
+    if (source) parts.push('《' + String(source).replace(/^《|》$/g, '') + '》');
+    qfrom.textContent = '—— ' + (parts.length ? parts.join(' · ') : (source || '佚名'));
+    qtext.classList.remove('in');
+    void qtext.offsetWidth;
+    qtext.classList.add('in');
+  }
+
+  function fallbackQuote() {
+    var i;
+    do { i = Math.floor(Math.random() * QUOTES.length); } while (i === lastQuote && QUOTES.length > 1);
+    lastQuote = i;
+    renderQuote(QUOTES[i][0], QUOTES[i][1], '');
+  }
+
+  // 带超时的 JSON 请求：某个源卡住时立刻换下一个，不让页面一直空着
+  function fetchJSON(url, ms) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function () { if (!done) { done = true; reject(new Error('timeout')); } }, ms || 3500);
+      fetch(url, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function (d) {
+        if (!done) { done = true; clearTimeout(timer); resolve(d); }
+      }, function (e) {
+        if (!done) { done = true; clearTimeout(timer); reject(e); }
+      });
+    });
+  }
+
+  function nextQuote() {
+    scheduleQuote();                       // 先排下次，网络慢也不卡轮换
+    var seq = ++quoteSeq;
+    if (typeof window.fetch !== 'function' || typeof Promise !== 'function') { fallbackQuote(); return; }
+
+    function use(d) {
+      if (seq !== quoteSeq) return;
+      if (d && d.hitokoto) { renderQuote(d.hitokoto, d.from || '', d.from_who || d.creator || ''); return true; }
+      if (d && d.content)  { renderQuote(d.content, '', d.author || ''); return true; }
+      return false;
     }
-    requestAnimationFrame(floatLoop);
+    fetchJSON(HITOKOTO, 3500)
+      .then(function (d) { if (!use(d) && seq === quoteSeq) fallbackQuote(); })
+      .catch(function () {
+        if (seq !== quoteSeq) return;
+        fetchJSON(QUOTABLE, 3500)
+          .then(function (d) { if (seq === quoteSeq && !use(d)) fallbackQuote(); })
+          .catch(function () { if (seq === quoteSeq) fallbackQuote(); });
+      });
+  }
+
+  /* ---------- 帮助 ---------- */
+  var helpPop = document.getElementById('help-pop');
+  var helpBtn = document.getElementById('help-btn');
+  function setHelp(on) {
+    helpPop.classList.toggle('on', on);
+    helpBtn.classList.toggle('on', on);
+    helpBtn.setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
+  helpBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setHelp(!helpPop.classList.contains('on'));
+  });
+  document.addEventListener('click', function (e) {
+    if (!document.getElementById('help-wrap').contains(e.target)) setHelp(false);
+  });
+
+  /* ---------- 导航 ---------- */
+  function goHome() { location.href = './index.html'; }
+  function goBack() {
+    if (document.referrer && history.length > 1) history.back();
+    else location.href = './index.html';
+  }
+
+  /* ---------- 交互 ---------- */
+  document.getElementById('btn-refresh').addEventListener('click', function () { location.reload(); });
+  document.getElementById('btn-back').addEventListener('click', goBack);
+  document.getElementById('bHome').addEventListener('click', goHome);
+  document.getElementById('bBack').addEventListener('click', goBack);
+  document.getElementById('btn-wallpaper').addEventListener('click', function () { refreshWallpaper(); nextQuote(); say('已换一张壁纸'); });
+  document.getElementById('btn-quote').addEventListener('click', nextQuote);
+  document.getElementById('quote').addEventListener('click', nextQuote);
+  function copySrc() {
+    var t = state.realUrl;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function () { say('已复制图片源地址'); }).catch(function () { say(t); });
+    } else { say(t); }
+  }
+  // 点气泡（含链接文字）复制，不跳转
+  tipEl.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); copySrc(); });
+  // Ctrl / ⌘ / Shift + 点「原图」直接复制，不打开新窗口
+  origEl.addEventListener('click', function (e) {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) { e.preventDefault(); copySrc(); }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var k = (e.key || '').toLowerCase();
+    // 帮助打开时 Esc 先关帮助；否则 Esc 返回（与面包屑语义一致）
+    if (k === 'escape') {
+      if (helpPop.classList.contains('on')) { setHelp(false); return; }
+      goBack(); return;
+    }
+    if (k === 'h' || e.key === '?') { setHelp(!helpPop.classList.contains('on')); return; }
+    if (k === 'r') { refreshWallpaper(); nextQuote(); say('已换一张壁纸'); return; }
+    if (e.key === 'ArrowLeft' && !/input|textarea/i.test((e.target.tagName || ''))) goBack();
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+
+  /* ---------- 启动 ---------- */
+  loadWallpaper(false);
+  nextQuote();
 })();
-
-applyLang(currentLang);
-loadBackground();
-setInterval(loadHitokoto, 6580);
 </script>
 </body>
 </html>
