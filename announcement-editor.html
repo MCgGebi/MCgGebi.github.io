@@ -69,8 +69,8 @@
 })();
 </script>
 
-<link rel="stylesheet" href="./vendor/font-awesome.min.css?v=0.9.32" />
-<link rel="stylesheet" href="./styles/main.css?v=0.9.32" />
+<link rel="stylesheet" href="./vendor/font-awesome.min.css?v=0.9.33" />
+<link rel="stylesheet" href="./styles/main.css?v=0.9.33" />
 
 <style>
 /* ============================================================
@@ -1091,10 +1091,12 @@ button { cursor: pointer; }
   function fetchServer(loud) {
     fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
+        // ★ 304 缓存未变更：正常响应，无 body 时保留当前数据
+        if (!(r.ok === true || r.status === 304)) throw new Error('HTTP ' + r.status);
+        return r.status === 304 ? null : r.json();
       })
       .then(function (d) {
+        if (d === null) return;
         if (!d || !Array.isArray(d.announcements)) throw new Error('JSON 结构不正确');
         try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
         setData(d, true);

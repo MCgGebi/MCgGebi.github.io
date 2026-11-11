@@ -346,8 +346,9 @@
     if (registry) return Promise.resolve(registry);
     return fetch(JSON_URL, { cache: 'no-cache' })
       .then(function (r) {
-        if (!r.ok) throw new Error('彩蛋注册表加载失败: ' + r.status);
-        return r.json();
+        // ★ 304 = 缓存未变更，正常响应，不是错误
+        if (!(r.ok === true || r.status === 304)) throw new Error('彩蛋注册表加载失败: ' + r.status);
+        return r.status === 304 ? null : r.json();
       })
       .then(function (j) {
         registry = (j && j.events) ? j.events : [];

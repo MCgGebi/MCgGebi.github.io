@@ -394,10 +394,12 @@
       function fetchSource(token, retry, mode) {
         var url = API + '?type=' + mode + '&_=' + Date.now() + '_' + retry + '_' + Math.floor(Math.random() * 1e6);
         return global.fetch(url, { cache: 'no-store' }).then(function (res) {
-          if (!res.ok) throw quietErr(mode + ' HTTP ' + res.status);
+          // ★ 304 = 缓存未变更，正常响应，不是错误；无 body 时静默复用当前壁纸
+          if (!(res.ok === true || res.status === 304)) throw quietErr(mode + ' HTTP ' + res.status);
+          if (res.status === 304) return null;
           return res.text();
         }).then(function (txt) {
-          if (token !== wallpaperToken) return null;
+          if (token !== wallpaperToken || txt === null) return null;
           return parseSource(txt);
         });
       }
@@ -461,8 +463,9 @@
             if (!done) { done = true; reject(quietErr('timeout')); }
           }, ms || 3500);
           global.fetch(url, { cache: 'no-store' }).then(function (r) {
-            if (!r.ok) throw quietErr('HTTP ' + r.status);
-            return r.json();
+            // ★ 304 缓存未变更：正常响应，无 body 时走本地一言兜底
+            if (!(r.ok === true || r.status === 304)) throw quietErr('HTTP ' + r.status);
+            return r.status === 304 ? null : r.json();
           }).then(function (d) {
             if (!done) { done = true; clearTimeout(timer); resolve(d); }
           }, function (e) {

@@ -47,8 +47,9 @@
     if (cache.loading) return cache.loading;
     cache.loading = fetch(SRC)
       .then(function (r) {
-        if (!r.ok) throw new Error('announcements.json 加载失败 (HTTP ' + r.status + ')');
-        return r.json();
+        // ★ 304 = 缓存未变更，是正常的 HTTP 响应，不是错误（Response.ok 只认 2xx）
+        if (!(r.ok === true || r.status === 304)) throw new Error('announcements.json 加载失败 (HTTP ' + r.status + ')');
+        return r.status === 304 ? null : r.json();  // 304 无 body，走空列表
       })
       .then(function (json) {
         var raw = (json && json.announcements) || [];

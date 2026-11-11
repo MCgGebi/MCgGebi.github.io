@@ -22,6 +22,15 @@
   var LOADING_PLUGINS = {};
   var READY = false;
 
+  // ★ 304 Not Modified 是缓存协商的正常响应，不是错误（Response.ok 只认 2xx）。
+  //   304 响应没有 body，读取时统一返回空内容，避免解析空串产生新的 SyntaxError。
+  function httpOk(r) {
+    return !!(r && (r.ok === true || r.status === 304 || r.statusCode === 304));
+  }
+  function is304(r) { return !!(r && (r.status === 304 || r.statusCode === 304)); }
+  function readText(r) { return is304(r) ? Promise.resolve('') : r.text(); }
+  function readJson(r) { return is304(r) ? Promise.resolve(null) : r.json(); }
+
   // ★ fetch 失败统一包装：把 HTTP 状态码挂到 Error 上，供 404 判定使用
   //   isEntry=true 仅用于「插件入口文件」自己的 fetch；插件内部资源/脚本抛出的
   //   任何错误（哪怕带 status:404 或 message 含 HTTP 404）都不会带此标记。
@@ -308,7 +317,7 @@
         function loadMarkdown() {
           loaded.value = false; error.value = '';
           fetch(meta.src, { cache: 'no-cache' })
-            .then(function (r) { if (!r.ok) throw httpError(r, 'HTTP ' + r.status + ' - ' + meta.src, true); return r.text(); })
+            .then(function (r) { if (!httpOk(r)) throw httpError(r, 'HTTP ' + r.status + ' - ' + meta.src, true); return readText(r); })
             .then(function (text) { rawText.value = text; renderedHtml.value = markdownToHtml(text); loaded.value = true; error.value = ''; })
             .catch(function (err) {
               // ★ 仅插件入口文件 404：不显示错误框、不进总线，直接显示内置 404 页面
@@ -656,7 +665,7 @@
         function loadHtml() {
           loading.value = true; error.value = '';
           fetch(meta.src, { cache: 'no-cache' })
-            .then(function (r) { if (!r.ok) throw httpError(r, 'HTTP ' + r.status + ' - ' + meta.src, true); return r.text(); })
+            .then(function (r) { if (!httpOk(r)) throw httpError(r, 'HTTP ' + r.status + ' - ' + meta.src, true); return readText(r); })
             .then(function (html) {
               htmlContent.value = html; loading.value = false;
               var self = this;
@@ -704,8 +713,14 @@
     } else {
       promise = (async function () {
         var resp = await fetch(meta.src, { cache: 'no-cache' });
-        if (!resp.ok) throw httpError(resp, '插件加载失败: ' + meta.src, true);
-        var code = await resp.text();
+        if (!httpOk(resp)) throw httpError(resp, '插件加载失败: ' + meta.src, true);
+        var code = await readText(resp);
+        // ★ 304 缓存有效且无响应体：不重新执行、不报「未注册」，静默复用已有组件
+        if (is304(resp)) {
+          var hit = PLUGIN_COMPONENTS[pluginId] || (global._PLUGIN_COMPONENTS && global._PLUGIN_COMPONENTS[pluginId]);
+          if (hit) { PLUGIN_COMPONENTS[pluginId] = hit; return hit; }
+          return null;
+        }
         try { new Function(code).call(global); } catch (ex) { report('plugin-register', ex, { plugin: pluginId, url: meta.src, fatal: false }); throw ex; }
         if (!PLUGIN_COMPONENTS[pluginId]) {
           var fallback = global._PLUGIN_COMPONENTS && global._PLUGIN_COMPONENTS[pluginId];
@@ -738,8 +753,8 @@
 
     try {
       var resp = await fetch('./js/plugins.json', { cache: 'no-cache' });
-      if (!resp.ok) throw httpError(resp, 'plugins.json 加载失败');
-      var config = await resp.json();
+      if (!httpOk(resp)) throw httpError(resp, 'plugins.json 加载失败');
+      var config = (await readJson(resp)) || {};
       CATEGORIES = config.categories || [];
       APP_VERSION = config.version || APP_VERSION;
 
