@@ -44,6 +44,28 @@
   global.DBP_is404 = is404;
 
   /* ------------------------------------------------------------
+     ★ 304 Not Modified 是 HTTP 缓存协商的正常响应，不是错误。
+       fetch 的 Response.ok 只认 2xx，304 会得到 false，必须单独放行；
+       否则任何 `if (!r.ok) throw` 都会把它当成加载失败上报。
+       注意：行号/列号里的 304（如 app.js:304:11）不会被误判。
+     ------------------------------------------------------------ */
+  function isNotModified(x) {
+    if (x && typeof x === 'object') {
+      if (x.status === 304 || x.statusCode === 304 || x.notModified === true) return true;
+      if (x.message !== undefined) return isNotModified(x.message);
+      return false;
+    }
+    var s = String(x == null ? '' : x);
+    return /HTTP\s*304|304\s*Not\s*Modified|\(304\)/i.test(s);
+  }
+  global.DBP_isNotModified = isNotModified;
+
+  /* 统一的 HTTP 成功判定：2xx 或 304 都算成功（304 无响应体，调用方需短路） */
+  global.DBP_isHttpOk = function (r) {
+    return !!(r && (r.ok === true || (global.DBP_isNotModified && global.DBP_isNotModified(r))));
+  };
+
+  /* ------------------------------------------------------------
      ★ 404 页面内部资源（随机壁纸 / 一言）加载失败：直接忽略。
        不进错误总线、不写历史日志、不弹错误窗、不弹 toast。
        判定严格限定在「当前确实处于 404 页面」+「带静默标记或属于
@@ -99,7 +121,7 @@
       if (!raw) return [];
       var arr = JSON.parse(raw);
       if (!Array.isArray(arr)) return [];
-      return arr.slice(-MAX_ERRORS).filter(function (e) { return e && typeof e === 'object'; }).map(function (e) {
+      return arr.slice(-MAX_ERRORS).filter(function (e) { return e && typeof e === 'object' && !isNotModified(e); }).map(function (e) {
         var c = clonePlain(e);
         c.live = false;        // ★ 历史记录不属于本次会话
         c.restored = true;     // ★ 设置页据此显示「历史」标记
@@ -129,6 +151,8 @@
     historyList: function () { return errors.filter(function (e) { return !e.live; }); },
     push: function (e) {
       var entry = (typeof e === 'object' && e !== null) ? e : { message: String(e) };
+      // ★ 304 是缓存协商的正常响应：不记录、不持久化、不触发错误面板
+      if (isNotModified(entry)) return null;
       entry.time = entry.time || new Date().toISOString();
       entry.phase = entry.phase || 'runtime';
       if (entry.message instanceof Error) entry.message = entry.message.message;

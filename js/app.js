@@ -247,6 +247,9 @@
       // 早期错误纳入面板
       var early = (global.__DBP_EARLY_ERRORS || []).map(function (e) {
         return { phase: 'early', plugin: null, url: e.src || null, message: e.msg, stack: '', time: e.time || new Date().toISOString(), fatal: false };
+      }).filter(function (e) {
+        // ★ 304 是缓存协商的正常响应，不进错误面板
+        return !(global.DBP_isNotModified && global.DBP_isNotModified(e.message));
       });
       startupErrors.value = startupErrors.value.concat(early);
 

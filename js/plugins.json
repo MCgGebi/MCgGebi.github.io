@@ -16,7 +16,23 @@
           "path": "/home",
           "badge": "",
           "badgeClass": "",
-          "version": "0.9.4"
+          "version": "0.9.4",
+          "order": 1,
+          "src": "./js/pages/home.js"
+        },
+        {
+          "id": "skyblock-ideas",
+          "type": "plugin",
+          "title": "空岛灵感站",
+          "icon": "fas fa-lightbulb",
+          "path": "/skyblock-ideas",
+          "badge": "",
+          "badgeClass": "",
+          "src": "./plugins/html/skyblock-ideas.html",
+          "version": "1.0.0",
+          "order": 5,
+          "renderMode": "iframe",
+          "pluginType": "html"
         }
       ]
     },

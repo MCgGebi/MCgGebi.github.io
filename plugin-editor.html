@@ -956,6 +956,8 @@
   async function loadDefault() {
     try {
       var resp = await fetch('./js/plugins.json', { cache: 'no-cache' });
+      // ★ 304 缓存未变更：正常响应，沿用当前数据，不报错也不清空编辑器
+      if (resp.status === 304) { console.log('[Editor] plugins.json 未修改，沿用当前数据'); return; }
       if (resp.ok) {
         DEFAULT_DATA = await resp.json();
         state.categories = JSON.parse(JSON.stringify(DEFAULT_DATA.categories));
